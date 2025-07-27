@@ -32,9 +32,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imguizmo::imguizmo)
 
 #Link local third party packages
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
+target_link_libraries(${PROJECT_NAME} PRIVATE wgl)
 
 #link project libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE Shaders)
+target_link_libraries(${PROJECT_NAME} PRIVATE Platform)
 
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLFW_INCLUDE_NONE)
@@ -42,3 +43,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRARY_SUFFIX="")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
         ${glad_SOURCE_DIR})
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX)
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)

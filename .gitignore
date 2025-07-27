@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+#Output
+[Bb]uild/
+cmake-build-*/
+
+#IDE specific
+.idea/
+.vs/
+
+
