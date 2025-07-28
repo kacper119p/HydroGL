@@ -12,5 +12,6 @@ endif ()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 
 add_subdirectory(Application)
+add_subdirectory(Core)
 add_subdirectory(Platform)
 add_subdirectory(ThirdParty)

@@ -2,15 +2,15 @@
 
 #include <iostream>
 
-#include "Launcher.h"
+#include "Engine.h"
 
 int ApplicationMain(Platform::Window* const Window)
 {
+    Core::Engine::Start(Window);
     while (!Window->ShouldClose())
     {
 
     }
-    std::cout << "Hello World!" << std::endl;
-    Window->Close();
+    Core::Engine::Shutdown();
     return 0;
 }
