@@ -28,9 +28,9 @@ namespace Platform
     }
 
     Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext):
-        WindowHandle(WindowHandle),
-        DeviceContext(DeviceContext),
-        OpenGlContext(OpenGlContext)
+        _windowHandle(WindowHandle),
+        _deviceContext(DeviceContext),
+        _openGlContext(OpenGlContext)
     {
     }
 
@@ -156,7 +156,7 @@ namespace Platform
 
     bool Window::ShouldClose()
     {
-        wglMakeCurrent(DeviceContext, OpenGlContext);
+        wglMakeCurrent(_deviceContext, _openGlContext);
 
         MSG msg;
         while (true)
@@ -174,7 +174,7 @@ namespace Platform
             // OpenGL rendering here
             glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            SwapBuffers(DeviceContext);
+            SwapBuffers(_deviceContext);
         }
     }
 
@@ -183,11 +183,11 @@ namespace Platform
         ChangeDisplaySettings(nullptr, 0);
         SetForegroundWindow(GetDesktopWindow());
         wglMakeCurrent(nullptr, nullptr);
-        wglDeleteContext(OpenGlContext);
-        ReleaseDC(WindowHandle, DeviceContext);
-        DestroyWindow(WindowHandle);
-        WindowHandle = nullptr;
-        DeviceContext = nullptr;
-        OpenGlContext = nullptr;
+        wglDeleteContext(_openGlContext);
+        ReleaseDC(_windowHandle, _deviceContext);
+        DestroyWindow(_windowHandle);
+        _windowHandle = nullptr;
+        _deviceContext = nullptr;
+        _openGlContext = nullptr;
     }
 }

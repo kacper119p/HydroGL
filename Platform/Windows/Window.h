@@ -9,9 +9,9 @@ namespace Platform
         friend class Launcher;
 
     private:
-        HWND WindowHandle = nullptr;
-        HDC DeviceContext = nullptr;
-        HGLRC OpenGlContext = nullptr;
+        HWND _windowHandle = nullptr;
+        HDC _deviceContext = nullptr;
+        HGLRC _openGlContext = nullptr;
 
     private:
         Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext);
