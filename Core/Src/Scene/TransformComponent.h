@@ -23,7 +23,7 @@ namespace Core
 
     public:
         static void on_construct(entt::registry& Registry, entt::entity Id);
-        static void on_destruct(entt::registry& Registry, entt::entity Id);
+        static void on_destroy(entt::registry& Registry, entt::entity Id);
 
     public:
         [[nodiscard]] const glm::vec3& GetPosition() const { return _position; }
@@ -67,5 +67,7 @@ namespace Core
             }
             return _localToParentMatrix;
         }
+
+        [[nodiscard]] SceneNode& GetSceneHierarchyNode() const { return *_sceneHierarchyNode; }
     };
 } // namespace Core

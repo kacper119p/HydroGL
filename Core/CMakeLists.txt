@@ -24,10 +24,10 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 
 #Link OpenGL
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} PRIVATE ${OPENGL_LIBRARIES})
 
 #link third party libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
+target_link_libraries(${LIBRARY_NAME} PUBLIC glm::glm)
 target_link_libraries(${LIBRARY_NAME} PRIVATE glad)
 target_link_libraries(${LIBRARY_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${LIBRARY_NAME} PRIVATE EnTT::EnTT)
@@ -36,12 +36,35 @@ target_link_libraries(${LIBRARY_NAME} PRIVATE boost)
 #link project libraries
 target_link_libraries(${LIBRARY_NAME} PRIVATE Platform)
 
-target_include_directories(${LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR/Src}
+target_include_directories(${LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR/Src}
         ${glad_SOURCE_DIR})
 
 if (MSVC)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX)
+    target_compile_definitions(${LIBRARY_NAME} PRIVATE NOMINMAX)
 endif ()
 
 target_compile_definitions(${LIBRARY_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
 target_compile_definitions(${LIBRARY_NAME} PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
+# --------------------------------TESTS--------------------------------
+
+set(TESTS_NAME CoreTests)
+
+enable_testing()
+
+file(GLOB_RECURSE TEST_FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.cpp")
+
+add_executable(${TESTS_NAME} ${TEST_FILES})
+
+target_link_libraries(${TESTS_NAME} PRIVATE ${LIBRARY_NAME})
+target_link_libraries(${TESTS_NAME} PRIVATE GTest::gtest_main)
+target_link_libraries(${TESTS_NAME} PRIVATE glm::glm)
+target_link_libraries(${TESTS_NAME} PRIVATE glad)
+target_link_libraries(${TESTS_NAME} PRIVATE spdlog::spdlog)
+target_link_libraries(${TESTS_NAME} PRIVATE EnTT::EnTT)
+target_link_libraries(${TESTS_NAME} PRIVATE boost)
+
+include(GoogleTest)
+gtest_discover_tests(CoreTests)

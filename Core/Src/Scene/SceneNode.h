@@ -28,38 +28,38 @@ namespace Core
 
     public:
         ~SceneNode();
-        void AddChild(SceneNode* Child)
+        void AddChild(SceneNode& Child)
         {
-            if (Child->_parent != nullptr)
+            if (Child._parent != nullptr)
             {
-                Child->_parent->RemoveChild(Child);
+                Child._parent->RemoveChild(Child);
             }
-            Child->_parent = this;
-            Child->MarkDirty();
-            _children.push_back(Child);
+            Child._parent = this;
+            Child.MarkDirty();
+            _children.push_back(&Child);
         }
 
     public:
         static SceneNode* Create(entt::registry* EntityRegistry, entt::entity EntityId);
 
     public:
-        void RemoveChild(SceneNode* Child)
+        void RemoveChild(SceneNode& Child)
         {
-            if (std::erase(_children, Child))
+            if (std::erase(_children, &Child))
             {
-                Child->_parent = nullptr;
-                Child->MarkDirty();
+                Child._parent = nullptr;
+                Child.MarkDirty();
             }
         }
 
-        void SetParent(SceneNode* InParent)
+        void SetParent(SceneNode& InParent)
         {
             if (_parent != nullptr)
             {
-                _parent->RemoveChild(this);
+                _parent->RemoveChild(*this);
             }
-            _parent = InParent;
-            _parent->AddChild(this);
+            _parent = &InParent;
+            _parent->AddChild(*this);
             MarkDirty();
         }
 

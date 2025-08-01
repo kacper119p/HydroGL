@@ -1,6 +1,7 @@
 #include "SceneNode.h"
 
 #include <glm/gtx/quaternion.hpp>
+#include <iostream>
 
 #include "TransformComponent.h"
 
@@ -10,10 +11,6 @@ namespace Core
 
     SceneNode::~SceneNode()
     {
-        if (_entityRegistry->valid(_entityId))
-        {
-            _entityRegistry->destroy(_entityId);
-        }
         for (int i = 0; i < _children.size(); ++i)
         {
             const SceneNode* child = _children[i];
