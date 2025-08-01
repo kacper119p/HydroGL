@@ -14,8 +14,8 @@ namespace Core
 
     private:
         glm::vec3 _position;
-        glm::vec3 _scale;
-        glm::quat _rotation;
+        glm::vec3 _scale = glm::vec3(1.0f);
+        glm::quat _rotation = glm::identity<glm::quat>();
         glm::mat4 _localToWorldMatrix = glm::identity<glm::mat4>();
         glm::mat4 _localToParentMatrix = glm::identity<glm::mat4>();
         SceneNode* _sceneHierarchyNode = nullptr;
@@ -31,7 +31,7 @@ namespace Core
         void SetPosition(const glm::vec3& Position)
         {
             _position = Position;
-            _isDirty = true;
+            _sceneHierarchyNode->MarkDirty();
         }
 
         [[nodiscard]] const glm::vec3& GetScale() const { return _scale; }
@@ -39,7 +39,7 @@ namespace Core
         void SetScale(const glm::vec3& Scale)
         {
             _scale = Scale;
-            _isDirty = true;
+            _sceneHierarchyNode->MarkDirty();
         }
 
         [[nodiscard]] const glm::quat& GetRotation() const { return _rotation; }
@@ -47,8 +47,16 @@ namespace Core
         void SetRotation(const glm::quat& Rotation)
         {
             _rotation = Rotation;
-            _isDirty = true;
+            _sceneHierarchyNode->MarkDirty();
         }
+
+        void SetEulerAngles(const glm::vec3& EulerAngles)
+        {
+            _rotation = glm::quat(EulerAngles);
+            _sceneHierarchyNode->MarkDirty();
+        }
+
+        [[nodiscard]] glm::vec3 GetEulerAngles() const { return glm::degrees(glm::eulerAngles(_rotation)); }
 
         [[nodiscard]] const glm::mat4& GetLocalToWorldMatrix() const
         {

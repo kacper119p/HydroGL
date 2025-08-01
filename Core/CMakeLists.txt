@@ -56,7 +56,14 @@ file(GLOB_RECURSE TEST_FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.cpp")
 
-add_executable(${TESTS_NAME} ${TEST_FILES})
+file(GLOB_RECURSE TEST_HEADER_FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Test/*.h")
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_HEADER_FILES})
+
+add_executable(${TESTS_NAME} ${TEST_HEADER_FILES} ${TEST_FILES})
 
 target_link_libraries(${TESTS_NAME} PRIVATE ${LIBRARY_NAME})
 target_link_libraries(${TESTS_NAME} PRIVATE GTest::gtest_main)
@@ -65,6 +72,11 @@ target_link_libraries(${TESTS_NAME} PRIVATE glad)
 target_link_libraries(${TESTS_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${TESTS_NAME} PRIVATE EnTT::EnTT)
 target_link_libraries(${TESTS_NAME} PRIVATE boost)
+
+if (MSVC)
+    target_compile_definitions(${TESTS_NAME} PRIVATE NOMINMAX)
+endif ()
+target_compile_definitions(${TESTS_NAME} PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 include(GoogleTest)
 gtest_discover_tests(CoreTests)

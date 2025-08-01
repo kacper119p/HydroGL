@@ -38,7 +38,7 @@ namespace Core
         UpdateMatrices(transform);
     }
 
-    void SceneNode::SceneNode::UpdateMatrices(TransformComponent& Transform) const
+    void SceneNode::UpdateMatrices(TransformComponent& Transform) const
     {
         glm::mat4& localToParent = Transform._localToParentMatrix;
 
