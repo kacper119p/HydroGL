@@ -4,24 +4,24 @@
 #include "Scene/TransformComponent.h"
 
 
-class TestDriver : public testing::Test
+class TransformTests : public testing::Test
 {
 protected:
-    TestDriver() {}
+    TransformTests() = default;
 
     std::unique_ptr<entt::registry> _registry = std::make_unique<entt::registry>();
 };
 
 
 // Demonstrate some basic assertions.
-TEST_F(TestDriver, TransformCreationAndDestruction)
+TEST_F(TransformTests, TransformCreationAndDestruction)
 {
     const entt::entity id = _registry->create();
     ASSERT_NO_FATAL_FAILURE(_registry->emplace<Core::TransformComponent>(id));
     ASSERT_NO_FATAL_FAILURE(_registry->remove<Core::TransformComponent>(id));
 }
 
-TEST_F(TestDriver, TransformWitchChildCreationAndDestruction)
+TEST_F(TransformTests, TransformWitchChildCreationAndDestruction)
 {
     const ::entt::entity parentId = _registry->create();
     const ::entt::entity childId = _registry->create();
@@ -39,7 +39,7 @@ TEST_F(TestDriver, TransformWitchChildCreationAndDestruction)
 }
 
 
-TEST_F(TestDriver, TransformMatrixUpdate)
+TEST_F(TransformTests, TransformMatrixUpdate)
 {
     const ::entt::entity id = _registry->create();
     ASSERT_NO_FATAL_FAILURE(_registry->emplace<Core::TransformComponent>(id));
