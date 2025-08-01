@@ -10,7 +10,13 @@ set(WGL_DIR ${CMAKE_CURRENT_LIST_DIR}/Wgl)
 add_library(wgl INTERFACE)
 target_include_directories(wgl INTERFACE ${WGL_DIR})
 
+
+set(BOOST_DIR ${CMAKE_CURRENT_LIST_DIR}/Boost)
+add_library(boost INTERFACE)
+target_include_directories(boost INTERFACE ${BOOST_DIR})
+
 set_target_properties(
         glad
         wgl
+        boost
         PROPERTIES FOLDER "ThirdParty")
