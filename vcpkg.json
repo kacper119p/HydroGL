@@ -1,0 +1,14 @@
+{
+  "$schema" : "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "dependencies" : [ {
+    "name" : "imgui",
+    "features" : [ "docking-experimental" ]
+  },
+    "imguizmo",
+    "glm",
+    "gtest",
+    "spdlog",
+    "tracy",
+    "entt"
+  ]
+}

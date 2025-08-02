@@ -50,6 +50,8 @@ target_compile_definitions(${LIBRARY_NAME} PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 set(TESTS_NAME CoreTests)
 
+find_package(gtest CONFIG REQUIRED)
+
 enable_testing()
 
 file(GLOB_RECURSE TEST_FILES

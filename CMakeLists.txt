@@ -11,7 +11,6 @@ endif ()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 include(GlobalSettings)
-include(FetchGoogleTest)
 
 add_subdirectory(Application)
 add_subdirectory(Core)
