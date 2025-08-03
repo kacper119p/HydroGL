@@ -87,4 +87,4 @@ namespace Core
 
         return std::string();
     }
-} // namespace Core
+}

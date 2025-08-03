@@ -1,7 +1,6 @@
 #include "SceneNode.h"
 
 #include <glm/gtx/quaternion.hpp>
-#include <iostream>
 
 #include "TransformComponent.h"
 

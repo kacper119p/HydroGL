@@ -30,4 +30,4 @@ namespace Core
 
         static std::string FindFile(const std::string& Path, const std::string& CallerPath);
     };
-} // Shaders
+}

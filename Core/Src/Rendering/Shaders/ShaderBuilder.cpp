@@ -171,4 +171,4 @@ namespace Core
                 return GL_NONE;
         }
     }
-} // namespace Core
+}

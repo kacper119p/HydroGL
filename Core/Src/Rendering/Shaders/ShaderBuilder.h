@@ -60,4 +60,4 @@ namespace Core
 
         Shader CreateComputeShader() const;
     };
-} // namespace Core
+}
