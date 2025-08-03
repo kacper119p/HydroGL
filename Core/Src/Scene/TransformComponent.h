@@ -23,6 +23,7 @@ namespace Core
 
     public:
         static void on_construct(entt::registry& Registry, entt::entity Id);
+
         static void on_destroy(entt::registry& Registry, entt::entity Id);
 
     public:

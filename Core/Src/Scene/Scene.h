@@ -1,10 +1,8 @@
 #pragma once
 
-namespace Core {
-
-class Scene
+namespace Core
 {
-
-};
-
+    class Scene
+    {
+    };
 }

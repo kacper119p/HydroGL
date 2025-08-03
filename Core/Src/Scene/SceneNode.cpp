@@ -17,10 +17,12 @@ namespace Core
             child->_entityRegistry->destroy(child->_entityId);
         }
     }
+
     SceneNode* SceneNode::Create(entt::registry* EntityRegistry, const entt::entity EntityId)
     {
         return _memoryPool.construct(EntityRegistry, EntityId);
     }
+
     void SceneNode::MarkDirty() const
     {
         TransformComponent& transform = _entityRegistry->get<TransformComponent>(_entityId);
@@ -31,6 +33,7 @@ namespace Core
             child->MarkDirty();
         }
     }
+
     void SceneNode::UpdateMatrices() const
     {
         TransformComponent& transform = _entityRegistry->get<TransformComponent>(_entityId);

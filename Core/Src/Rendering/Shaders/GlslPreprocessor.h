@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace Shaders
+namespace Core
 {
     /**
      * @brief Simple preprocessor static-only class for resolving GLSL #includes.<br>
@@ -16,9 +16,6 @@ namespace Shaders
 
     private:
         GLSLPreprocessor() = default;
-
-    public:
-        ~GLSLPreprocessor();
 
     public:
         /**

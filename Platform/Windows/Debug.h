@@ -65,8 +65,6 @@ namespace Platform
     private:
         static void APIENTRY GlDebugOutput(GLenum Source, GLenum Type, unsigned int Id, GLenum Severity,
                                            GLsizei Length, const char* Message, const void* UserParam);
-
     };
 }
 #endif
-

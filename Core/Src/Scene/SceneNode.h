@@ -21,13 +21,14 @@ namespace Core
         entt::entity _entityId;
 
     public:
-        SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) :
-            _entityRegistry(EntityRegistry), _entityId(EntityId)
+        SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) : _entityRegistry(EntityRegistry),
+            _entityId(EntityId)
         {
         }
 
     public:
         ~SceneNode();
+
         void AddChild(SceneNode& Child)
         {
             if (Child._parent != nullptr)
@@ -66,6 +67,7 @@ namespace Core
         [[nodiscard]] SceneNode* GetParent() const { return _parent; }
 
         void MarkDirty() const;
+
         void UpdateMatrices() const;
 
         [[nodiscard]] std::vector<SceneNode*>::iterator begin() { return _children.begin(); }
