@@ -26,9 +26,8 @@ namespace Core
         Destination = content;
         return true;
     }
-
-    void FindFilesWithExtension(const std::string& Directory, const std::string& Extension,
-                                std::vector<std::string>& Results)
+    void FileUtility::FindFilesWithExtension(const std::string& Directory, const std::string& Extension,
+                                             std::vector<std::string>& Results)
     {
         for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(Directory))
         {
@@ -38,4 +37,4 @@ namespace Core
             }
         }
     }
-}
+} // namespace Core

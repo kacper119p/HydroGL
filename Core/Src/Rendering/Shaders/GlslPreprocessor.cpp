@@ -6,15 +6,15 @@
 
 namespace Core
 {
-    std::filesystem::path GLSLPreprocessor::IncludeDirectory("Assets/Shaders/Include/");
+    std::filesystem::path GlslPreprocessor::_includeDirectory("Assets/Shaders/Include/");
 
-    std::string GLSLPreprocessor::PreprocessFile(const std::string& Path)
+    std::string GlslPreprocessor::PreprocessFile(const std::string& Path)
     {
         std::unordered_set<std::string> includedFiles;
         return PreprocessInternal(Path, includedFiles);
     }
 
-    std::string GLSLPreprocessor::PreprocessInternal(const std::string& Path,
+    std::string GlslPreprocessor::PreprocessInternal(const std::string& Path,
                                                      std::unordered_set<std::string>& IncludedFiles)
     {
         std::string source;
@@ -57,7 +57,7 @@ namespace Core
         return output.str();
     }
 
-    std::string GLSLPreprocessor::FindFile(const std::string& Path, const std::string& CallerPath)
+    std::string GlslPreprocessor::FindFile(const std::string& Path, const std::string& CallerPath)
     {
         // Search in Caller's directory.
         const std::filesystem::path callerPath(CallerPath);
@@ -66,7 +66,7 @@ namespace Core
 
         if (exists(path))
         {
-            std::filesystem::perms permissions = status(path).permissions();
+            const std::filesystem::perms permissions = status(path).permissions();
             if ((permissions & std::filesystem::perms::owner_read) == std::filesystem::perms::owner_read)
             {
                 return path.string();
@@ -74,7 +74,7 @@ namespace Core
         }
 
         // Search in Include directory.
-        path = IncludeDirectory / Path;
+        path = _includeDirectory / Path;
 
         if (exists(path))
         {
@@ -87,4 +87,4 @@ namespace Core
 
         return std::string();
     }
-}
+} // namespace Core

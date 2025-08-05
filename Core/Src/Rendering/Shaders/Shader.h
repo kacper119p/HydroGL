@@ -477,4 +477,4 @@ namespace Core
 
         bool operator!=(const Shader& Other) const { return !(*this == Other); }
     };
-}
+} // namespace Core

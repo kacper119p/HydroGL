@@ -9,13 +9,13 @@ namespace Core
      * @brief Simple preprocessor static-only class for resolving GLSL #includes.<br>
      * Rest of preprocessing directives is handled by driver.
      */
-    class GLSLPreprocessor final
+    class GlslPreprocessor final
     {
     private:
-        static std::filesystem::path IncludeDirectory;
+        static std::filesystem::path _includeDirectory;
 
     private:
-        GLSLPreprocessor() = default;
+        GlslPreprocessor() = default;
 
     public:
         /**
@@ -30,4 +30,4 @@ namespace Core
 
         static std::string FindFile(const std::string& Path, const std::string& CallerPath);
     };
-}
+} // namespace Core

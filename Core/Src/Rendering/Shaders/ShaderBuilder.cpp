@@ -10,7 +10,8 @@ namespace Core
 
     static constexpr int32_t ErrorLogSize = 512;
 
-    std::unordered_map<std::string, uint32_t> ShaderBuilder::ShaderStages;
+    std::unordered_map<std::string, uint32_t> ShaderBuilder::_shaderStageCache;
+    std::unordered_map<ShaderBuilder::ShaderCacheKey, Shader> ShaderBuilder::_shaderCache;
 
     Shader ShaderBuilder::Build() const
     {
@@ -24,6 +25,12 @@ namespace Core
         }
 #endif
 
+        const ShaderCacheKey key = static_cast<ShaderCacheKey>(_shaderStages);
+        if (const auto iterator = _shaderCache.find(key); iterator != _shaderCache.end())
+        {
+            return iterator->second;
+        }
+
         Shader shader;
         if (_shaderStages[static_cast<uint8_t>(ShaderStage::ComputeShader)].Stage != ShaderStage::None)
         {
@@ -34,14 +41,18 @@ namespace Core
             shader = CreateShader();
         }
 
-        // TODO: Error handling.
+        if (shader.GetId() != 0)
+        {
+            // TODO: Return default shader.
+            _shaderCache.emplace(key, shader);
+        }
 
         return shader;
     }
 
     uint32_t ShaderBuilder::CompileShaderStage(const std::string& FilePath, const GLenum Type)
     {
-        const std::string preprocessedSource = GLSLPreprocessor::PreprocessFile(FilePath);
+        const std::string preprocessedSource = GlslPreprocessor::PreprocessFile(FilePath);
         const GLchar* const source = preprocessedSource.c_str();
 
         const uint32_t shaderId = glCreateShader(Type);
@@ -63,13 +74,13 @@ namespace Core
 
     uint32_t ShaderBuilder::GetShaderStage(const std::string& FilePath, const GLenum Type)
     {
-        if (const auto iterator = ShaderStages.find(FilePath); iterator != ShaderStages.end())
+        if (const auto iterator = _shaderStageCache.find(FilePath); iterator != _shaderStageCache.end())
         {
             return iterator->second;
         }
 
         uint32_t shaderId = CompileShaderStage(FilePath, Type);
-        ShaderStages.emplace(FilePath, shaderId);
+        _shaderStageCache.emplace(FilePath, shaderId);
         return shaderId;
     }
 
@@ -86,7 +97,7 @@ namespace Core
             }
 
             const uint32_t newShaderStage =
-                    GetShaderStage(_shaderStages[i].Path, ShaderStageToGL(_shaderStages[i].Stage));
+                    GetShaderStage(_shaderStages[i].Path, ShaderStageToGl(_shaderStages[i].Stage));
 
             if (newShaderStage == 0)
             {
@@ -151,7 +162,7 @@ namespace Core
 
         return Shader(programId);
     }
-    GLenum ShaderBuilder::ShaderStageToGL(ShaderStage Stage)
+    GLenum ShaderBuilder::ShaderStageToGl(const ShaderStage Stage)
     {
         switch (Stage)
         {
@@ -171,4 +182,4 @@ namespace Core
                 return GL_NONE;
         }
     }
-}
+} // namespace Core
