@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cstdio>
+#include <string>
 
 #include "glad/glad.h"
 
@@ -257,6 +258,7 @@ namespace Core
         };
 
 #pragma pack(pop)
+
     public:
         /**
          * @brief Loads OpenGL texture from dds file
@@ -265,13 +267,14 @@ namespace Core
          * @param Height Outputs texture height.
          * @return Texture ID.
          */
-        static uint32_t LoadDds(const char* FilePath, int& Width, int& Height);
+        static uint32_t LoadDds(const std::string& FilePath, uint32_t& Width, uint32_t& Height);
 
     private:
         static void DdsToGlFormat(DXGI_FORMAT DxgiFormat, GlTextureDescriptor& TextureDescriptor);
 
         static uint32_t CreateTexture2D(const GlTextureDescriptor& TextureDescriptor, const DDS_HEADER& DdsHeader,
                                         const void* Buffer);
+
         static uint32_t CreateTextureCube(const GlTextureDescriptor& TextureDescriptor, const DDS_HEADER& DdsHeader,
                                           const void* Buffer);
     };

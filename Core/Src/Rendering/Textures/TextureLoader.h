@@ -1,10 +1,8 @@
 #pragma once
 
-namespace Core {
-
-class TextureLoader
+namespace Core
 {
-
-};
-
+    class TextureLoader
+    {
+    };
 }

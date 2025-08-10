@@ -26,6 +26,7 @@ namespace Core
         Destination = content;
         return true;
     }
+
     void FileUtility::FindFilesWithExtension(const std::string& Directory, const std::string& Extension,
                                              std::vector<std::string>& Results)
     {

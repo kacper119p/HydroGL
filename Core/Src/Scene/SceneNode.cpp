@@ -58,8 +58,7 @@ namespace Core
                 _parent->UpdateMatrices(parentTransform);
             }
             Transform._localToWorldMatrix = parentTransform._localToWorldMatrix * localToParent;
-        }
-        else
+        } else
         {
             Transform._localToWorldMatrix = localToParent;
         }

@@ -1,4 +1,5 @@
 #include "TextureLoader.h"
 
-namespace Core {
+namespace Core
+{
 }

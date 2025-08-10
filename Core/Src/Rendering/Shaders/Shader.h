@@ -14,11 +14,17 @@ namespace Core
         uint32_t Id;
 
     public:
-        Shader() : Id(0) {}
+        Shader() : Id(0)
+        {
+        }
 
-        explicit Shader(const uint32_t ProgramId) : Id(ProgramId) {}
+        explicit Shader(const uint32_t ProgramId) : Id(ProgramId)
+        {
+        }
 
-        Shader(const Shader& Other) noexcept : Id(Other.Id) {}
+        Shader(const Shader& Other) noexcept : Id(Other.Id)
+        {
+        }
 
     public:
         [[nodiscard]] static glm::ivec3 GetComputeShaderWorkGroupSize(const Shader& Shader)
@@ -33,18 +39,36 @@ namespace Core
             glDispatchCompute(WorkGroupCount.x, WorkGroupCount.y, WorkGroupCount.z);
         }
 
-        static void DispatchCompute() { glDispatchCompute(1, 1, 1); }
+        static void DispatchCompute()
+        {
+            glDispatchCompute(1, 1, 1);
+        }
 
     public:
-        void Use() const { glUseProgram(Id); }
+        void Use() const
+        {
+            glUseProgram(Id);
+        }
 
-        [[nodiscard]] bool IsNull() const { return Id == 0; }
+        [[nodiscard]] bool IsNull() const
+        {
+            return Id == 0;
+        }
 
-        [[nodiscard]] unsigned int GetId() const { return Id; }
+        [[nodiscard]] unsigned int GetId() const
+        {
+            return Id;
+        }
 
-        int32_t GetUniformLocation(const char* const Name) const { return glGetUniformLocation(Id, Name); }
+        int32_t GetUniformLocation(const char* const Name) const
+        {
+            return glGetUniformLocation(Id, Name);
+        }
 
-        static void SetUniform(const int32_t UniformId, const float Value) { glUniform1f(UniformId, Value); }
+        static void SetUniform(const int32_t UniformId, const float Value)
+        {
+            glUniform1f(UniformId, Value);
+        }
 
         void SetUniform(const char* const Name, const float Value) const
         {
@@ -81,7 +105,10 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const int32_t Value) { glUniform1i(UniformId, Value); }
+        static void SetUniform(const int32_t UniformId, const int32_t Value)
+        {
+            glUniform1i(UniformId, Value);
+        }
 
         void SetUniform(const char* const Name, const int32_t Value) const
         {
@@ -123,9 +150,15 @@ namespace Core
             glUniform1i(UniformId, static_cast<int>(Value));
         }
 
-        void SetUniform(const char* const Name, const bool Value) const { SetUniform(GetUniformLocation(Name), Value); }
+        void SetUniform(const char* const Name, const bool Value) const
+        {
+            SetUniform(GetUniformLocation(Name), Value);
+        }
 
-        static void SetUniform(const int32_t UniformId, const uint32_t Value) { glUniform1ui(UniformId, Value); }
+        static void SetUniform(const int32_t UniformId, const uint32_t Value)
+        {
+            glUniform1ui(UniformId, Value);
+        }
 
         void SetUniform(const char* const Name, const uint32_t Value) const
         {
@@ -473,8 +506,14 @@ namespace Core
         }
 
     public:
-        bool operator==(const Shader& Other) const { return Other.Id == this->Id; }
+        bool operator==(const Shader& Other) const
+        {
+            return Other.Id == this->Id;
+        }
 
-        bool operator!=(const Shader& Other) const { return !(*this == Other); }
+        bool operator!=(const Shader& Other) const
+        {
+            return !(*this == Other);
+        }
     };
 } // namespace Core

@@ -89,9 +89,9 @@ TEST_F(TransformTests, ChildMatrixUpdateTest)
 
     ASSERT_NO_FATAL_FAILURE(childTransform.GetSceneHierarchyNode().SetParent(parentTransform.GetSceneHierarchyNode()));
     ASSERT_NO_FATAL_FAILURE(
-            ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), glm::identity<glm::mat4>()));
+        ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), glm::identity<glm::mat4>()));
     ASSERT_NO_FATAL_FAILURE(
-            ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
+        ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
 
     constexpr glm::vec3 position = glm::vec3(3420.0f, 53.0f, 53.0f);
     constexpr glm::mat4 targetMatrix = glm::translate(glm::mat4(1.0f), position);
@@ -99,5 +99,5 @@ TEST_F(TransformTests, ChildMatrixUpdateTest)
 
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(
-            ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
+        ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
 }

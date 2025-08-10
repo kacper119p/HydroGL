@@ -28,8 +28,9 @@ namespace Core
             std::array<ShaderStageDescription, ShaderStagesArraySize> ShaderStages{};
 
         public:
-            explicit ShaderCacheKey(const std::array<ShaderStageDescription, ShaderStagesArraySize>& ShaderStages) :
-                ShaderStages(ShaderStages)
+            explicit ShaderCacheKey(
+                const std::array<ShaderStageDescription, ShaderStagesArraySize>& ShaderStages) : ShaderStages(
+                ShaderStages)
             {
             }
 

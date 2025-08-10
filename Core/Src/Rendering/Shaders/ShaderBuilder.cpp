@@ -7,7 +7,6 @@
 
 namespace Core
 {
-
     static constexpr int32_t ErrorLogSize = 512;
 
     std::unordered_map<std::string, uint32_t> ShaderBuilder::_shaderStageCache;
@@ -35,8 +34,7 @@ namespace Core
         if (_shaderStages[static_cast<uint8_t>(ShaderStage::ComputeShader)].Stage != ShaderStage::None)
         {
             shader = CreateComputeShader();
-        }
-        else
+        } else
         {
             shader = CreateShader();
         }
@@ -136,7 +134,6 @@ namespace Core
 
     Shader ShaderBuilder::CreateComputeShader() const
     {
-
         const uint32_t ComputeShaderId =
                 GetShaderStage(_shaderStages[static_cast<uint8_t>(ShaderStage::ComputeShader)].Path, GL_COMPUTE_SHADER);
         if (ComputeShaderId == 0)
@@ -162,6 +159,7 @@ namespace Core
 
         return Shader(programId);
     }
+
     GLenum ShaderBuilder::ShaderStageToGl(const ShaderStage Stage)
     {
         switch (Stage)

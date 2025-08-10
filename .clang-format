@@ -6,8 +6,11 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: true
 AlignTrailingComments: false
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AlwaysBreakAfterDefinitionReturnType: false
 AlwaysBreakTemplateDeclarations: Yes
-BraceWrapping:
+BraceWrapping: 
   AfterCaseLabel: true
   AfterClass: true
   AfterControlStatement: true
@@ -16,9 +19,9 @@ BraceWrapping:
   AfterNamespace: true
   AfterStruct: true
   AfterUnion: true
-  AfterExternBlock: false
+  AfterExternBlock: true
   BeforeCatch: false
-  BeforeElse: true
+  BeforeElse: false
   BeforeLambdaBody: true
   BeforeWhile: false
   IndentBraces: false
@@ -47,7 +50,6 @@ MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: All
 PointerAlignment: Left
-SortIncludes: CaseInsensitive
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false
 SpaceInEmptyParentheses: false

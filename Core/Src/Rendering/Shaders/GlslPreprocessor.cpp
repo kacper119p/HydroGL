@@ -48,8 +48,7 @@ namespace Core
                     output << PreprocessInternal(filePath, IncludedFiles);
                     IncludedFiles.insert(filename);
                 }
-            }
-            else
+            } else
             {
                 output << line << "\n";
             }

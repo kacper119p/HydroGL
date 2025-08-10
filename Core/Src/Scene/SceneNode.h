@@ -64,19 +64,34 @@ namespace Core
             MarkDirty();
         }
 
-        [[nodiscard]] SceneNode* GetParent() const { return _parent; }
+        [[nodiscard]] SceneNode* GetParent() const
+        {
+            return _parent;
+        }
 
         void MarkDirty() const;
 
         void UpdateMatrices() const;
 
-        [[nodiscard]] std::vector<SceneNode*>::iterator begin() { return _children.begin(); }
+        [[nodiscard]] std::vector<SceneNode*>::iterator begin()
+        {
+            return _children.begin();
+        }
 
-        [[nodiscard]] std::vector<SceneNode*>::iterator end() { return _children.end(); }
+        [[nodiscard]] std::vector<SceneNode*>::iterator end()
+        {
+            return _children.end();
+        }
 
-        [[nodiscard]] std::vector<SceneNode*>::const_iterator begin() const { return _children.begin(); }
+        [[nodiscard]] std::vector<SceneNode*>::const_iterator begin() const
+        {
+            return _children.begin();
+        }
 
-        [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const { return _children.end(); }
+        [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const
+        {
+            return _children.end();
+        }
 
     private:
         void UpdateMatrices(TransformComponent& Transform) const;
