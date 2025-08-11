@@ -22,6 +22,7 @@ find_package(OpenGL REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 #Link OpenGL
 target_link_libraries(${LIBRARY_NAME} PRIVATE ${OPENGL_LIBRARIES})
@@ -32,6 +33,7 @@ target_link_libraries(${LIBRARY_NAME} PRIVATE glad)
 target_link_libraries(${LIBRARY_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${LIBRARY_NAME} PRIVATE EnTT::EnTT)
 target_link_libraries(${LIBRARY_NAME} PRIVATE boost)
+target_link_libraries(${LIBRARY_NAME} PRIVATE assimp::assimp)
 
 #link project libraries
 target_link_libraries(${LIBRARY_NAME} PRIVATE Platform)
