@@ -1,4 +1,5 @@
 #pragma once
+#include <unordered_map>
 #include <assimp/scene.h>
 
 #include "Meshes/MeshFacesData.h"
@@ -17,6 +18,8 @@ namespace Core
         static std::vector<glm::uvec2> _takenVertexMemoryChunks;
         static std::vector<glm::uvec2> _takenFaceMemoryChunks;
 
+        static std::unordered_map<std::string, Mesh> _meshCache;
+
         static uint32_t _glVertexArray;
         static uint32_t _glElementBuffer;
         static uint32_t _glVertexBuffer;
@@ -32,7 +35,7 @@ namespace Core
          * @brief Constructs a new model from a given file.
          * @param FilePath Path to a model file.
          */
-        explicit Mesh(const char* FilePath);
+        explicit Mesh(const std::string& FilePath);
 
     public:
         ~Mesh() = default;
@@ -42,13 +45,32 @@ namespace Core
 
         static void FreeResources();
 
-        static uint32_t AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks);
+        [[nodiscard]] static Mesh GetMesh(const std::string& Path);
+
+        static bool DeleteMesh(const std::string& Path);
+
+        static bool DeleteMesh(const Mesh& Mesh);
+
+        static void DeleteAllMeshes();
+
+        [[nodiscard]] static bool IsValid(const std::string& Path);
+
+        [[nodiscard]] static bool IsValid(const Mesh& Mesh);
+
+        [[nodiscard]] static std::string GetMeshPath(const Mesh& Mesh);
 
     private:
+        static uint32_t AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks);
+
+
         void ProcessScene(const aiScene& Scene);
 
         void UploadToGpu() const;
 
     public:
+        bool operator==(const Mesh& Mesh) const
+        {
+            return memcmp(this, &Mesh, sizeof(Mesh)) == 0;
+        }
     };
 }

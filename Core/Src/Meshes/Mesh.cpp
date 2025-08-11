@@ -1,5 +1,6 @@
 #include "Mesh.h"
 
+#include <ranges>
 #include <Assimp/Importer.hpp>
 #include <Assimp/postprocess.h>
 #include <glad/glad.h>
@@ -16,11 +17,13 @@ namespace Core
     std::vector<glm::uvec2> Mesh::_takenVertexMemoryChunks(4096);
     std::vector<glm::uvec2> Mesh::_takenFaceMemoryChunks(4096);
 
+    std::unordered_map<std::string, Mesh> Mesh::_meshCache(256);
+
     uint32_t Mesh::_glVertexArray = 0;
     uint32_t Mesh::_glElementBuffer = 0;
     uint32_t Mesh::_glVertexBuffer = 0;
 
-    Mesh::Mesh(const char* FilePath)
+    Mesh::Mesh(const std::string& FilePath)
     {
         Assimp::Importer importer = Assimp::Importer();
         importer.SetPropertyInteger(
@@ -86,6 +89,80 @@ namespace Core
         glDeleteBuffers(1, &_glVertexBuffer);
 
         //TODO: Free remaining resources
+    }
+
+    Mesh Mesh::GetMesh(const std::string& Path)
+    {
+        if (const auto iterator = _meshCache.find(Path); iterator != _meshCache.end())
+        {
+            return iterator->second;
+        }
+
+        Mesh newMesh(Path);
+        _meshCache.emplace(Path, newMesh);
+        return newMesh;
+    }
+
+    bool Mesh::DeleteMesh(const std::string& Path)
+    {
+        const auto iterator = _meshCache.find(Path);
+        if (iterator != _meshCache.end())
+        {
+            //TODO: Free block
+            _meshCache.erase(iterator);
+            return true;
+        }
+        return false;
+    }
+
+    bool Mesh::DeleteMesh(const Mesh& Mesh)
+    {
+        for (const auto& [path, mesh] : _meshCache)
+            if (mesh == Mesh)
+            {
+                //TODO: Free block
+                _meshCache.erase(path);
+                return true;
+            }
+        return false;
+    }
+
+    void Mesh::DeleteAllMeshes()
+    {
+        for (const auto& pair : _meshCache)
+        {
+            //TODO: Free block
+        }
+        _meshCache.clear();
+    }
+
+    bool Mesh::IsValid(const std::string& Path)
+    {
+        return _meshCache.contains(Path);
+    }
+
+    bool Mesh::IsValid(const Mesh& Mesh)
+    {
+        for (const Core::Mesh& mesh : _meshCache | std::views::values)
+        {
+            if (mesh == Mesh)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::string Mesh::GetMeshPath(const Mesh& Mesh)
+    {
+        for (const auto& [path, mesh] : _meshCache)
+        {
+            if (mesh == Mesh)
+            {
+                return path;
+            }
+        }
+        return "";
     }
 
     void Mesh::ProcessScene(const aiScene& Scene)
