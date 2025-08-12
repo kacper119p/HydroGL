@@ -9,7 +9,7 @@ namespace Core
 {
     std::unordered_map<std::string, Texture> Texture::_textureCache;
 
-    Texture Texture::GetTexture(const std::string& Path)
+    Texture Texture::GetTexture(const std::string_view& Path)
     {
         const std::string path = Path;
 
@@ -26,7 +26,7 @@ namespace Core
         return Texture(textureId);
     }
 
-    bool Texture::DeleteTexture(const std::string& Path)
+    bool Texture::DeleteTexture(const std::string_view& Path)
     {
         const std::string path = Path;
         if (const auto iterator = _textureCache.find(path); iterator != _textureCache.end())

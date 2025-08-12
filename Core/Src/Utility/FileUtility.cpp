@@ -6,7 +6,7 @@
 
 namespace Core
 {
-    bool FileUtility::GetTextFileContent(const char* Path, std::string& Destination)
+    bool FileUtility::GetTextFileContent(const std::string_view& Path, std::string& Destination)
     {
         std::string content;
         std::ifstream fileStream;
@@ -27,7 +27,7 @@ namespace Core
         return true;
     }
 
-    void FileUtility::FindFilesWithExtension(const std::string& Directory, const std::string& Extension,
+    void FileUtility::FindFilesWithExtension(const std::string_view& Directory, const std::string_view& Extension,
                                              std::vector<std::string>& Results)
     {
         for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(Directory))

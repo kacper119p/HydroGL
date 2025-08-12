@@ -8,17 +8,17 @@ namespace Core
 {
     std::filesystem::path GlslPreprocessor::_includeDirectory("Assets/Shaders/Include/");
 
-    std::string GlslPreprocessor::PreprocessFile(const std::string& Path)
+    std::string GlslPreprocessor::PreprocessFile(const std::string_view& Path)
     {
         std::unordered_set<std::string> includedFiles;
         return PreprocessInternal(Path, includedFiles);
     }
 
-    std::string GlslPreprocessor::PreprocessInternal(const std::string& Path,
+    std::string GlslPreprocessor::PreprocessInternal(const std::string_view& Path,
                                                      std::unordered_set<std::string>& IncludedFiles)
     {
         std::string source;
-        if (!FileUtility::GetTextFileContent(Path.c_str(), source))
+        if (!FileUtility::GetTextFileContent(Path, source))
         {
             spdlog::error("Failed to read file ", Path);
             return std::string();
@@ -56,7 +56,7 @@ namespace Core
         return output.str();
     }
 
-    std::string GlslPreprocessor::FindFile(const std::string& Path, const std::string& CallerPath)
+    std::string GlslPreprocessor::FindFile(const std::string_view& Path, const std::string_view& CallerPath)
     {
         // Search in Caller's directory.
         const std::filesystem::path callerPath(CallerPath);

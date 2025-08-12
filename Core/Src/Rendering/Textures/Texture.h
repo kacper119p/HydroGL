@@ -47,14 +47,14 @@ namespace Core
          * @param Path Path to a texture file.
          * @return A loaded texture.
          */
-        static Texture GetTexture(const std::string& Path);
+        static Texture GetTexture(const std::string_view& Path);
 
         /**
          * @brief Frees resources used by an existing texture.
          * @param Path Path to a texture file.
          * @return True if the texture existed prior to a method call. False otherwise.
          */
-        static bool DeleteTexture(const std::string& Path);
+        static bool DeleteTexture(const std::string_view& Path);
 
         /**
          * @brief Frees resources used by an existing texture.
