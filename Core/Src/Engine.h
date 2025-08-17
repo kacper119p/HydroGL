@@ -15,4 +15,4 @@ namespace Core
 
         static void Shutdown();
     };
-} // namespace Core
+}

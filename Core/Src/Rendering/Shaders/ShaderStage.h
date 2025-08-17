@@ -12,4 +12,4 @@ namespace Core
         ComputeShader = 5,
         None = 255
     };
-} // namespace Core
+}

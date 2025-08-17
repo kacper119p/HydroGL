@@ -3,7 +3,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "boost/functional/hash.hpp"
+#include <boost/functional/hash.hpp>
+
 #include "Shader.h"
 #include "ShaderStage.h"
 
@@ -60,16 +61,15 @@ namespace Core
     private:
         std::array<ShaderStageDescription, ShaderStagesArraySize> _shaderStages{};
 
-    public:
-        ShaderBuilder& SetStage(std::string&& Path, const ShaderStage Stage)
-        {
-            const uint8_t index = static_cast<uint8_t>(Stage);
-            _shaderStages[index].Path = std::move(Path);
-            _shaderStages[index].Stage = Stage;
-            return *this;
-        }
+    private:
+        static uint32_t CompileShaderStage(const std::string& FilePath, GLenum Type);
 
-        ShaderBuilder& SetStage(const std::string& Path, const ShaderStage Stage)
+        static uint32_t GetShaderStage(const std::string& FilePath, GLenum Type);
+
+        static GLenum ShaderStageToGl(ShaderStage Stage);
+
+    public:
+        ShaderBuilder& SetStage(const std::string_view& Path, const ShaderStage Stage)
         {
             const uint8_t index = static_cast<uint8_t>(Stage);
             _shaderStages[index].Path = Path;
@@ -77,14 +77,7 @@ namespace Core
             return *this;
         }
 
-        Shader Build() const;
-
-    private:
-        static uint32_t CompileShaderStage(const std::string& FilePath, GLenum Type);
-
-        static uint32_t GetShaderStage(const std::string& FilePath, GLenum Type);
-
-        static GLenum ShaderStageToGl(ShaderStage Stage);
+        [[nodiscard]] Shader Build() const;
 
     private:
         Shader CreateShader() const;

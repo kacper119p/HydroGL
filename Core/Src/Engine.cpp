@@ -18,4 +18,4 @@ namespace Core
         spdlog::info("Engine Shutdown.");
         _window->Close();
     }
-} // namespace Core
+}

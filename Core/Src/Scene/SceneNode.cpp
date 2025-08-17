@@ -64,4 +64,4 @@ namespace Core
         }
         Transform._isDirty = false;
     }
-} // namespace Core
+}

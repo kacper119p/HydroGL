@@ -14,8 +14,6 @@ protected:
     std::unique_ptr<entt::registry> _registry = std::make_unique<entt::registry>();
 };
 
-
-// Demonstrate some basic assertions.
 TEST_F(TransformTests, TransformCreationAndDestruction)
 {
     const entt::entity id = _registry->create();

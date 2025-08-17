@@ -100,4 +100,4 @@ namespace Core
             return !(*this == Other);
         }
     };
-} // namespace Core
+}

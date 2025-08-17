@@ -11,25 +11,22 @@ namespace Core
 
     Texture Texture::GetTexture(const std::string_view& Path)
     {
-        const std::string path = Path;
-
-        if (const auto iterator = _textureCache.find(path); iterator != _textureCache.end())
+        if (const auto iterator = _textureCache.find(Path.data()); iterator != _textureCache.end())
         {
             return Texture(iterator->second);
         }
 
         uint32_t width;
         uint32_t height;
-        uint32_t textureId = DdsLoader::LoadDds(path, width, height);
+        uint32_t textureId = DdsLoader::LoadDds(Path, width, height);
 
-        _textureCache.emplace(path, textureId);
+        _textureCache.emplace(Path, textureId);
         return Texture(textureId);
     }
 
     bool Texture::DeleteTexture(const std::string_view& Path)
     {
-        const std::string path = Path;
-        if (const auto iterator = _textureCache.find(path); iterator != _textureCache.end())
+        if (const auto iterator = _textureCache.find(Path.data()); iterator != _textureCache.end())
         {
             const uint32_t id = iterator->second.GetId();
             glDeleteTextures(1, &id);
@@ -95,4 +92,4 @@ namespace Core
             return std::string();
         }
     }
-} // namespace Core
+}

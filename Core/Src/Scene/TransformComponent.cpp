@@ -13,4 +13,4 @@ namespace Core
         const TransformComponent& transform = Registry.get<TransformComponent>(Id);
         delete transform._sceneHierarchyNode;
     }
-} // namespace Core
+}

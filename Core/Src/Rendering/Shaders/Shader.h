@@ -11,18 +11,18 @@ namespace Core
     class Shader final
     {
     private:
-        uint32_t Id;
+        uint32_t _id;
 
     public:
-        Shader() : Id(0)
+        Shader() : _id(0)
         {
         }
 
-        explicit Shader(const uint32_t ProgramId) : Id(ProgramId)
+        explicit Shader(const uint32_t ProgramId) : _id(ProgramId)
         {
         }
 
-        Shader(const Shader& Other) noexcept : Id(Other.Id)
+        Shader(const Shader& Other) noexcept : _id(Other._id)
         {
         }
 
@@ -47,22 +47,22 @@ namespace Core
     public:
         void Use() const
         {
-            glUseProgram(Id);
+            glUseProgram(_id);
         }
 
         [[nodiscard]] bool IsNull() const
         {
-            return Id == 0;
+            return _id == 0;
         }
 
         [[nodiscard]] unsigned int GetId() const
         {
-            return Id;
+            return _id;
         }
 
         int32_t GetUniformLocation(const char* const Name) const
         {
-            return glGetUniformLocation(Id, Name);
+            return glGetUniformLocation(_id, Name);
         }
 
         static void SetUniform(const int32_t UniformId, const float Value)
@@ -508,7 +508,7 @@ namespace Core
     public:
         bool operator==(const Shader& Other) const
         {
-            return Other.Id == this->Id;
+            return Other._id == this->_id;
         }
 
         bool operator!=(const Shader& Other) const
@@ -516,4 +516,4 @@ namespace Core
             return !(*this == Other);
         }
     };
-} // namespace Core
+}

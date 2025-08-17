@@ -26,8 +26,9 @@ namespace Core
         static std::string PreprocessFile(const std::string_view& Path);
 
     private:
-        static std::string PreprocessInternal(const std::string_view& Path, std::unordered_set<std::string>& IncludedFiles);
+        static std::string PreprocessInternal(const std::string_view& Path,
+                                              std::unordered_set<std::string>& IncludedFiles);
 
         static std::string FindFile(const std::string_view& Path, const std::string_view& CallerPath);
     };
-} // namespace Core
+}

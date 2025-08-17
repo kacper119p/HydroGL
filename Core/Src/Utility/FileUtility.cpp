@@ -38,4 +38,4 @@ namespace Core
             }
         }
     }
-} // namespace Core
+}

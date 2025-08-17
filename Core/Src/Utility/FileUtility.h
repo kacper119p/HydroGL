@@ -27,4 +27,4 @@ namespace Core
         static void FindFilesWithExtension(const std::string_view& Directory, const std::string_view& Extension,
                                            std::vector<std::string>& Results);
     };
-} // namespace Core
+}

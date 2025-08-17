@@ -96,4 +96,4 @@ namespace Core
     private:
         void UpdateMatrices(TransformComponent& Transform) const;
     };
-} // namespace Core
+}

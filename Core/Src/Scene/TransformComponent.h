@@ -79,4 +79,4 @@ namespace Core
 
         [[nodiscard]] SceneNode& GetSceneHierarchyNode() const { return *_sceneHierarchyNode; }
     };
-} // namespace Core
+}

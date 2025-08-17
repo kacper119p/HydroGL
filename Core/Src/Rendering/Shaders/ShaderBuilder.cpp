@@ -102,7 +102,7 @@ namespace Core
                 return Shader(0);
             }
 
-            shaderPrograms[i] = newShaderStage;
+            shaderPrograms[stageCount] = newShaderStage;
             stageCount++;
         }
 
@@ -114,7 +114,7 @@ namespace Core
         }
 
         glLinkProgram(programId);
-        for (uint8_t i = 0; i < RenderShaderStages; ++i)
+        for (uint8_t i = 0; i < stageCount; ++i)
         {
             glDetachShader(programId, shaderPrograms[i]);
         }
@@ -134,18 +134,18 @@ namespace Core
 
     Shader ShaderBuilder::CreateComputeShader() const
     {
-        const uint32_t ComputeShaderId =
+        const uint32_t computeShaderId =
                 GetShaderStage(_shaderStages[static_cast<uint8_t>(ShaderStage::ComputeShader)].Path, GL_COMPUTE_SHADER);
-        if (ComputeShaderId == 0)
+        if (computeShaderId == 0)
         {
             return Shader(0);
         }
 
         const uint32_t programId = glCreateProgram();
-        glAttachShader(programId, ComputeShaderId);
+        glAttachShader(programId, computeShaderId);
         glLinkProgram(programId);
 
-        glDetachShader(programId, ComputeShaderId);
+        glDetachShader(programId, computeShaderId);
 
         int32_t success;
         glGetProgramiv(programId, GL_LINK_STATUS, &success);
@@ -180,4 +180,4 @@ namespace Core
                 return GL_NONE;
         }
     }
-} // namespace Core
+}

@@ -32,7 +32,7 @@ target_link_libraries(${LIBRARY_NAME} PUBLIC glm::glm)
 target_link_libraries(${LIBRARY_NAME} PRIVATE glad)
 target_link_libraries(${LIBRARY_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${LIBRARY_NAME} PRIVATE EnTT::EnTT)
-target_link_libraries(${LIBRARY_NAME} PRIVATE boost)
+target_link_libraries(${LIBRARY_NAME} PUBLIC boost)
 target_link_libraries(${LIBRARY_NAME} PRIVATE assimp::assimp)
 
 #link project libraries

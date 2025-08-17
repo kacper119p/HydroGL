@@ -9,20 +9,7 @@ namespace Core
 {
     class Mesh final
     {
-    public:
-        static constexpr uint32_t VertexBufferMaxCapacity = 4194304; //Space for 2^22 vertices
-
-    private:
-        static MeshVerticesData _vertexBuffer;
-        static MeshFacesData _faceBuffer;
-        static std::vector<glm::uvec2> _takenVertexMemoryChunks;
-        static std::vector<glm::uvec2> _takenFaceMemoryChunks;
-
-        static std::unordered_map<std::string, Mesh> _meshCache;
-
-        static uint32_t _glVertexArray;
-        static uint32_t _glElementBuffer;
-        static uint32_t _glVertexBuffer;
+        friend class MeshManager;
 
     private:
         uint32_t _verticesIndex;
@@ -30,44 +17,44 @@ namespace Core
         uint32_t _facesIndex;
         uint32_t _facesCount;
 
-    private:
-        /**
-         * @brief Constructs a new model from a given file.
-         * @param FilePath Path to a model file.
-         */
-        explicit Mesh(const std::string& FilePath);
+    public:
+        Mesh() : _verticesIndex(0), _verticesCount(0), _facesIndex(0), _facesCount(0)
+        {
+        }
+
+        Mesh(const uint32_t VerticesIndex, const uint32_t VerticesCount, const uint32_t FacesIndex,
+             const uint32_t FacesCount)
+            : _verticesIndex(VerticesIndex),
+              _verticesCount(VerticesCount),
+              _facesIndex(FacesIndex),
+              _facesCount(FacesCount)
+        {
+        }
 
     public:
         ~Mesh() = default;
 
-    private:
-        static void Initialize();
-
-        static void FreeResources();
-
-        [[nodiscard]] static Mesh GetMesh(const std::string& Path);
-
-        static bool DeleteMesh(const std::string& Path);
-
-        static bool DeleteMesh(const Mesh& Mesh);
-
-        static void DeleteAllMeshes();
-
-        [[nodiscard]] static bool IsValid(const std::string& Path);
-
-        [[nodiscard]] static bool IsValid(const Mesh& Mesh);
-
-        [[nodiscard]] static std::string GetMeshPath(const Mesh& Mesh);
-
-    private:
-        static uint32_t AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks);
-
-
-        void ProcessScene(const aiScene& Scene);
-
-        void UploadToGpu() const;
-
     public:
+        [[nodiscard]] uint32_t GetVerticesIndex() const
+        {
+            return _verticesIndex;
+        }
+
+        [[nodiscard]] uint32_t GetVerticesCount() const
+        {
+            return _verticesCount;
+        }
+
+        [[nodiscard]] uint32_t GetFacesIndex() const
+        {
+            return _facesIndex;
+        }
+
+        [[nodiscard]] uint32_t GetFacesCount() const
+        {
+            return _facesCount;
+        }
+
         bool operator==(const Mesh& Mesh) const
         {
             return memcmp(this, &Mesh, sizeof(Mesh)) == 0;

@@ -9,12 +9,12 @@
 
 namespace Core
 {
-    uint32_t DdsLoader::LoadDds(const std::string& FilePath, uint32_t& Width, uint32_t& Height)
+    uint32_t DdsLoader::LoadDds(const std::string_view& FilePath, uint32_t& Width, uint32_t& Height)
     {
         uint32_t textureId = 0;
 
         FILE* file;
-        if (fopen_s(&file, FilePath.c_str(), "rb") != 0)
+        if (fopen_s(&file, FilePath.data(), "rb") != 0)
         {
 #if DEBUG
             NOTIFY_FAILED
@@ -155,6 +155,12 @@ namespace Core
                 TextureDescriptor.DataType = GL_UNSIGNED_SHORT;
                 TextureDescriptor.Format = GL_RED;
                 return;
+            case DXGI_FORMAT_R16G16B16A16_FLOAT: // uncompressed 16 bit HDR
+                TextureDescriptor.InternalFormat = GL_RGBA16F;
+                TextureDescriptor.BlockSize = 8;
+                TextureDescriptor.DataType = GL_HALF_FLOAT;
+                TextureDescriptor.Format = GL_RGBA;
+                return;
             default: // Unsupported format
                 TextureDescriptor.InternalFormat = GL_NONE;
                 TextureDescriptor.BlockSize = 0;
@@ -282,15 +288,19 @@ namespace Core
                 if (TextureDescriptor.Format != GL_NONE) // Uncompressed
                 {
                     const uint32_t size = w * h * TextureDescriptor.BlockSize;
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, mip, TextureDescriptor.InternalFormat, w, h, 0,
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<int32_t>(mip),
+                                 TextureDescriptor.InternalFormat, static_cast<int32_t>(w), static_cast<int32_t>(h), 0,
                                  TextureDescriptor.Format, TextureDescriptor.DataType,
                                  reinterpret_cast<const uint8_t*>(Buffer) + offset);
                     offset += size;
                 } else
                 {
                     const uint32_t size = ((w + 3) / 4) * ((h + 3) / 4) * TextureDescriptor.BlockSize;
-                    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, mip, TextureDescriptor.InternalFormat,
-                                           w, h, 0, size, reinterpret_cast<const uint8_t*>(Buffer) + offset);
+                    glCompressedTexImage2D(
+                        GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<int32_t>(mip),
+                        TextureDescriptor.InternalFormat,
+                        static_cast<int32_t>(w), static_cast<int32_t>(h), 0, static_cast<int32_t>(size),
+                        reinterpret_cast<const uint8_t*>(Buffer) + offset);
                     offset += size;
                 }
                 w = std::max(1u, w / 2u);
@@ -300,4 +310,4 @@ namespace Core
 
         return textureId;
     }
-} // namespace Core
+}

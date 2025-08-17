@@ -267,7 +267,7 @@ namespace Core
          * @param Height Outputs texture height.
          * @return Texture ID.
          */
-        static uint32_t LoadDds(const std::string& FilePath, uint32_t& Width, uint32_t& Height);
+        static uint32_t LoadDds(const std::string_view& FilePath, uint32_t& Width, uint32_t& Height);
 
     private:
         static void DdsToGlFormat(DXGI_FORMAT DxgiFormat, GlTextureDescriptor& TextureDescriptor);
@@ -278,4 +278,4 @@ namespace Core
         static uint32_t CreateTextureCube(const GlTextureDescriptor& TextureDescriptor, const DDS_HEADER& DdsHeader,
                                           const void* Buffer);
     };
-} // namespace Core
+}
