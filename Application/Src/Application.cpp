@@ -35,6 +35,8 @@ int ApplicationMain(Platform::Window* const Window)
     Window->MakeContextCurrent();
     while (!Window->ShouldClose())
     {
+        Window->PoolEvents();
+
         Core::Renderer::RenderFrame(*scene);
         Window->SwapBuffers();
     }

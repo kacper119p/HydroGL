@@ -15,6 +15,7 @@ namespace Platform
         HGLRC _openGlContext = nullptr;
         uint32_t _windowWidth = 0;
         uint32_t _windowHeight = 0;
+        bool _shouldClose = false;
 
     private:
         Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext, uint32_t WindowWidth,
@@ -38,7 +39,9 @@ namespace Platform
         }
 
     public:
-        bool ShouldClose();
+        void PoolEvents();
+
+        [[nodiscard]] bool ShouldClose() const;
 
         void MakeContextCurrent() const;
 

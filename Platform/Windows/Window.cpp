@@ -5,14 +5,23 @@
 #include <glad/glad.h>
 
 #include "Debug.h"
+#include "Input.h"
 #include "GL/wglext.h"
 
 namespace Platform
 {
     static LRESULT CALLBACK WndProc(HWND Hwnd, const UINT Msg, const WPARAM WParam, const LPARAM LParam)
     {
+        Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(Hwnd, GWLP_USERDATA));
+
         switch (Msg)
         {
+            case WM_CREATE:
+            {
+                CREATESTRUCT* cs = reinterpret_cast<CREATESTRUCT*>(LParam);
+                SetWindowLongPtr(Hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+            }
+            break;
             case WM_CLOSE:
                 PostQuitMessage(0);
                 return 0;
@@ -22,6 +31,61 @@ namespace Platform
                     SetCursor(LoadCursor(nullptr, IDC_ARROW));
                 }
                 break;
+
+            case WM_KEYDOWN:
+                switch (WParam)
+                {
+                    case 'W':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::W, Input::ButtonEventType::KeyPressed);
+                        break;
+                    case 'A':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::A, Input::ButtonEventType::KeyPressed);
+                        break;
+                    case 'S':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::S, Input::ButtonEventType::KeyPressed);
+                        break;
+                    case 'D':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::D, Input::ButtonEventType::KeyPressed);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case WM_KEYUP:
+                switch (WParam)
+                {
+                    case 'W':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::W, Input::ButtonEventType::KeyReleased);
+                        break;
+                    case 'A':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::A, Input::ButtonEventType::KeyReleased);
+                        break;
+                    case 'S':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::S, Input::ButtonEventType::KeyReleased);
+                        break;
+                    case 'D':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::D, Input::ButtonEventType::KeyReleased);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case WM_MOUSEMOVE:
+            {
+                const int16_t xPosition = static_cast<int16_t>(LOWORD(LParam));
+                const int16_t yPosition = static_cast<int16_t>(HIWORD(LParam));
+
+                float normalizedX = static_cast<float>(xPosition) / static_cast<float>(window->GetWindowWidth());
+                float normalizedY = static_cast<float>(yPosition) / static_cast<float>(window->GetWindowHeight());
+
+                Input::DispatchCameraRotationEvent(normalizedX, normalizedY);
+                break;
+            }
+            case WM_RBUTTONDOWN:
+                Input::DispatchCameraDragEvent(true);
+                break;
+            case WM_RBUTTONUP:
+                Input::DispatchCameraDragEvent(false);
             default:
                 break;
         }
@@ -158,22 +222,33 @@ namespace Platform
         Debug::EnableOpenGlDebugging();
 #endif
 
-        return new Window(hwnd, deviceContext, fullGlContext, windowWidth, windowHeight);
+        Window* window = new Window(hwnd, deviceContext, fullGlContext, windowWidth, windowHeight);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
+        return window;
     }
 
-    bool Window::ShouldClose()
+    void Window::PoolEvents()
     {
         MSG msg;
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            if (msg.message == WM_QUIT)
+            switch (msg.message)
             {
-                return true;
+                case WM_QUIT:
+                    _shouldClose = true;
+                    break;
+                default:
+                    break;
             }
+
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-        return false;
+    }
+
+    bool Window::ShouldClose() const
+    {
+        return _shouldClose;
     }
 
     void Window::MakeContextCurrent() const
