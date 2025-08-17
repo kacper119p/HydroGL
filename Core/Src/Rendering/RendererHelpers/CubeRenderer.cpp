@@ -4,6 +4,8 @@
 
 namespace Core
 {
+    CubeRenderer::CachedData CubeRenderer::_cachedData;
+
     CubeRenderer::CachedData::~CachedData()
     {
         glDeleteBuffers(1, &VertexBuffer);
@@ -18,7 +20,7 @@ namespace Core
             Initialize();
         }
         glBindVertexArray(_cachedData.VertexArray);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(0);
     }
 

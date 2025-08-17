@@ -9,7 +9,6 @@ namespace Core
     class CubeRenderer final
     {
     private:
-    private:
         struct CachedData
         {
             uint32_t VertexArray = 0;

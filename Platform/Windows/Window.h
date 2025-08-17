@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <windows.h>
 
 namespace Platform
@@ -12,9 +13,12 @@ namespace Platform
         HWND _windowHandle = nullptr;
         HDC _deviceContext = nullptr;
         HGLRC _openGlContext = nullptr;
+        uint32_t _windowWidth = 0;
+        uint32_t _windowHeight = 0;
 
     private:
-        Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext);
+        Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext, uint32_t WindowWidth,
+               uint32_t WindowHeight);
 
     public:
         ~Window();
@@ -23,7 +27,22 @@ namespace Platform
         static Window* Create(HINSTANCE HInstance);
 
     public:
+        [[nodiscard]] uint32_t GetWindowWidth() const
+        {
+            return _windowWidth;
+        }
+
+        [[nodiscard]] uint32_t GetWindowHeight() const
+        {
+            return _windowHeight;
+        }
+
+    public:
         bool ShouldClose();
+
+        void MakeContextCurrent() const;
+
+        void SwapBuffers() const;
 
         void Close();
     };

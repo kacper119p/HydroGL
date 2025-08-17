@@ -1,5 +1,6 @@
 #include "Window.h"
 
+#include <cstdint>
 #include <windows.h>
 #include <glad/glad.h>
 
@@ -27,10 +28,12 @@ namespace Platform
         return DefWindowProc(Hwnd, Msg, WParam, LParam);
     }
 
-    Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext):
-        _windowHandle(WindowHandle),
-        _deviceContext(DeviceContext),
-        _openGlContext(OpenGlContext)
+    Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext, const uint32_t WindowWidth,
+                   const uint32_t WindowHeight): _windowHandle(WindowHandle),
+                                                 _deviceContext(DeviceContext),
+                                                 _openGlContext(OpenGlContext),
+                                                 _windowWidth(WindowWidth),
+                                                 _windowHeight(WindowHeight)
     {
     }
 
@@ -55,13 +58,17 @@ namespace Platform
         MONITORINFO monitorInfo = {sizeof(monitorInfo)};
         HMONITOR primaryMonitor = MonitorFromWindow(nullptr, MONITOR_DEFAULTTOPRIMARY);
         GetMonitorInfo(primaryMonitor, &monitorInfo);
+
+        const int32_t windowWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+        const int32_t windowHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+
         HWND hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP,
                                    className,
                                    "HydroGL",
                                    WS_POPUP,
                                    monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
-                                   monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                                   monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                                   windowWidth,
+                                   windowHeight,
                                    nullptr, nullptr, HInstance, nullptr);
         if (!hwnd)
         {
@@ -116,15 +123,15 @@ namespace Platform
         }
 
         int contextAttribs[] = {
-                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-                WGL_CONTEXT_MINOR_VERSION_ARB, 6,
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 6,
 #if DEBUG
-                WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
+            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
 #else
                 WGL_CONTEXT_FLAGS_ARB, 0,
 #endif
-                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-                0
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
         };
 
         PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
@@ -151,31 +158,32 @@ namespace Platform
         Debug::EnableOpenGlDebugging();
 #endif
 
-        return new Window(hwnd, deviceContext, fullGlContext);
+        return new Window(hwnd, deviceContext, fullGlContext, windowWidth, windowHeight);
     }
 
     bool Window::ShouldClose()
     {
-        wglMakeCurrent(_deviceContext, _openGlContext);
-
         MSG msg;
-        while (true)
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+            if (msg.message == WM_QUIT)
             {
-                if (msg.message == WM_QUIT)
-                {
-                    return true;
-                }
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                return true;
             }
-
-            // OpenGL rendering here
-            glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            SwapBuffers(_deviceContext);
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
+        return false;
+    }
+
+    void Window::MakeContextCurrent() const
+    {
+        wglMakeCurrent(_deviceContext, _openGlContext);
+    }
+
+    void Window::SwapBuffers() const
+    {
+        ::SwapBuffers(_deviceContext);
     }
 
     void Window::Close()

@@ -51,8 +51,8 @@ namespace Core
         GetCaptureViews(captureViews);
 
         const Shader shader = ShaderBuilder()
-                .SetStage("./res/shaders/Utility/Convolution/Convolution.vert", ShaderStage::VertexShader)
-                .SetStage("./res/shaders/Utility/Convolution/Convolution.frag", ShaderStage::FragmentShader)
+                .SetStage("Assets/Shaders/Utility/Convolution/Convolution.vert", ShaderStage::VertexShader)
+                .SetStage("Assets/Shaders/Utility/Convolution/Convolution.frag", ShaderStage::FragmentShader)
                 .Build();
 
 
@@ -109,8 +109,8 @@ namespace Core
         InitializeFbo(fbo, rbo, resolution);
 
         const Shader shader = ShaderBuilder()
-                .SetStage("./res/shaders/Utility/SpecularIBLSetup/Prefilter.vert", ShaderStage::VertexShader)
-                .SetStage("./res/shaders/Utility/SpecularIBLSetup/Prefilter.frag", ShaderStage::FragmentShader)
+                .SetStage("Assets/Shaders/Utility/SpecularIBLSetup/Prefilter.vert", ShaderStage::VertexShader)
+                .SetStage("Assets/Shaders/Utility/SpecularIBLSetup/Prefilter.frag", ShaderStage::FragmentShader)
                 .Build();
 
         shader.Use();

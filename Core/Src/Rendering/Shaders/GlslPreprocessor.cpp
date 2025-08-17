@@ -1,5 +1,6 @@
 #include "GlslPreprocessor.h"
 
+#include <iostream>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <Utility/FileUtility.h>
@@ -20,7 +21,7 @@ namespace Core
         std::string source;
         if (!FileUtility::GetTextFileContent(Path, source))
         {
-            spdlog::error("Failed to read file ", Path);
+            std::filesystem::path cwd = std::filesystem::current_path();
             return std::string();
         }
         std::istringstream input(source);
