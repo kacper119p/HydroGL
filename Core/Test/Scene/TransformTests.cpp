@@ -46,7 +46,7 @@ TEST_F(TransformTests, TransformMatrixUpdate)
 
     // Euler Angles
     constexpr glm::vec3 euler = glm::vec3(90.0f, 45.0f, 12.0f);
-    glm::mat4 targetMatrix = glm::toMat4(glm::quat(euler));
+    glm::mat4 targetMatrix = glm::toMat4(glm::quat(glm::radians(euler)));
     ASSERT_NO_FATAL_FAILURE(transform.SetEulerAngles(euler));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToParentMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToWorldMatrix(), targetMatrix));

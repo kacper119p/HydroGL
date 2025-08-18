@@ -10,8 +10,6 @@ namespace Platform
     std::vector<std::pair<Input::CallbackId, Input::CameraRotationCallback>> Input::_cameraRotationCallbacks;
     std::vector<std::pair<Input::CallbackId, Input::CameraDragCallback>> Input::_cameraDragCallbacks;
 
-    float Input::_mouseX = 0.0f;
-    float Input::_mouseY = 0.0f;
     float Input::_inputX = 0.0f;
     float Input::_inputY = 0.0f;
     bool Input::_isCameraDragging = false;
@@ -70,18 +68,12 @@ namespace Platform
         }
     }
 
-    void Input::DispatchCameraRotationEvent(const float X, const float Y)
+    void Input::DispatchCameraRotationEvent(const float DeltaX, const float DeltaY)
     {
-        const float deltaX = X - _mouseX;
-        const float deltaY = Y - _mouseY;
-
         for (const auto& callback : _cameraRotationCallbacks | std::views::values)
         {
-            callback(deltaX, deltaY);
+            callback(DeltaX, DeltaY);
         }
-
-        _mouseX = X;
-        _mouseY = Y;
     }
 
     void Input::DispatchCameraDragEvent(const bool IsDragging)

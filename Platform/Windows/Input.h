@@ -39,8 +39,6 @@ namespace Platform
         static std::vector<std::pair<CallbackId, CameraDragCallback>> _cameraDragCallbacks;
         static CallbackId _nextCallbackId;
 
-        static float _mouseX;
-        static float _mouseY;
         static float _inputX;
         static float _inputY;
         static bool _isCameraDragging;
@@ -106,7 +104,7 @@ namespace Platform
 
         static void DispatchMovementEvent(KeyboardButton Button, ButtonEventType Type);
 
-        static void DispatchCameraRotationEvent(float X, float Y);
+        static void DispatchCameraRotationEvent(float DeltaX, float DeltaY);
 
         static void DispatchCameraDragEvent(bool IsDragging);
     };

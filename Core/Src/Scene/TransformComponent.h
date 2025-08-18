@@ -27,7 +27,10 @@ namespace Core
         static void on_destroy(entt::registry& Registry, entt::entity Id);
 
     public:
-        [[nodiscard]] const glm::vec3& GetPosition() const { return _position; }
+        [[nodiscard]] const glm::vec3& GetPosition() const
+        {
+            return _position;
+        }
 
         void SetPosition(const glm::vec3& Position)
         {
@@ -35,7 +38,10 @@ namespace Core
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] const glm::vec3& GetScale() const { return _scale; }
+        [[nodiscard]] const glm::vec3& GetScale() const
+        {
+            return _scale;
+        }
 
         void SetScale(const glm::vec3& Scale)
         {
@@ -43,7 +49,10 @@ namespace Core
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] const glm::quat& GetRotation() const { return _rotation; }
+        [[nodiscard]] const glm::quat& GetRotation() const
+        {
+            return _rotation;
+        }
 
         void SetRotation(const glm::quat& Rotation)
         {
@@ -53,11 +62,14 @@ namespace Core
 
         void SetEulerAngles(const glm::vec3& EulerAngles)
         {
-            _rotation = glm::quat(EulerAngles);
+            _rotation = glm::quat(glm::radians(EulerAngles));
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] glm::vec3 GetEulerAngles() const { return glm::degrees(glm::eulerAngles(_rotation)); }
+        [[nodiscard]] glm::vec3 GetEulerAngles() const
+        {
+            return glm::degrees(glm::eulerAngles(_rotation));
+        }
 
         [[nodiscard]] const glm::mat4& GetLocalToWorldMatrix() const
         {
@@ -77,6 +89,9 @@ namespace Core
             return _localToParentMatrix;
         }
 
-        [[nodiscard]] SceneNode& GetSceneHierarchyNode() const { return *_sceneHierarchyNode; }
+        [[nodiscard]] SceneNode& GetSceneHierarchyNode() const
+        {
+            return *_sceneHierarchyNode;
+        }
     };
 }

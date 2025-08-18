@@ -7,7 +7,5 @@ namespace Core
     {
     public:
         glm::mat4 ProjectionMatrix{};
-        float RotationSensitivity{};
-        float MovementSensitivity{};
     };
 }

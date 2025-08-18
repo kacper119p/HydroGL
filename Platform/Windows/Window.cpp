@@ -12,7 +12,10 @@ namespace Platform
 {
     static LRESULT CALLBACK WndProc(HWND Hwnd, const UINT Msg, const WPARAM WParam, const LPARAM LParam)
     {
-        Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(Hwnd, GWLP_USERDATA));
+        static bool isDragging = false;
+        static POINT oldMousePosition;
+
+        const Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(Hwnd, GWLP_USERDATA));
 
         switch (Msg)
         {
@@ -72,19 +75,30 @@ namespace Platform
                 break;
             case WM_MOUSEMOVE:
             {
-                const int16_t xPosition = static_cast<int16_t>(LOWORD(LParam));
-                const int16_t yPosition = static_cast<int16_t>(HIWORD(LParam));
-
-                float normalizedX = static_cast<float>(xPosition) / static_cast<float>(window->GetWindowWidth());
-                float normalizedY = static_cast<float>(yPosition) / static_cast<float>(window->GetWindowHeight());
-
-                Input::DispatchCameraRotationEvent(normalizedX, normalizedY);
+                if (isDragging)
+                {
+                    POINT currentMousePosition;
+                    GetCursorPos(&currentMousePosition);
+                    const float deltaX = static_cast<float>(currentMousePosition.x - oldMousePosition.x)
+                                         / static_cast<float>(window->GetWindowWidth());
+                    const float deltaY = static_cast<float>(currentMousePosition.y - oldMousePosition.y)
+                                         / static_cast<float>(window->GetWindowHeight());
+                    SetCursorPos(oldMousePosition.x, oldMousePosition.y);
+                    Input::DispatchCameraRotationEvent(deltaX, deltaY);
+                }
                 break;
             }
             case WM_RBUTTONDOWN:
+            {
                 Input::DispatchCameraDragEvent(true);
+                ShowCursor(FALSE);
+                GetCursorPos(&oldMousePosition);
+                isDragging = true;
                 break;
+            }
             case WM_RBUTTONUP:
+                ShowCursor(TRUE);
+                isDragging = false;
                 Input::DispatchCameraDragEvent(false);
             default:
                 break;
@@ -221,6 +235,7 @@ namespace Platform
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         Debug::EnableOpenGlDebugging();
 #endif
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
         Window* window = new Window(hwnd, deviceContext, fullGlContext, windowWidth, windowHeight);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));

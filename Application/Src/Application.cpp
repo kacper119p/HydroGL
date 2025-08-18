@@ -1,6 +1,6 @@
 #include "Application.h"
 
-#include <iostream>
+#include <chrono>
 
 #include "Engine.h"
 #include "Camera/CameraComponent.h"
@@ -9,13 +9,22 @@
 #include "Rendering/Shaders/ShaderBuilder.h"
 #include "Scene/TransformComponent.h"
 
-int ApplicationMain(Platform::Window* const Window)
+int32_t ApplicationMain(Platform::Window* const Window)
+{
+    std::unique_ptr<Application::Application> application = std::make_unique<Application::Application>();
+    application->Run(Window);
+    return 0;
+}
+
+int32_t Application::Application::Run(Platform::Window* Window)
 {
     Core::Engine::Initialize(Window);
     Core::ShaderBuilder shaderBuilder;
     Core::Shader shader = shaderBuilder.SetStage("Assets/Shaders/PBR/PBR.vert", Core::ShaderStage::VertexShader)
             .SetStage("Assets/Shaders/PBR/PBR.frag", Core::ShaderStage::FragmentShader)
             .Build();
+
+    _cameraManager = std::make_unique<CameraManager>();
 
     Core::Scene* scene = Core::Engine::GetScene();
 
@@ -33,8 +42,14 @@ int ApplicationMain(Platform::Window* const Window)
                                                         / static_cast<float>(Window->GetWindowHeight()),
                                                         0.1f, 1000.0f);
     Window->MakeContextCurrent();
+
+    auto lastTime = std::chrono::high_resolution_clock::now();
     while (!Window->ShouldClose())
     {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> delta = currentTime - lastTime;
+        lastTime = currentTime;
+
         Window->PoolEvents();
 
         Core::Renderer::RenderFrame(*scene);
