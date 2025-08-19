@@ -15,7 +15,7 @@ namespace Platform
     bool Input::_isCameraDragging = false;
 
 
-    void Input::DispatchMovementEvent(const KeyboardButton Button, ButtonEventType Type)
+    void Input::DispatchMovementEvent(const KeyboardButton Button, const ButtonEventType Type)
     {
         switch (Type)
         {

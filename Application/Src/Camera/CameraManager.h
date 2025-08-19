@@ -48,14 +48,14 @@ namespace Application
             _movementSensitivity = MovementSensitivity;
         }
 
+    public:
+        void Update(Core::Scene& Scene, float DeltaTime) const;
+
     private:
         void HandleMovement(float X, float Y);
 
         void HandleRotation(float DeltaX, float DeltaY);
 
         void HandleDrag(bool IsDragging);
-
-    private:
-        void Update(Core::Scene& Scene, float DeltaTime) const;
     };
 }

@@ -23,7 +23,7 @@ namespace Core
         }
 
         fseek(file, 0, SEEK_END);
-        long file_size = ftell(file);
+        const long fileSize = ftell(file);
         fseek(file, 0, SEEK_SET);
 
         int32_t fileCode;
@@ -64,7 +64,7 @@ namespace Core
             fclose(file);
             return 0;
         }
-        void* buffer = malloc(file_size - sizeof(DDS_HEADER) - sizeof(DDS_HEADER_DXT10));
+        void* buffer = malloc(fileSize - sizeof(DDS_HEADER) - sizeof(DDS_HEADER_DXT10));
         if (buffer == nullptr)
         {
 #if DEBUG
@@ -75,7 +75,7 @@ namespace Core
             return 0;
         }
 
-        fread(buffer, 1, file_size, file);
+        fread(buffer, 1, fileSize, file);
 
         if ((header.dwCaps2 & DDS_CUBEMAP) != 0)
         {

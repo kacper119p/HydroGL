@@ -29,7 +29,7 @@ namespace Core
         uint32_t _resolvedColorBuffer = 0;
 
     public:
-        explicit SceneFrameBuffer(glm::ivec2 Resolution);
+        explicit SceneFrameBuffer(const glm::ivec2& Resolution);
 
         ~SceneFrameBuffer();
 

@@ -11,7 +11,7 @@
 
 int32_t ApplicationMain(Platform::Window* const Window)
 {
-    std::unique_ptr<Application::Application> application = std::make_unique<Application::Application>();
+    const std::unique_ptr<Application::Application> application = std::make_unique<Application::Application>();
     application->Run(Window);
     return 0;
 }
@@ -49,8 +49,10 @@ int32_t Application::Application::Run(Platform::Window* Window)
         auto currentTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> delta = currentTime - lastTime;
         lastTime = currentTime;
+        float deltaTime = delta.count();
 
         Window->PoolEvents();
+        _cameraManager->Update(*scene, deltaTime);
 
         Core::Renderer::RenderFrame(*scene);
         Window->SwapBuffers();
