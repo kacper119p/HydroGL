@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Window.h"
+#include "Rendering/Renderer.h"
 #include "Scene/Scene.h"
 
 namespace Core
@@ -9,18 +10,29 @@ namespace Core
     class Engine
     {
     private:
-        static std::unique_ptr<Platform::Window> _window;
-        static std::unique_ptr<Scene> _scene;
+        Platform::Window* _window;
+        Scene* _scene;
+        Renderer* _renderer;
 
     public:
-        static Scene* GetScene()
+        [[nodiscard]] Scene* GetScene() const
         {
-            return _scene.get();
+            return _scene;
         }
 
-    public:
-        static int32_t Initialize(Platform::Window* Window);
+        [[nodiscard]] Platform::Window* GetWindow() const
+        {
+            return _window;
+        }
 
-        static void Shutdown();
+        [[nodiscard]] Renderer* GetRenderer() const
+        {
+            return _renderer;
+        }
+
+        explicit Engine(Platform::Window* Window);
+
+    public:
+        ~Engine();
     };
 }

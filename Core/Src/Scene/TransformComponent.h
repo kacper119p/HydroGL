@@ -8,7 +8,7 @@
 
 namespace Core
 {
-    class TransformComponent
+    struct TransformComponent
     {
         friend class SceneNode;
 

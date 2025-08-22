@@ -100,6 +100,15 @@ namespace Platform
                 ShowCursor(TRUE);
                 isDragging = false;
                 Input::DispatchCameraDragEvent(false);
+                break;
+            case WM_SETFOCUS:
+                if (isDragging)
+                {
+                    ShowCursor(TRUE);
+                    isDragging = false;
+                    Input::DispatchCameraDragEvent(false);
+                }
+                break;
             default:
                 break;
         }
@@ -107,17 +116,26 @@ namespace Platform
     }
 
     Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext, const uint32_t WindowWidth,
-                   const uint32_t WindowHeight): _windowHandle(WindowHandle),
-                                                 _deviceContext(DeviceContext),
-                                                 _openGlContext(OpenGlContext),
-                                                 _windowWidth(WindowWidth),
-                                                 _windowHeight(WindowHeight)
+                   const uint32_t WindowHeight) :
+        _windowHandle(WindowHandle),
+        _deviceContext(DeviceContext),
+        _openGlContext(OpenGlContext),
+        _windowWidth(WindowWidth),
+        _windowHeight(WindowHeight)
     {
     }
 
     Window::~Window()
     {
-        Close();
+        ChangeDisplaySettings(nullptr, 0);
+        SetForegroundWindow(GetDesktopWindow());
+        wglMakeCurrent(nullptr, nullptr);
+        wglDeleteContext(_openGlContext);
+        ReleaseDC(_windowHandle, _deviceContext);
+        DestroyWindow(_windowHandle);
+        _windowHandle = nullptr;
+        _deviceContext = nullptr;
+        _openGlContext = nullptr;
     }
 
     Window* Window::Create(HINSTANCE HInstance)
@@ -201,15 +219,15 @@ namespace Platform
         }
 
         int contextAttribs[] = {
-            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 6,
+                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+                WGL_CONTEXT_MINOR_VERSION_ARB, 6,
 #if DEBUG
-            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
+                WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
 #else
                 WGL_CONTEXT_FLAGS_ARB, 0,
 #endif
-            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-            0
+                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                0
         };
 
         PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
@@ -274,18 +292,5 @@ namespace Platform
     void Window::SwapBuffers() const
     {
         ::SwapBuffers(_deviceContext);
-    }
-
-    void Window::Close()
-    {
-        ChangeDisplaySettings(nullptr, 0);
-        SetForegroundWindow(GetDesktopWindow());
-        wglMakeCurrent(nullptr, nullptr);
-        wglDeleteContext(_openGlContext);
-        ReleaseDC(_windowHandle, _deviceContext);
-        DestroyWindow(_windowHandle);
-        _windowHandle = nullptr;
-        _deviceContext = nullptr;
-        _openGlContext = nullptr;
     }
 }

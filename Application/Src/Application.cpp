@@ -4,7 +4,9 @@
 
 #include "Engine.h"
 #include "Camera/CameraComponent.h"
+#include "Meshes/MeshManager.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/Components/RenderedMeshComponent.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 #include "Scene/TransformComponent.h"
@@ -18,15 +20,15 @@ int32_t ApplicationMain(Platform::Window* const Window)
 
 int32_t Application::Application::Run(Platform::Window* Window)
 {
-    Core::Engine::Initialize(Window);
-    Core::ShaderBuilder shaderBuilder;
-    Core::Shader shader = shaderBuilder.SetStage("Assets/Shaders/PBR/PBR.vert", Core::ShaderStage::VertexShader)
-            .SetStage("Assets/Shaders/PBR/PBR.frag", Core::ShaderStage::FragmentShader)
-            .Build();
+    Window->MakeContextCurrent();
 
-    _cameraManager = std::make_unique<CameraManager>();
+    std::unique_ptr<Core::Engine> engine = std::make_unique<Core::Engine>(Window);
 
-    Core::Scene* scene = Core::Engine::GetScene();
+    std::unique_ptr<Core::MaterialManager> materialManager = std::make_unique<Core::MaterialManager>();
+
+    _cameraManager = std::make_unique<CameraManager>(engine.get());
+
+    Core::Scene* scene = engine->GetScene();
 
     scene->SetSkybox(Core::Skybox::CreateSkybox("Assets/Textures/Skyboxes/Skybox.dds"));
 
@@ -41,7 +43,13 @@ int32_t Application::Application::Run(Platform::Window* Window)
                                                         static_cast<float>(Window->GetWindowWidth())
                                                         / static_cast<float>(Window->GetWindowHeight()),
                                                         0.1f, 1000.0f);
-    Window->MakeContextCurrent();
+
+    const entt::entity meshEntity = entityRegistry->create();
+
+    Core::TransformComponent& meshTransform = entityRegistry->emplace<Core::TransformComponent>(meshEntity);
+    Core::RenderedMeshComponent& renderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(meshEntity);
+
+    renderedMesh.Mesh = Core::MeshManager::GetMesh("Assets/Meshes/Torch.fbx");
 
     auto lastTime = std::chrono::high_resolution_clock::now();
     while (!Window->ShouldClose())
@@ -54,9 +62,9 @@ int32_t Application::Application::Run(Platform::Window* Window)
         Window->PoolEvents();
         _cameraManager->Update(*scene, deltaTime);
 
-        Core::Renderer::RenderFrame(*scene);
+        engine->GetRenderer()->RenderFrame(*scene, *materialManager.get());
         Window->SwapBuffers();
     }
-    Core::Engine::Shutdown();
+
     return 0;
 }

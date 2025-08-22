@@ -46,7 +46,5 @@ namespace Platform
         void MakeContextCurrent() const;
 
         void SwapBuffers() const;
-
-        void Close();
     };
 }

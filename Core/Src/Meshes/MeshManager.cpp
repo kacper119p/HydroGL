@@ -5,7 +5,6 @@
 #include <Assimp/postprocess.h>
 
 #include "Debug.h"
-#include "glad/glad.h"
 
 namespace Core
 {
@@ -14,8 +13,10 @@ namespace Core
 
     MeshVerticesData MeshManager::_vertexBuffer(VertexBufferMaxCapacity);
     MeshFacesData MeshManager::_faceBuffer(VertexBufferMaxCapacity);
-    std::vector<glm::uvec2> MeshManager::_takenVertexMemoryChunks(4096);
-    std::vector<glm::uvec2> MeshManager::_takenFaceMemoryChunks(4096);
+
+    std::vector<glm::uvec2> MeshManager::_takenVertexMemoryChunks;
+
+    std::vector<glm::uvec2> MeshManager::_takenFaceMemoryChunks;
 
     std::unordered_map<std::string, Mesh> MeshManager::_meshCache(256);
 
@@ -149,9 +150,9 @@ namespace Core
         for (uint32_t i = 0; i < Scene.mNumMeshes; ++i)
         {
             Mesh._verticesCount += Scene.mMeshes[i]->mNumVertices;
-            Mesh._facesCount += Scene.mMeshes[i]->mNumFaces;
+            Mesh._indicesCount += Scene.mMeshes[i]->mNumFaces;
         }
-        Mesh._facesCount *= 3;
+        Mesh._indicesCount *= 3;
 
         Mesh._verticesIndex = AllocateMemoryChunk(Mesh._verticesCount, _takenVertexMemoryChunks);
 
@@ -168,9 +169,9 @@ namespace Core
             offset += mesh->mNumVertices;
         }
 
-        Mesh._facesIndex = AllocateMemoryChunk(Mesh._facesCount, _takenFaceMemoryChunks);
+        Mesh._indicesIndex = AllocateMemoryChunk(Mesh._indicesCount, _takenFaceMemoryChunks);
 
-        offset = Mesh._facesIndex;
+        offset = Mesh._indicesIndex;
         for (uint32_t currentMesh = 0; currentMesh < Scene.mNumMeshes; ++currentMesh)
         {
             const aiMesh* mesh = Scene.mMeshes[currentMesh];
@@ -181,7 +182,7 @@ namespace Core
                 CHECK_MESSAGE(face.mNumIndices == 3, "Mesh is not triangulated!");
                 for (unsigned int j = 0; j < 3; j++)
                 {
-                    _faceBuffer.Indices[offset] = face.mIndices[0];
+                    _faceBuffer.Indices[offset] = face.mIndices[j];
                     offset++;
                 }
             }
@@ -190,7 +191,7 @@ namespace Core
 
     void MeshManager::UploadToGpu(const Mesh& Mesh)
     {
-        glBindVertexArray(0);
+        glBindVertexArray(_glVertexArray);
 
         glBindBuffer(GL_ARRAY_BUFFER, _glVertexBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _glElementBuffer);
@@ -218,9 +219,9 @@ namespace Core
                         _vertexBuffer.Tangents + Mesh._verticesIndex);
 
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
-                        static_cast<GLintptr>(Mesh._facesIndex * sizeof(uint32_t) * 3),
-                        static_cast<GLintptr>(Mesh._facesCount * sizeof(uint32_t)),
-                        _faceBuffer.Indices + Mesh._verticesIndex);
+                        static_cast<GLintptr>(Mesh._indicesIndex * sizeof(uint32_t)),
+                        static_cast<GLintptr>(Mesh._indicesCount * sizeof(uint32_t)),
+                        _faceBuffer.Indices + Mesh._indicesIndex);
     }
 
     uint32_t MeshManager::AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks)
@@ -235,7 +236,7 @@ namespace Core
         {
             const uint32_t areaStart = TakenMemoryChunks[0].y + 1;
             TakenMemoryChunks.emplace_back(areaStart, areaStart + VertexCount);
-            return 0;
+            return areaStart;
         }
 
         for (int i = 0; i < TakenMemoryChunks.size() - 1; ++i)
@@ -257,9 +258,9 @@ namespace Core
     {
         Assimp::Importer importer = Assimp::Importer();
         importer.SetPropertyInteger(
-            AI_CONFIG_PP_SBP_REMOVE,
-            aiPrimitiveType_LINE | aiPrimitiveType_POINT
-        );
+                AI_CONFIG_PP_SBP_REMOVE,
+                aiPrimitiveType_LINE | aiPrimitiveType_POINT
+                );
 
         const aiScene* scene = importer.ReadFile(Path,
                                                  aiProcess_Triangulate | aiProcess_GenNormals);

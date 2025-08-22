@@ -2,18 +2,23 @@
 
 namespace Core
 {
-    Material MaterialManager::_materials[std::numeric_limits<uint8_t>::max() + 1]{};
-    uint32_t MaterialManager::_buffers[std::numeric_limits<uint8_t>::max() + 1]{};
-    MaterialManager::FreeBuffer MaterialManager::_freeBuffer;
+    MaterialManager::MaterialManager()
+    {
+        glGenBuffers(1, &_materialSsbo);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _materialSsbo);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Material) * MaxMaterials, nullptr, GL_STATIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _materialSsbo);
+    }
+
+    MaterialManager::~MaterialManager()
+    {
+        glDeleteBuffers(1, &_materialSsbo);
+    }
 
     MaterialId MaterialManager::CreateMaterial()
     {
-        MaterialId id = _freeBuffer.FreeIndices.top();
+        const MaterialId id = _freeBuffer.FreeIndices.top();
         _freeBuffer.FreeIndices.pop();
-
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Material), nullptr, GL_STATIC_DRAW);
 
         return id;
     }
@@ -45,8 +50,16 @@ namespace Core
         _freeBuffer.FreeIndices.push(Id);
     }
 
-    void MaterialManager::SubmitMaterialToGpu(const MaterialId Id)
+    void MaterialManager::SubmitMaterialToGpu(const MaterialId Id) const
     {
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Material), _materials + Id, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _materialSsbo);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, Id * static_cast<int64_t>(sizeof(Material)), sizeof(Material),
+                        _materials + Id);
+    }
+
+    void MaterialManager::BindMaterialBuffer() const
+    {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _materialSsbo);
     }
 }

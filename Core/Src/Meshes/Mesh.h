@@ -14,20 +14,21 @@ namespace Core
     private:
         uint32_t _verticesIndex;
         uint32_t _verticesCount;
-        uint32_t _facesIndex;
-        uint32_t _facesCount;
+        uint32_t _indicesIndex;
+        uint32_t _indicesCount;
 
     public:
-        Mesh() : _verticesIndex(0), _verticesCount(0), _facesIndex(0), _facesCount(0)
+        Mesh() :
+            _verticesIndex(0), _verticesCount(0), _indicesIndex(0), _indicesCount(0)
         {
         }
 
         Mesh(const uint32_t VerticesIndex, const uint32_t VerticesCount, const uint32_t FacesIndex,
-             const uint32_t FacesCount)
-            : _verticesIndex(VerticesIndex),
-              _verticesCount(VerticesCount),
-              _facesIndex(FacesIndex),
-              _facesCount(FacesCount)
+             const uint32_t FacesCount) :
+            _verticesIndex(VerticesIndex),
+            _verticesCount(VerticesCount),
+            _indicesIndex(FacesIndex),
+            _indicesCount(FacesCount)
         {
         }
 
@@ -45,14 +46,14 @@ namespace Core
             return _verticesCount;
         }
 
-        [[nodiscard]] uint32_t GetFacesIndex() const
+        [[nodiscard]] uint32_t GetIndicesIndex() const
         {
-            return _facesIndex;
+            return _indicesIndex;
         }
 
-        [[nodiscard]] uint32_t GetFacesCount() const
+        [[nodiscard]] uint32_t GetIndicesCount() const
         {
-            return _facesCount;
+            return _indicesCount;
         }
 
         bool operator==(const Mesh& Mesh) const

@@ -3,7 +3,7 @@
 
 namespace Core
 {
-    class CameraComponent
+    struct CameraComponent
     {
     public:
         glm::mat4 ProjectionMatrix{};

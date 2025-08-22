@@ -23,30 +23,41 @@ namespace Core
             }
         };
 
+    public:
+        static constexpr uint32_t MaxMaterials = std::numeric_limits<uint8_t>::max() + 1;
+
     private:
-        static Material _materials[std::numeric_limits<uint8_t>::max() + 1];
-        static uint32_t _buffers[std::numeric_limits<uint8_t>::max() + 1];
-        static FreeBuffer _freeBuffer;
+        Material _materials[MaxMaterials]{};
+        uint32_t _buffers[MaxMaterials]{};
+        FreeBuffer _freeBuffer{};
+
+        uint32_t _materialSsbo = 0;
 
     public:
-        static Material& GetMaterial(const MaterialId Id)
+        MaterialManager();
+
+        ~MaterialManager();
+
+        Material& GetMaterial(const MaterialId Id)
         {
             return _materials[Id];
         }
 
-        static MaterialId CreateMaterial();
+        MaterialId CreateMaterial();
 
-        static MaterialId CreateMaterial(const glm::vec3& BaseColor,
-                                         float Roughness,
-                                         const glm::vec3& EmissiveColor,
-                                         float Metallic,
-                                         uint64_t BaseMap,
-                                         uint64_t RoughnessMetallicAmbientOcclusionMap,
-                                         uint64_t NormalMap,
-                                         uint64_t EmissiveMap);
+        MaterialId CreateMaterial(const glm::vec3& BaseColor,
+                                  float Roughness,
+                                  const glm::vec3& EmissiveColor,
+                                  float Metallic,
+                                  uint64_t BaseMap,
+                                  uint64_t RoughnessMetallicAmbientOcclusionMap,
+                                  uint64_t NormalMap,
+                                  uint64_t EmissiveMap);
 
-        static void FreeMaterial(const MaterialId Id);
+        void FreeMaterial(MaterialId Id);
 
-        static void SubmitMaterialToGpu(const MaterialId Id);
+        void SubmitMaterialToGpu(MaterialId Id) const;
+
+        void BindMaterialBuffer() const;
     };
 }

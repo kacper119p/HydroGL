@@ -4,7 +4,7 @@
 
 namespace Core
 {
-    class RenderedMesh
+    struct RenderedMeshComponent
     {
     public:
         Mesh Mesh;

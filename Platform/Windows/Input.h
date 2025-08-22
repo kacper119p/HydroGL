@@ -34,14 +34,19 @@ namespace Platform
         using CameraDragCallback = std::function<void(bool)>;
 
     private:
-        static std::vector<std::pair<CallbackId, MovementCallback>> _movementCallbacks;
-        static std::vector<std::pair<CallbackId, CameraRotationCallback>> _cameraRotationCallbacks;
-        static std::vector<std::pair<CallbackId, CameraDragCallback>> _cameraDragCallbacks;
+        static std::vector<std::pair<CallbackId, MovementCallback> > _movementCallbacks;
+        static std::vector<std::pair<CallbackId, CameraRotationCallback> > _cameraRotationCallbacks;
+        static std::vector<std::pair<CallbackId, CameraDragCallback> > _cameraDragCallbacks;
         static CallbackId _nextCallbackId;
 
         static float _inputX;
         static float _inputY;
         static bool _isCameraDragging;
+
+        static bool _wPressed;
+        static bool _aPressed;
+        static bool _sPressed;
+        static bool _dPressed;
 
     public:
         Input(const Input&) = delete;

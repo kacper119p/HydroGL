@@ -6,6 +6,7 @@
 #include "Meshes/Mesh.h"
 #include "Meshes/MeshFacesData.h"
 #include "Meshes/MeshVerticesData.h"
+#include "glad/glad.h"
 
 
 namespace Core
@@ -47,6 +48,11 @@ namespace Core
         [[nodiscard]] static std::string GetMeshPath(const Mesh& Mesh);
 
         static uint32_t AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks);
+
+        static void BindVao()
+        {
+            glBindVertexArray(_glVertexArray);
+        }
 
     private:
         static Mesh LoadMesh(const std::string& Path);

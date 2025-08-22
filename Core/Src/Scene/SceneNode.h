@@ -7,7 +7,7 @@
 
 namespace Core
 {
-    class TransformComponent;
+    struct TransformComponent;
 
     class SceneNode
     {
@@ -21,7 +21,8 @@ namespace Core
         entt::entity _entityId;
 
     public:
-        SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) : _entityRegistry(EntityRegistry),
+        SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) :
+            _entityRegistry(EntityRegistry),
             _entityId(EntityId)
         {
         }

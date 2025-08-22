@@ -2,25 +2,29 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Meshes/MeshManager.h"
 #include "Rendering/Renderer.h"
 
 namespace Core
 {
-    std::unique_ptr<Platform::Window> Engine::_window = nullptr;
-    std::unique_ptr<Scene> Engine::_scene = nullptr;
-
-    int32_t Engine::Initialize(Platform::Window* Window)
+    Engine::Engine(Platform::Window* Window)
     {
-        _window = static_cast<std::unique_ptr<Platform::Window>>(Window);
-        _scene = std::make_unique<Scene>();
-        Renderer::Initialize(glm::uvec2(Window->GetWindowWidth(), Window->GetWindowHeight()));
+        _window = Window;
+        _scene = new Scene();
+        _renderer = new Renderer(glm::uvec2(Window->GetWindowWidth(), Window->GetWindowHeight()));
+
+        MeshManager::Initialize();
+
         spdlog::info("Engine Started.");
-        return 0;
     }
 
-    void Engine::Shutdown()
+    Engine::~Engine()
     {
         spdlog::info("Engine Shutdown.");
-        _window->Close();
+        delete _window;
+        delete _scene;
+        delete _renderer;
+
+        MeshManager::FreeResources();
     }
 }

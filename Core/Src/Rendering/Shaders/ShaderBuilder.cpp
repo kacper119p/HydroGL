@@ -63,7 +63,7 @@ namespace Core
         {
             char errorInfo[ErrorLogSize];
             glGetShaderInfoLog(shaderId, ErrorLogSize, nullptr, errorInfo);
-            spdlog::error("Failed to compile shader: ", FilePath, ": ", errorInfo);
+            spdlog::error("Failed to compile shader: {}: {}", FilePath, errorInfo);
             glDeleteShader(shaderId);
             return 0;
         }

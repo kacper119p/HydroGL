@@ -1,32 +1,34 @@
 #include "CameraManager.h"
 
+#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Debug.h"
 #include "Engine.h"
-#include "Camera/CameraComponent.h"
 #include "Scene/TransformComponent.h"
 
 #include "Input.h"
+#include "Camera/CameraComponent.h"
 
 namespace Application
 {
-    CameraManager::CameraManager()
+    CameraManager::CameraManager(const Core::Engine* Engine) :
+        _movementCallbackId(Platform::Input::SubscribeToMovementEvent(
+                [this](const float X, const float Y)
+                {
+                    HandleMovement(X, Y);
+                })),
+        _rotationCallbackId(Platform::Input::SubscribeToCameraRotationEvent(
+                [this](const float DeltaX, const float DeltaY)
+                {
+                    HandleRotation(DeltaX, DeltaY);
+                })),
+        _dragCallbackId(Platform::Input::SubscribeToCameraDragEvent(
+                [this](const bool IsDragging)
+                {
+                    HandleDrag(IsDragging);
+                })),
+        _scene(Engine->GetScene())
     {
-        _movementCallbackId = Platform::Input::SubscribeToMovementEvent(
-            [this](const float X, const float Y)
-            {
-                HandleMovement(X, Y);
-            });
-        _rotationCallbackId = Platform::Input::SubscribeToCameraRotationEvent(
-            [this](const float DeltaX, const float DeltaY)
-            {
-                HandleRotation(DeltaX, DeltaY);
-            });
-        _dragCallbackId = Platform::Input::SubscribeToCameraDragEvent(
-            [this](const bool IsDragging)
-            {
-                HandleDrag(IsDragging);
-            });
     }
 
     CameraManager::~CameraManager()
@@ -44,7 +46,7 @@ namespace Application
 
     void CameraManager::HandleRotation(const float DeltaX, const float DeltaY)
     {
-        entt::registry* entityRegistry = Core::Engine::GetScene()->GetEntityRegistry();
+        entt::registry* entityRegistry = _scene->GetEntityRegistry();
 
         const auto cameraView = entityRegistry->view<Core::CameraComponent, Core::TransformComponent>();
         const entt::entity cameraEntity = cameraView.front();
@@ -53,8 +55,8 @@ namespace Application
 
         Core::TransformComponent& cameraTransform = entityRegistry->get<Core::TransformComponent>(cameraEntity);
 
-        _pitch += DeltaY * _rotationSensitivity;
-        _yaw += DeltaX * _rotationSensitivity;
+        _pitch -= DeltaY * _rotationSensitivity;
+        _yaw -= DeltaX * _rotationSensitivity;
 
         if (_yaw > glm::two_pi<float>())
         {
@@ -65,12 +67,15 @@ namespace Application
         }
 
         _pitch = glm::clamp(_pitch,
-                            -glm::half_pi<float>() + glm::epsilon<float>(),
-                            glm::half_pi<float>() - glm::epsilon<float>());
+                            -glm::half_pi<float>() + glm::half_pi<float>() * 0.05f,
+                            glm::half_pi<float>() - glm::half_pi<float>() * 0.05f);
 
-        glm::quat q = glm::angleAxis(_pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-        q *= glm::angleAxis(_yaw, glm::vec3(0.0f, 1.0f, 0.0f));
-        cameraTransform.SetRotation(q);
+        const glm::quat yawQuat = glm::angleAxis(_yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+        const glm::vec3 rightAxis = yawQuat * glm::vec3(1.0f, 0.0f, 0.0f);
+        const glm::quat pitchQuat = glm::angleAxis(_pitch, rightAxis);
+        const glm::quat rotation = pitchQuat * yawQuat;
+
+        cameraTransform.SetRotation(rotation);
     }
 
     void CameraManager::HandleDrag(const bool IsDragging)
@@ -88,16 +93,14 @@ namespace Application
         CHECK_MESSAGE(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
 
         Core::TransformComponent& cameraTransform = entityRegistry->get<Core::TransformComponent>(cameraEntity);
-        if (_movementX == 0.0f || _movementY == 0.0f)
+        if (_movementX == 0.0f && _movementY == 0.0f)
         {
             return;
         }
         const glm::mat4& worldMatrix = cameraTransform.GetLocalToWorldMatrix();
         const glm::vec3 forward = -glm::normalize(glm::vec3(worldMatrix[2]));
         const glm::vec3 right = glm::normalize(glm::vec3(worldMatrix[0]));
-        glm::vec3 movement = glm::vec3(0.0f);
-        movement += forward * _movementY * _movementSensitivity * DeltaTime;
-        movement += right * _movementX * _movementSensitivity * DeltaTime;
+        const glm::vec3 movement = _movementSensitivity * DeltaTime * (forward * _movementY + right * _movementX);
         const glm::vec3 newPosition = cameraTransform.GetPosition() + movement;
         cameraTransform.SetPosition(newPosition);
     }
