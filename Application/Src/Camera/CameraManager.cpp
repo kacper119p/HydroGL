@@ -1,6 +1,5 @@
 #include "CameraManager.h"
 
-#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Debug.h"
 #include "Engine.h"

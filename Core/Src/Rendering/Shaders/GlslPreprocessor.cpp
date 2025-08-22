@@ -1,9 +1,8 @@
 #include "GlslPreprocessor.h"
 
-#include <iostream>
-#include <spdlog/spdlog.h>
 #include <sstream>
 #include <Utility/FileUtility.h>
+#include <spdlog/spdlog.h>
 
 namespace Core
 {
