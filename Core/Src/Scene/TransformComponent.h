@@ -27,48 +27,84 @@ namespace Core
         static void on_destroy(entt::registry& Registry, entt::entity Id);
 
     public:
-        [[nodiscard]] const glm::vec3& GetPosition() const
+        [[nodiscard]] const glm::vec3& GetLocalPosition() const
         {
             return _position;
         }
 
-        void SetPosition(const glm::vec3& Position)
+        void SetLocalPosition(const glm::vec3& Position)
         {
             _position = Position;
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] const glm::vec3& GetScale() const
+        [[nodiscard]] const glm::vec3& GetLocalScale() const
         {
             return _scale;
         }
 
-        void SetScale(const glm::vec3& Scale)
+        void SetLocalScale(const glm::vec3& Scale)
         {
             _scale = Scale;
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] const glm::quat& GetRotation() const
+        [[nodiscard]] const glm::quat& GetLocalRotation() const
         {
             return _rotation;
         }
 
-        void SetRotation(const glm::quat& Rotation)
+        void SetLocalRotation(const glm::quat& Rotation)
         {
             _rotation = Rotation;
             _sceneHierarchyNode->MarkDirty();
         }
 
-        void SetEulerAngles(const glm::vec3& EulerAngles)
+        void SetLocalEulerAngles(const glm::vec3& EulerAngles)
         {
             _rotation = glm::quat(glm::radians(EulerAngles));
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] glm::vec3 GetEulerAngles() const
+        [[nodiscard]] glm::vec3 GetWorldPosition() const
+        {
+            return glm::vec3(GetLocalToWorldMatrix()[3]);
+        }
+
+
+        void SetWorldPosition(const glm::vec3& Position)
+        {
+            if (_sceneHierarchyNode->GetParent())
+            {
+                const SceneNode* parentNode = _sceneHierarchyNode->GetParent();
+                const glm::mat4& parentWorld = parentNode->GetTransformComponent().GetLocalToWorldMatrix();
+                const glm::mat4 parentWorldInv = glm::inverse(parentWorld);
+                _position = glm::vec3(parentWorldInv * glm::vec4(Position, 1.0f));
+            } else
+            {
+                _position = Position;
+            }
+            _sceneHierarchyNode->MarkDirty();
+        }
+
+        [[nodiscard]] glm::vec3 GetLocalEulerAngles() const
         {
             return glm::degrees(glm::eulerAngles(_rotation));
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldRight() const
+        {
+            return glm::normalize(glm::vec3(_localToWorldMatrix * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldUp() const
+        {
+            return glm::normalize(glm::vec3(_localToWorldMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldForward() const
+        {
+            return glm::normalize(glm::vec3(_localToWorldMatrix * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f)));
         }
 
         [[nodiscard]] const glm::mat4& GetLocalToWorldMatrix() const

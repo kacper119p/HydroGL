@@ -2,29 +2,32 @@
 #include <stack>
 
 #include "Rendering/Materials/Material.h"
+#include "Rendering/Textures/Texture.h"
 
 namespace Core
 {
+    class Texture;
+
     class MaterialManager
     {
+    public:
+        static constexpr uint32_t MaxMaterials = std::numeric_limits<uint8_t>::max() + 1;
+
     private:
         struct FreeBuffer
         {
         public:
-            std::stack<uint8_t> FreeIndices;
+            std::stack<MaterialId> FreeIndices;
 
         public:
             explicit FreeBuffer()
             {
-                for (uint8_t i = std::numeric_limits<uint8_t>::max(); i <= 0; ++i)
+                for (int32_t i = MaxMaterials; i >= 0; --i)
                 {
                     FreeIndices.emplace(i);
                 }
             }
         };
-
-    public:
-        static constexpr uint32_t MaxMaterials = std::numeric_limits<uint8_t>::max() + 1;
 
     private:
         Material _materials[MaxMaterials]{};
@@ -44,6 +47,15 @@ namespace Core
         }
 
         MaterialId CreateMaterial();
+
+        MaterialId CreateMaterial(const glm::vec3& BaseColor,
+                                  float Roughness,
+                                  const glm::vec3& EmissiveColor,
+                                  float Metallic,
+                                  Texture BaseMap,
+                                  Texture RoughnessMetallicAmbientOcclusionMap,
+                                  Texture NormalMap,
+                                  Texture EmissiveMap);
 
         MaterialId CreateMaterial(const glm::vec3& BaseColor,
                                   float Roughness,

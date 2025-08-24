@@ -38,27 +38,23 @@ struct light
     float Attenuation;
 };
 
-layout (binding = 11) uniform sampler2DShadow DirectionalLightShadowMap;
-layout (binding = 12) uniform samplerCubeShadow PointLightShadowMap0;
-layout (binding = 13) uniform samplerCubeShadow PointLightShadowMap1;
-layout (binding = 14) uniform samplerCubeShadow SpotLightShadowMap0;
-layout (binding = 15) uniform samplerCubeShadow SpotLightShadowMap1;
-layout (binding = 16) uniform samplerCube IrradianceMap;
-layout (binding = 17) uniform samplerCube PrefilterMap;
-layout (binding = 18) uniform sampler2D BrdfLUT;
-layout (binding = 19) uniform sampler2D SSAOMap;
+layout (binding = 10) uniform sampler2DShadow DirectionalLightShadowMap;
+layout (binding = 11) uniform samplerCubeShadow PointLightShadowMap0;
+layout (binding = 12) uniform samplerCubeShadow PointLightShadowMap1;
+layout (binding = 13) uniform samplerCubeShadow SpotLightShadowMap0;
+layout (binding = 14) uniform samplerCubeShadow SpotLightShadowMap1;
+layout (binding = 0) uniform samplerCube IrradianceMap;
+layout (binding = 1) uniform samplerCube PrefilterMap;
+layout (binding = 2) uniform sampler2D BrdfLUT;
 
-layout (std430, binding = 1) buffer Lights {
+layout (std430, binding = 3) buffer Lights {
     uint DirectionalLightCount;
     uint PointLightCount;
     uint SpotlightCount;
     float _padding;
-    uvec2 Resolution;
-    float _padding1[2];
     directionalLight DirectionalLight;
-    pointLight PointLights[2];
-    spotLight SpotLights[2];
-    pointLight PointLightsDynamic[];
+    pointLight PointLights[8];
+    spotLight Spotlights[8];
 };
 
 const float SHADOW_BIAS = 0.00005;
@@ -79,7 +75,8 @@ light CalculateDirectionalLight(directionalLight Light, vec3 Position)
     vec4 fragPosLightSpace = DirectionalLight.DirectionalLightSpaceTransform * vec4(Position, 1.0);
     vec3 shadowCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     shadowCoords.xyz = shadowCoords.xyz * 0.5 + 0.5;
-    result.Attenuation = texture(DirectionalLightShadowMap, shadowCoords, SHADOW_BIAS);
+    // result.Attenuation = texture(DirectionalLightShadowMap, shadowCoords, SHADOW_BIAS);
+    result.Attenuation = 1.0;
     return result;
 }
 
@@ -237,7 +234,7 @@ vec3 CalculateEnvironmentInfluence(vec3 BaseColor, vec3 Normal, vec3 ViewDirecti
     vec2 brdf = texture(BrdfLUT, vec2(max(dot(Normal, ViewDirection), 0.0), Roughness)).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
 
-    return (kD * diffuse + specular) * min(vec3(texture(SSAOMap, gl_FragCoord.xy / vec2(Resolution.x, Resolution.y)).r), AmbientOcclusion);
+    return (kD * diffuse + specular) * AmbientOcclusion;
 }
 
 vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal, vec3 Position, vec3 ViewDirection, float AmbientOcclusion)
@@ -258,62 +255,27 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
         F0);
     }
 
-    if (PointLightCount > 0)
+    for (uint i = 0; i < PointLightCount; ++i)
     {
-        Light += CalculateLightInfluence(CalculatePointLightShadowed(PointLights[0], PointLightShadowMap0, Position),
+        Light += CalculateLightInfluence(CalculatePointLight(PointLights[i], Position),
         BaseColor,
         Normal,
         ViewDirection,
         Roughness,
         Metallic,
         F0);
-        if (PointLightCount > 1)
-        {
-            Light += CalculateLightInfluence(CalculatePointLightShadowed(PointLights[1], PointLightShadowMap1, Position),
-            BaseColor,
-            Normal,
-            ViewDirection,
-            Roughness,
-            Metallic,
-            F0);
-
-            for (uint i = 0; i < PointLightCount - 2; ++i)
-            {
-                Light += CalculateLightInfluence(CalculatePointLight(PointLightsDynamic[i], Position),
-                BaseColor,
-                Normal,
-                ViewDirection,
-                Roughness,
-                Metallic,
-                F0);
-            }
-        }
     }
 
-
-
-    if (SpotlightCount > 0)
+    for (uint i = 0; i < SpotlightCount; ++i)
     {
-        Light += CalculateLightInfluence(CalculateSpotLightShadowed(SpotLights[0], SpotLightShadowMap0, Position),
+        Light += CalculateLightInfluence(CalculateSpotLight(Spotlights[i], Position),
         BaseColor,
         Normal,
         ViewDirection,
         Roughness,
         Metallic,
         F0);
-        if (SpotlightCount > 1)
-        {
-            Light += CalculateLightInfluence(CalculateSpotLightShadowed(SpotLights[1], SpotLightShadowMap1, Position),
-            BaseColor,
-            Normal,
-            ViewDirection,
-            Roughness,
-            Metallic,
-            F0);
-        }
     }
-
-
 
     vec3 Color = Light + CalculateEnvironmentInfluence(BaseColor,
     Normal,

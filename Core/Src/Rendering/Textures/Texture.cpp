@@ -16,9 +16,10 @@ namespace Core
             return Texture(iterator->second);
         }
 
-        uint32_t width;
-        uint32_t height;
-        uint32_t textureId = DdsLoader::LoadDds(Path, width, height);
+        uint32_t textureId = DdsLoader::LoadDds(Path);
+
+        const uint64_t handle = glGetTextureHandleARB(textureId);
+        glMakeTextureHandleResidentARB(handle);
 
         _textureCache.emplace(Path, textureId);
         return Texture(textureId);

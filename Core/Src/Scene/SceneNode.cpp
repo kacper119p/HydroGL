@@ -40,6 +40,11 @@ namespace Core
         UpdateMatrices(transform);
     }
 
+    const TransformComponent& SceneNode::GetTransformComponent() const
+    {
+        return _entityRegistry->get<TransformComponent>(_entityId);
+    }
+
     void SceneNode::UpdateMatrices(TransformComponent& Transform) const
     {
         glm::mat4& localToParent = Transform._localToParentMatrix;

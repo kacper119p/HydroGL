@@ -30,6 +30,10 @@ namespace Core
     public:
         ~SceneNode();
 
+    public:
+        static SceneNode* Create(entt::registry* EntityRegistry, entt::entity EntityId);
+
+    public:
         void AddChild(SceneNode& Child)
         {
             if (Child._parent != nullptr)
@@ -41,10 +45,6 @@ namespace Core
             _children.push_back(&Child);
         }
 
-    public:
-        static SceneNode* Create(entt::registry* EntityRegistry, entt::entity EntityId);
-
-    public:
         void RemoveChild(SceneNode& Child)
         {
             if (std::erase(_children, &Child))
@@ -93,6 +93,8 @@ namespace Core
         {
             return _children.end();
         }
+
+        const TransformComponent& GetTransformComponent() const;
 
     private:
         void UpdateMatrices(TransformComponent& Transform) const;

@@ -9,6 +9,13 @@
 
 namespace Core
 {
+    uint32_t DdsLoader::LoadDds(const std::string_view& FilePath)
+    {
+        uint32_t Width;
+        uint32_t Height;
+        return LoadDds(FilePath, Width, Height);
+    }
+
     uint32_t DdsLoader::LoadDds(const std::string_view& FilePath, uint32_t& Width, uint32_t& Height)
     {
         uint32_t textureId = 0;
@@ -268,8 +275,8 @@ namespace Core
 
         constexpr uint8_t faceCount = 6;
         constexpr uint32_t faces[faceCount]{
-            DDS_CUBEMAP_POSITIVEX, DDS_CUBEMAP_NEGATIVEX, DDS_CUBEMAP_POSITIVEY,
-            DDS_CUBEMAP_NEGATIVEY, DDS_CUBEMAP_POSITIVEZ, DDS_CUBEMAP_NEGATIVEZ
+                DDS_CUBEMAP_POSITIVEX, DDS_CUBEMAP_NEGATIVEX, DDS_CUBEMAP_POSITIVEY,
+                DDS_CUBEMAP_NEGATIVEY, DDS_CUBEMAP_POSITIVEZ, DDS_CUBEMAP_NEGATIVEZ
         };
 
         uint32_t offset = 0;
@@ -297,10 +304,10 @@ namespace Core
                 {
                     const uint32_t size = ((w + 3) / 4) * ((h + 3) / 4) * TextureDescriptor.BlockSize;
                     glCompressedTexImage2D(
-                        GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<int32_t>(mip),
-                        TextureDescriptor.InternalFormat,
-                        static_cast<int32_t>(w), static_cast<int32_t>(h), 0, static_cast<int32_t>(size),
-                        reinterpret_cast<const uint8_t*>(Buffer) + offset);
+                            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<int32_t>(mip),
+                            TextureDescriptor.InternalFormat,
+                            static_cast<int32_t>(w), static_cast<int32_t>(h), 0, static_cast<int32_t>(size),
+                            reinterpret_cast<const uint8_t*>(Buffer) + offset);
                     offset += size;
                 }
                 w = std::max(1u, w / 2u);

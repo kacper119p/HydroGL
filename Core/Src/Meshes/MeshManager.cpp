@@ -162,9 +162,14 @@ namespace Core
             const aiMesh* mesh = Scene.mMeshes[currentMesh];
 
             memcpy(_vertexBuffer.Positions + offset, mesh->mVertices, mesh->mNumVertices * sizeof(glm::vec3));
-            memcpy(_vertexBuffer.TexCoords + offset, mesh->mTextureCoords[0], mesh->mNumVertices * sizeof(glm::vec2));
             memcpy(_vertexBuffer.Normals + offset, mesh->mNormals, mesh->mNumVertices * sizeof(glm::vec3));
             memcpy(_vertexBuffer.Tangents + offset, mesh->mTangents, mesh->mNumVertices * sizeof(glm::vec3));
+
+            const aiVector3D* texCoords = mesh->mTextureCoords[0];
+            for (uint32_t i = 0; i < mesh->mNumVertices; ++i)
+            {
+                _vertexBuffer.TexCoords[offset + i] = glm::vec2(texCoords[i].x, texCoords[i].y);
+            }
 
             offset += mesh->mNumVertices;
         }

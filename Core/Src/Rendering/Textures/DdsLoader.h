@@ -263,6 +263,13 @@ namespace Core
         /**
          * @brief Loads OpenGL texture from dds file
          * @param FilePath Path to a texture file.
+         * @return Texture ID.
+         */
+        static uint32_t LoadDds(const std::string_view& FilePath);
+
+        /**
+         * @brief Loads OpenGL texture from dds file
+         * @param FilePath Path to a texture file.
          * @param Width Outputs texture width.
          * @param Height Outputs texture height.
          * @return Texture ID.

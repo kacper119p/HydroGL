@@ -74,7 +74,7 @@ namespace Application
         const glm::quat pitchQuat = glm::angleAxis(_pitch, rightAxis);
         const glm::quat rotation = pitchQuat * yawQuat;
 
-        cameraTransform.SetRotation(rotation);
+        cameraTransform.SetLocalRotation(rotation);
     }
 
     void CameraManager::HandleDrag(const bool IsDragging)
@@ -100,7 +100,7 @@ namespace Application
         const glm::vec3 forward = -glm::normalize(glm::vec3(worldMatrix[2]));
         const glm::vec3 right = glm::normalize(glm::vec3(worldMatrix[0]));
         const glm::vec3 movement = _movementSensitivity * DeltaTime * (forward * _movementY + right * _movementX);
-        const glm::vec3 newPosition = cameraTransform.GetPosition() + movement;
-        cameraTransform.SetPosition(newPosition);
+        const glm::vec3 newPosition = cameraTransform.GetLocalPosition() + movement;
+        cameraTransform.SetLocalPosition(newPosition);
     }
 }

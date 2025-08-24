@@ -1,5 +1,14 @@
 #version 460 core
 
+struct DrawElementsIndirectCommand
+{
+    uint Count;
+    uint InstanceCount;
+    uint FirstIndex;
+    uint BaseVertex;
+    uint BaseInstance;
+};
+
 layout (location = 0) in vec3 inputPosition;
 layout (location = 1) in vec2 inputTexCoord;
 layout (location = 2) in vec3 inputNormal;
@@ -9,13 +18,27 @@ out vec2 TexCoord;
 out vec3 Position;
 out vec3 Normal;
 out vec3 Tangent;
+flat out int MaterialIndex;
 
-uniform mat4 ObjectToWorldMatrix;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
+layout(std430, binding = 1) readonly restrict buffer TransformBuffer
+{
+    mat4 ObjectToWorldMatrices[];
+};
+
+layout(std430, binding = 2) readonly restrict buffer DrawCommands
+{
+    DrawElementsIndirectCommand drawCommands[];
+};
+
 void main()
 {
+    uint drawID = gl_DrawID;
+    MaterialIndex = int(drawCommands[drawID].BaseInstance);
+    mat4 ObjectToWorldMatrix = ObjectToWorldMatrices[drawID];
+
     gl_Position = ProjectionMatrix * ViewMatrix * ObjectToWorldMatrix * vec4(inputPosition, 1.0);
 
     Position = (ObjectToWorldMatrix * vec4(inputPosition, 1.0)).xyz;

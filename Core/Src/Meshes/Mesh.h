@@ -1,9 +1,5 @@
 #pragma once
-#include <unordered_map>
 #include <assimp/scene.h>
-
-#include "Meshes/MeshFacesData.h"
-#include "Meshes/MeshVerticesData.h"
 
 namespace Core
 {

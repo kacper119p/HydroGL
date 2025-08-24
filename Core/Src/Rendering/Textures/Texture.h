@@ -16,11 +16,13 @@ namespace Core
         uint32_t _textureId;
 
     public:
-        Texture() : _textureId(0)
+        Texture() :
+            _textureId(0)
         {
         }
 
-        explicit Texture(const uint32_t TextureId) : _textureId(TextureId)
+        explicit Texture(const uint32_t TextureId) :
+            _textureId(TextureId)
         {
         }
 

@@ -126,7 +126,7 @@ namespace Core
             char errorInfo[ErrorLogSize];
             glGetProgramInfoLog(programId, ErrorLogSize, nullptr, errorInfo);
             glDeleteProgram(programId);
-            spdlog::error("Failed to link shader: ", errorInfo);
+            spdlog::error("Failed to link shader: {}", errorInfo);
         }
 
         return Shader(programId);
