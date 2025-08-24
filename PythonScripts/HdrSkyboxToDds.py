@@ -85,6 +85,10 @@ def main():
 
     hdr_img = cv2.imread(hdr_path, cv2.IMREAD_ANYDEPTH | cv2.IMREAD_COLOR)
     if hdr_img is None:
+        if args.cleanup and os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+
+        print(f"Removing temporary folder at {output_dir}")
         raise RuntimeError(f"Failed to load HDR image: {hdr_path}")
 
     faces = generate_cubemap_faces(hdr_img, face_size)
@@ -120,7 +124,11 @@ def main():
 
     output_dir_path = os.path.dirname(cubemap_output)
     if not output_dir_path:
-        output_dir_path = "."
+        if args.cleanup and os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+
+        print(f"Removing temporary folder at {output_dir}")
+        raise RuntimeError(f"{output_dir_path} is invalid.")
 
     subprocess.run([
         texconv_path,
