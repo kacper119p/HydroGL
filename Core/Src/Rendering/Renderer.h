@@ -6,7 +6,9 @@
 #include "Lights/PointLightComponent.h"
 #include "Lights/SpotlightComponent.h"
 #include "Materials/MaterialManager.h"
+#include "Postprocessing/BloomPostprocessingEffect.h"
 #include "RendererHelpers/DrawElementsIndirectCommand.h"
+#include "RendererHelpers/SceneFrameBuffer.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Skybox.h"
 #include "Scene/Scene.h"
@@ -55,6 +57,9 @@ namespace Core
         LightDataBuffer _lightDataBuffer;
 
         glm::mat4 DirectionalLightProjectionMatrix;
+
+        SceneFrameBuffer _frameBuffer;
+        BloomPostprocessingEffect _bloomPostprocessingEffect;
 
     public:
         explicit Renderer(const glm::uvec2& Resolution);

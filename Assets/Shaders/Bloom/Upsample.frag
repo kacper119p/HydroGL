@@ -4,7 +4,6 @@ in vec2 TexCoords;
 
 layout (binding = 0) uniform sampler2D InputTexture;
 
-in vec2 TexCoords;
 layout (location = 0) out vec3 FragColor;
 
 const float FILTER_RADIUS = 0.5;

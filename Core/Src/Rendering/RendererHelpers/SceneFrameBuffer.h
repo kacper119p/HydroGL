@@ -10,20 +10,14 @@ namespace Core
      */
     class SceneFrameBuffer final
     {
-    private:
+    public:
         static constexpr uint8_t Samples = 16;
 
+    private:
         uint32_t _multiSampledId = 0;
         glm::ivec2 _resolution;
         uint32_t _colorBuffer = 0;
-        uint32_t _normalsBuffer = 0;
-        uint32_t _occlusionBuffer = 0;
         uint32_t _depthStencilBuffer = 0;
-
-        uint32_t _resolvedNormalsFramebuffer = 0;
-        uint32_t _resolvedNormalsTexture = 0;
-        uint32_t _resolvedOcclusionBuffer = 0;
-        uint32_t _resolvedDepthBuffer = 0;
 
         uint32_t _resolvedId = 0;
         uint32_t _resolvedColorBuffer = 0;
@@ -60,11 +54,6 @@ namespace Core
             UpdateBuffers();
         }
 
-        [[nodiscard]] uint32_t GetResolvedOcclusionBuffer() const
-        {
-            return _resolvedOcclusionBuffer;
-        }
-
         /**
          * @brief Binds underlying FrameBuffer for rendering.
          */
@@ -76,8 +65,6 @@ namespace Core
         void BindResolved() const
         {
             glBindFramebuffer(GL_FRAMEBUFFER, _resolvedId);
-            constexpr GLenum drawBuffers[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-            glDrawBuffers(2, drawBuffers);
         }
 
         /**
@@ -101,35 +88,12 @@ namespace Core
             return _depthStencilBuffer;
         }
 
-        [[nodiscard]] uint32_t GetNormalsBuffer() const
-        {
-            return _normalsBuffer;
-        }
-
-        [[nodiscard]] uint32_t GetResolvedNormals() const
-        {
-            return _resolvedNormalsTexture;
-        }
-
         /**
          * @brief Resolves multisampling and writes result to Resolved color buffer.
          */
         void ResolveMultisampling() const;
 
-        void ResolveNormals() const;
-
-        void WriteNormals() const
-        {
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, _normalsBuffer, 0);
-        }
-
-        void WriteOcclusion() const
-        {
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, _occlusionBuffer,
-                                   0);
-        }
-
     private:
-        void UpdateBuffers();
+        void UpdateBuffers() const;
     };
 }

@@ -25,7 +25,9 @@ namespace Core
         _pbrProjectionMatrixLocation(_pbrShader.GetUniformLocation("ProjectionMatrix")),
         _cameraPositionLocation(_pbrShader.GetUniformLocation("CameraPosition")),
         _brdfLut(CubeMapGenerator::CreateBrdfLut()),
-        DirectionalLightProjectionMatrix(glm::ortho(-150.0f, 150.0f, -150.0f, 150.0f, 0.1f, 300.0f))
+        DirectionalLightProjectionMatrix(glm::ortho(-150.0f, 150.0f, -150.0f, 150.0f, 0.1f, 300.0f)),
+        _frameBuffer(Resolution),
+        _bloomPostprocessingEffect(Resolution)
     {
         glGenBuffers(1, &IndirectDrawCommandsSsbo);
         glGenBuffers(1, &TransformsSsbo);
@@ -54,14 +56,15 @@ namespace Core
         glDepthMask(GL_TRUE);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glViewport(0, 0, static_cast<int32_t>(_resolution.x), static_cast<int32_t>(_resolution.y));
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glCullFace(GL_BACK);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        _frameBuffer.BindMultiSampled();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // ------------------------ MESHES ------------------------
 
@@ -111,7 +114,8 @@ namespace Core
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, IndirectDrawCommandsSsbo);
 
-        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, _indirectDrawCommands.size(), 0);
+        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr,
+                                    static_cast<int32_t>(_indirectDrawCommands.size()), 0);
 
         // ------------------------ SKYBOX ------------------------
 
@@ -123,6 +127,8 @@ namespace Core
         glBindTexture(GL_TEXTURE_CUBE_MAP, Scene.GetSkybox().GetCubeMap());
 
         CubeRenderer::Draw();
+        _frameBuffer.ResolveMultisampling();
+        _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());
     }
 
     void Renderer::BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,

@@ -30,7 +30,7 @@ layout(std430, binding = 0) readonly restrict buffer MaterialBuffer
 };
 
 
-layout (location = 0) out vec3 FragColor;
+layout (location = 0) out vec4 FragColor;
 
 layout (early_fragment_tests) in;
 void main()
@@ -56,5 +56,5 @@ void main()
     vec3 Emissive = texture(Materials[MaterialIndex].EmissiveMap, TexCoord).rgb * Materials[MaterialIndex].EmissiveColor;
     Color += Emissive;
 
-    FragColor = Color;
+    FragColor = vec4(Color, 1.0);
 }

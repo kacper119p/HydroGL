@@ -52,7 +52,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
     const Core::Texture normalMap = Core::Texture::GetTexture("Assets/Textures/Box/NormalMap.dds");
     const Core::Texture rmaoMap = Core::Texture::GetTexture("Assets/Textures/Box/RmaoMap.dds");
 
-    const Core::MaterialId material = materialManager->CreateMaterial(glm::vec3(1.0f), 0.0f, glm::vec3(0.0f), 0.0f,
+    const Core::MaterialId material = materialManager->CreateMaterial(glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 0.0f,
                                                                       baseMap, rmaoMap, normalMap, emissiveMap);
 
     Core::TransformComponent& meshTransform = entityRegistry->emplace<Core::TransformComponent>(meshEntity);
@@ -78,6 +78,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
     Core::DirectionalLightComponent& directionalLight = entityRegistry->emplace<Core::DirectionalLightComponent>(
             directionalLightEntity);
     directionalLight.Color = glm::vec3(16.0f, 1.0f, 1.0f);
+    directionalLightTransform.SetLocalEulerAngles(glm::vec3(90.0f, 0.0f, 0.0f));
 
     auto lastTime = std::chrono::high_resolution_clock::now();
     while (!Window->ShouldClose())
