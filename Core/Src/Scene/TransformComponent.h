@@ -8,7 +8,7 @@
 
 namespace Core
 {
-    class TransformComponent
+    struct TransformComponent
     {
         friend class SceneNode;
 
@@ -23,40 +23,101 @@ namespace Core
 
     public:
         static void on_construct(entt::registry& Registry, entt::entity Id);
+
         static void on_destroy(entt::registry& Registry, entt::entity Id);
 
     public:
-        [[nodiscard]] const glm::vec3& GetPosition() const { return _position; }
+        [[nodiscard]] const glm::vec3& GetLocalPosition() const
+        {
+            return _position;
+        }
 
-        void SetPosition(const glm::vec3& Position)
+        void SetLocalPosition(const glm::vec3& Position)
         {
             _position = Position;
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] const glm::vec3& GetScale() const { return _scale; }
+        [[nodiscard]] const glm::vec3& GetLocalScale() const
+        {
+            return _scale;
+        }
 
-        void SetScale(const glm::vec3& Scale)
+        void SetLocalScale(const glm::vec3& Scale)
         {
             _scale = Scale;
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] const glm::quat& GetRotation() const { return _rotation; }
+        [[nodiscard]] const glm::quat& GetLocalRotation() const
+        {
+            return _rotation;
+        }
 
-        void SetRotation(const glm::quat& Rotation)
+        void SetLocalRotation(const glm::quat& Rotation)
         {
             _rotation = Rotation;
             _sceneHierarchyNode->MarkDirty();
         }
 
-        void SetEulerAngles(const glm::vec3& EulerAngles)
+        void SetLocalEulerAngles(const glm::vec3& EulerAngles)
         {
-            _rotation = glm::quat(EulerAngles);
+            _rotation = glm::quat(glm::radians(EulerAngles));
             _sceneHierarchyNode->MarkDirty();
         }
 
-        [[nodiscard]] glm::vec3 GetEulerAngles() const { return glm::degrees(glm::eulerAngles(_rotation)); }
+        [[nodiscard]] glm::vec3 GetWorldPosition() const
+        {
+            return glm::vec3(GetLocalToWorldMatrix()[3]);
+        }
+
+
+        void SetWorldPosition(const glm::vec3& Position)
+        {
+            if (_sceneHierarchyNode->GetParent())
+            {
+                const SceneNode* parentNode = _sceneHierarchyNode->GetParent();
+                const glm::mat4& parentWorld = parentNode->GetTransformComponent().GetLocalToWorldMatrix();
+                const glm::mat4 parentWorldInv = glm::inverse(parentWorld);
+                _position = glm::vec3(parentWorldInv * glm::vec4(Position, 1.0f));
+            } else
+            {
+                _position = Position;
+            }
+            _sceneHierarchyNode->MarkDirty();
+        }
+
+        [[nodiscard]] glm::vec3 GetLocalEulerAngles() const
+        {
+            return glm::degrees(glm::eulerAngles(_rotation));
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldRight() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::normalize(_localToWorldMatrix[0]);
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldUp() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::normalize(_localToWorldMatrix[1]);
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldForward() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return -glm::normalize(_localToWorldMatrix[2]);
+        }
 
         [[nodiscard]] const glm::mat4& GetLocalToWorldMatrix() const
         {
@@ -76,6 +137,9 @@ namespace Core
             return _localToParentMatrix;
         }
 
-        [[nodiscard]] SceneNode& GetSceneHierarchyNode() const { return *_sceneHierarchyNode; }
+        [[nodiscard]] SceneNode& GetSceneHierarchyNode() const
+        {
+            return *_sceneHierarchyNode;
+        }
     };
-} // namespace Core
+}

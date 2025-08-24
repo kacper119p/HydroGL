@@ -1,17 +1,30 @@
 #include "Window.h"
 
+#include <cstdint>
 #include <windows.h>
 #include <glad/glad.h>
 
 #include "Debug.h"
+#include "Input.h"
 #include "GL/wglext.h"
 
 namespace Platform
 {
     static LRESULT CALLBACK WndProc(HWND Hwnd, const UINT Msg, const WPARAM WParam, const LPARAM LParam)
     {
+        static bool isDragging = false;
+        static POINT oldMousePosition;
+
+        const Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(Hwnd, GWLP_USERDATA));
+
         switch (Msg)
         {
+            case WM_CREATE:
+            {
+                CREATESTRUCT* cs = reinterpret_cast<CREATESTRUCT*>(LParam);
+                SetWindowLongPtr(Hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+            }
+            break;
             case WM_CLOSE:
                 PostQuitMessage(0);
                 return 0;
@@ -21,22 +34,108 @@ namespace Platform
                     SetCursor(LoadCursor(nullptr, IDC_ARROW));
                 }
                 break;
+
+            case WM_KEYDOWN:
+                switch (WParam)
+                {
+                    case 'W':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::W, Input::ButtonEventType::KeyPressed);
+                        break;
+                    case 'A':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::A, Input::ButtonEventType::KeyPressed);
+                        break;
+                    case 'S':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::S, Input::ButtonEventType::KeyPressed);
+                        break;
+                    case 'D':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::D, Input::ButtonEventType::KeyPressed);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case WM_KEYUP:
+                switch (WParam)
+                {
+                    case 'W':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::W, Input::ButtonEventType::KeyReleased);
+                        break;
+                    case 'A':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::A, Input::ButtonEventType::KeyReleased);
+                        break;
+                    case 'S':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::S, Input::ButtonEventType::KeyReleased);
+                        break;
+                    case 'D':
+                        Input::DispatchMovementEvent(Input::KeyboardButton::D, Input::ButtonEventType::KeyReleased);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case WM_MOUSEMOVE:
+            {
+                if (isDragging)
+                {
+                    POINT currentMousePosition;
+                    GetCursorPos(&currentMousePosition);
+                    const float deltaX = static_cast<float>(currentMousePosition.x - oldMousePosition.x)
+                                         / static_cast<float>(window->GetWindowWidth());
+                    const float deltaY = static_cast<float>(currentMousePosition.y - oldMousePosition.y)
+                                         / static_cast<float>(window->GetWindowHeight());
+                    SetCursorPos(oldMousePosition.x, oldMousePosition.y);
+                    Input::DispatchCameraRotationEvent(deltaX, deltaY);
+                }
+                break;
+            }
+            case WM_RBUTTONDOWN:
+            {
+                Input::DispatchCameraDragEvent(true);
+                ShowCursor(FALSE);
+                GetCursorPos(&oldMousePosition);
+                isDragging = true;
+                break;
+            }
+            case WM_RBUTTONUP:
+                ShowCursor(TRUE);
+                isDragging = false;
+                Input::DispatchCameraDragEvent(false);
+                break;
+            case WM_SETFOCUS:
+                if (isDragging)
+                {
+                    ShowCursor(TRUE);
+                    isDragging = false;
+                    Input::DispatchCameraDragEvent(false);
+                }
+                break;
             default:
                 break;
         }
         return DefWindowProc(Hwnd, Msg, WParam, LParam);
     }
 
-    Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext):
+    Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext, const uint32_t WindowWidth,
+                   const uint32_t WindowHeight) :
         _windowHandle(WindowHandle),
         _deviceContext(DeviceContext),
-        _openGlContext(OpenGlContext)
+        _openGlContext(OpenGlContext),
+        _windowWidth(WindowWidth),
+        _windowHeight(WindowHeight)
     {
     }
 
     Window::~Window()
     {
-        Close();
+        ChangeDisplaySettings(nullptr, 0);
+        SetForegroundWindow(GetDesktopWindow());
+        wglMakeCurrent(nullptr, nullptr);
+        wglDeleteContext(_openGlContext);
+        ReleaseDC(_windowHandle, _deviceContext);
+        DestroyWindow(_windowHandle);
+        _windowHandle = nullptr;
+        _deviceContext = nullptr;
+        _openGlContext = nullptr;
     }
 
     Window* Window::Create(HINSTANCE HInstance)
@@ -55,13 +154,17 @@ namespace Platform
         MONITORINFO monitorInfo = {sizeof(monitorInfo)};
         HMONITOR primaryMonitor = MonitorFromWindow(nullptr, MONITOR_DEFAULTTOPRIMARY);
         GetMonitorInfo(primaryMonitor, &monitorInfo);
+
+        const int32_t windowWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+        const int32_t windowHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+
         HWND hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP,
                                    className,
                                    "HydroGL",
                                    WS_POPUP,
                                    monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
-                                   monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                                   monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                                   windowWidth,
+                                   windowHeight,
                                    nullptr, nullptr, HInstance, nullptr);
         if (!hwnd)
         {
@@ -150,44 +253,44 @@ namespace Platform
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         Debug::EnableOpenGlDebugging();
 #endif
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-        return new Window(hwnd, deviceContext, fullGlContext);
+        Window* window = new Window(hwnd, deviceContext, fullGlContext, windowWidth, windowHeight);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
+        return window;
     }
 
-    bool Window::ShouldClose()
+    void Window::PoolEvents()
     {
-        wglMakeCurrent(_deviceContext, _openGlContext);
-
         MSG msg;
-        while (true)
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
-            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+            switch (msg.message)
             {
-                if (msg.message == WM_QUIT)
-                {
-                    return true;
-                }
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                case WM_QUIT:
+                    _shouldClose = true;
+                    break;
+                default:
+                    break;
             }
 
-            // OpenGL rendering here
-            glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            SwapBuffers(_deviceContext);
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
     }
 
-    void Window::Close()
+    bool Window::ShouldClose() const
     {
-        ChangeDisplaySettings(nullptr, 0);
-        SetForegroundWindow(GetDesktopWindow());
-        wglMakeCurrent(nullptr, nullptr);
-        wglDeleteContext(_openGlContext);
-        ReleaseDC(_windowHandle, _deviceContext);
-        DestroyWindow(_windowHandle);
-        _windowHandle = nullptr;
-        _deviceContext = nullptr;
-        _openGlContext = nullptr;
+        return _shouldClose;
+    }
+
+    void Window::MakeContextCurrent() const
+    {
+        wglMakeCurrent(_deviceContext, _openGlContext);
+    }
+
+    void Window::SwapBuffers() const
+    {
+        ::SwapBuffers(_deviceContext);
     }
 }

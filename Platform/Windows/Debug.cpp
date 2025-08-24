@@ -17,9 +17,10 @@ namespace Platform
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     }
 
-    void Debug::GlDebugOutput(GLenum Source, GLenum Type, unsigned int Id, GLenum Severity, GLsizei Length,
-                              const char* Message, const void* UserParam)
+    void Debug::GlDebugOutput(const GLenum Source, const GLenum Type, const GLuint Id, const GLenum Severity,
+                              GLsizei Length, const char* Message, const void* UserParam)
     {
+
         // Ignore non-significant error/warning codes
         if (Id == 131169 || Id == 131185 || Id == 131218 || Id == 131204)
             return;
@@ -79,8 +80,6 @@ namespace Platform
                 stream << "Type: Pop Group | ";
                 break;
             case GL_DEBUG_TYPE_OTHER:
-                stream << "Type: Other | ";
-                break;
             default:
                 stream << "Type: Other | ";
                 break;

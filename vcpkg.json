@@ -9,6 +9,7 @@
     "gtest",
     "spdlog",
     "tracy",
-    "entt"
+    "entt",
+    "assimp"
   ]
 }

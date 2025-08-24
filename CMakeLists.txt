@@ -12,7 +12,8 @@ endif ()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 include(GlobalSettings)
 
-add_subdirectory(Application)
-add_subdirectory(Core)
-add_subdirectory(Platform)
 add_subdirectory(ThirdParty)
+add_subdirectory(Platform)
+add_subdirectory(Core)
+add_subdirectory(Application)
+

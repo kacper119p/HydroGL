@@ -15,12 +15,12 @@ namespace Platform
     }
 }
 
-static int WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
+int WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 {
     return Platform::Launcher::Start(hInstance);
 }
 
-static int main(int, char*)
+int main(int, char**)
 {
     return Platform::Launcher::Start(nullptr);
 }

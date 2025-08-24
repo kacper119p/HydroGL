@@ -14,8 +14,6 @@ protected:
     std::unique_ptr<entt::registry> _registry = std::make_unique<entt::registry>();
 };
 
-
-// Demonstrate some basic assertions.
 TEST_F(TransformTests, TransformCreationAndDestruction)
 {
     const entt::entity id = _registry->create();
@@ -48,17 +46,17 @@ TEST_F(TransformTests, TransformMatrixUpdate)
 
     // Euler Angles
     constexpr glm::vec3 euler = glm::vec3(90.0f, 45.0f, 12.0f);
-    glm::mat4 targetMatrix = glm::toMat4(glm::quat(euler));
-    ASSERT_NO_FATAL_FAILURE(transform.SetEulerAngles(euler));
+    glm::mat4 targetMatrix = glm::toMat4(glm::quat(glm::radians(euler)));
+    ASSERT_NO_FATAL_FAILURE(transform.SetLocalEulerAngles(euler));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToParentMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToWorldMatrix(), targetMatrix));
 
-    ASSERT_NO_FATAL_FAILURE(transform.SetEulerAngles(glm::vec3(0.0f)));
+    ASSERT_NO_FATAL_FAILURE(transform.SetLocalEulerAngles(glm::vec3(0.0f)));
 
     // Translation
     glm::vec3 position = glm::vec3(326.0f, -7235.0f, 523.0f);
     targetMatrix = glm::translate(glm::mat4(1.0f), position);
-    ASSERT_NO_FATAL_FAILURE(transform.SetPosition(position));
+    ASSERT_NO_FATAL_FAILURE(transform.SetLocalPosition(position));
 
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToParentMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToWorldMatrix(), targetMatrix));
@@ -66,7 +64,7 @@ TEST_F(TransformTests, TransformMatrixUpdate)
     // Quat rotation
     const glm::quat rotation = glm::quat(glm::vec3(53.0f, -53.0f, 43.0f));
     targetMatrix *= glm::toMat4(rotation);
-    transform.SetRotation(rotation);
+    transform.SetLocalRotation(rotation);
 
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToParentMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToWorldMatrix(), targetMatrix));
@@ -74,7 +72,7 @@ TEST_F(TransformTests, TransformMatrixUpdate)
     // Scale
     constexpr glm::vec3 scale = glm::vec3(6.0f, 3.0f, 64.0f);
     targetMatrix = glm::scale(targetMatrix, scale);
-    ASSERT_NO_FATAL_FAILURE(transform.SetScale(scale));
+    ASSERT_NO_FATAL_FAILURE(transform.SetLocalScale(scale));
 
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToParentMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(transform.GetLocalToWorldMatrix(), targetMatrix));
@@ -89,15 +87,15 @@ TEST_F(TransformTests, ChildMatrixUpdateTest)
 
     ASSERT_NO_FATAL_FAILURE(childTransform.GetSceneHierarchyNode().SetParent(parentTransform.GetSceneHierarchyNode()));
     ASSERT_NO_FATAL_FAILURE(
-            ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), glm::identity<glm::mat4>()));
+        ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), glm::identity<glm::mat4>()));
     ASSERT_NO_FATAL_FAILURE(
-            ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
+        ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
 
     constexpr glm::vec3 position = glm::vec3(3420.0f, 53.0f, 53.0f);
     constexpr glm::mat4 targetMatrix = glm::translate(glm::mat4(1.0f), position);
-    ASSERT_NO_FATAL_FAILURE(parentTransform.SetPosition(position));
+    ASSERT_NO_FATAL_FAILURE(parentTransform.SetLocalPosition(position));
 
     ASSERT_NO_FATAL_FAILURE(::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), targetMatrix));
     ASSERT_NO_FATAL_FAILURE(
-            ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
+        ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToParentMatrix(), glm::identity<glm::mat4>()));
 }

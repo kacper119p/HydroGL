@@ -7,7 +7,7 @@
 
 namespace Core
 {
-    class TransformComponent;
+    struct TransformComponent;
 
     class SceneNode
     {
@@ -22,12 +22,18 @@ namespace Core
 
     public:
         SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) :
-            _entityRegistry(EntityRegistry), _entityId(EntityId)
+            _entityRegistry(EntityRegistry),
+            _entityId(EntityId)
         {
         }
 
     public:
         ~SceneNode();
+
+    public:
+        static SceneNode* Create(entt::registry* EntityRegistry, entt::entity EntityId);
+
+    public:
         void AddChild(SceneNode& Child)
         {
             if (Child._parent != nullptr)
@@ -39,10 +45,6 @@ namespace Core
             _children.push_back(&Child);
         }
 
-    public:
-        static SceneNode* Create(entt::registry* EntityRegistry, entt::entity EntityId);
-
-    public:
         void RemoveChild(SceneNode& Child)
         {
             if (std::erase(_children, &Child))
@@ -63,20 +65,38 @@ namespace Core
             MarkDirty();
         }
 
-        [[nodiscard]] SceneNode* GetParent() const { return _parent; }
+        [[nodiscard]] SceneNode* GetParent() const
+        {
+            return _parent;
+        }
 
         void MarkDirty() const;
+
         void UpdateMatrices() const;
 
-        [[nodiscard]] std::vector<SceneNode*>::iterator begin() { return _children.begin(); }
+        [[nodiscard]] std::vector<SceneNode*>::iterator begin()
+        {
+            return _children.begin();
+        }
 
-        [[nodiscard]] std::vector<SceneNode*>::iterator end() { return _children.end(); }
+        [[nodiscard]] std::vector<SceneNode*>::iterator end()
+        {
+            return _children.end();
+        }
 
-        [[nodiscard]] std::vector<SceneNode*>::const_iterator begin() const { return _children.begin(); }
+        [[nodiscard]] std::vector<SceneNode*>::const_iterator begin() const
+        {
+            return _children.begin();
+        }
 
-        [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const { return _children.end(); }
+        [[nodiscard]] std::vector<SceneNode*>::const_iterator end() const
+        {
+            return _children.end();
+        }
+
+        const TransformComponent& GetTransformComponent() const;
 
     private:
         void UpdateMatrices(TransformComponent& Transform) const;
     };
-} // namespace Core
+}
