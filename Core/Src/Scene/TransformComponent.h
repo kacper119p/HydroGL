@@ -94,17 +94,29 @@ namespace Core
 
         [[nodiscard]] glm::vec3 GetWorldRight() const
         {
-            return glm::normalize(glm::vec3(_localToWorldMatrix * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::normalize(_localToWorldMatrix[0]);
         }
 
         [[nodiscard]] glm::vec3 GetWorldUp() const
         {
-            return glm::normalize(glm::vec3(_localToWorldMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::normalize(_localToWorldMatrix[1]);
         }
 
         [[nodiscard]] glm::vec3 GetWorldForward() const
         {
-            return glm::normalize(glm::vec3(_localToWorldMatrix * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f)));
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return -glm::normalize(_localToWorldMatrix[2]);
         }
 
         [[nodiscard]] const glm::mat4& GetLocalToWorldMatrix() const
