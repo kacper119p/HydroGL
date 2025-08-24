@@ -6,12 +6,14 @@ layout (binding = 0) uniform sampler2D InputTexture;
 
 layout (location = 0) out vec3 FragColor;
 
-const float FILTER_RADIUS = 0.5;
+const float FILTER_RADIUS = 0.03;
 
 void main()
 {
+    vec2 textureSize = vec2(textureSize(InputTexture, 0));
+    float aspectRatio = textureSize.x / textureSize.y;
     float x = FILTER_RADIUS;
-    float y = FILTER_RADIUS;
+    float y = FILTER_RADIUS * aspectRatio;
 
     vec3 a = texture(InputTexture, vec2(TexCoords.x - x, TexCoords.y + y)).rgb;
     vec3 b = texture(InputTexture, vec2(TexCoords.x, TexCoords.y + y)).rgb;
