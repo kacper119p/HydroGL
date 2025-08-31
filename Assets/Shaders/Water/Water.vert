@@ -1,23 +1,14 @@
 #version 460 core
 
-layout (location = 0) in vec3 inputPosition;
-layout (location = 1) in vec2 inputTexCoord;
-layout (location = 2) in vec3 inputNormal;
-layout (location = 3) in vec3 inputTangent;
+layout (location = 0) in vec3 inputLocalPosition;
+layout (location = 1) in vec3 inputPatchPosition;
 
 out vec3 Position;
-out vec3 Normal;
-out vec3 Tangent;
 
-uniform mat4 ObjectToWorldMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
+uniform vec3 CameraPosition;
 
 void main()
 {
-    gl_Position = ProjectionMatrix * ViewMatrix * ObjectToWorldMatrix * vec4(inputPosition, 1.0);
-
-    Position = (ObjectToWorldMatrix * vec4(inputPosition, 1.0)).xyz;
-    Normal = (ObjectToWorldMatrix * vec4(inputNormal, 0.0)).xyz;
-    Tangent = (ObjectToWorldMatrix * vec4(inputTangent, 0.0)).xyz;
+    Position = inputLocalPosition + inputPatchPosition + vec3(CameraPosition.x, 0.0, CameraPosition.z);
+    gl_Position = vec4(Position, 1.0);
 }

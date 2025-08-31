@@ -7,7 +7,6 @@ namespace Core
 {
     OceanGrid::OceanGrid(const float HalfWidth, const uint32_t PatchCount, const uint32_t PatchSubdivisions)
     {
-
         const float patchSize = (HalfWidth * 2.0f) / static_cast<float>(PatchCount);
         const float halfPatchSize = patchSize * 0.5f;
         const float quadSize = patchSize / static_cast<float>(PatchSubdivisions);
@@ -15,7 +14,7 @@ namespace Core
         const uint32_t verticesOnEdge = PatchSubdivisions + 1;
 
         const uint32_t vertexCount = verticesOnEdge * verticesOnEdge;
-        const uint32_t indexCount = PatchSubdivisions * PatchSubdivisions * 6;
+        const uint32_t indexCount = PatchSubdivisions * PatchSubdivisions * 4;
         const uint32_t patchCount = PatchCount * PatchCount;
 
         glm::vec3* vertexPositions = new glm::vec3[vertexCount];
@@ -27,40 +26,34 @@ namespace Core
             for (uint32_t x = 0; x < verticesOnEdge; ++x)
             {
                 vertexPositions[y * verticesOnEdge + x] = glm::vec3(
-                        -HalfWidth + static_cast<float>(x) * quadSize,
-                        0.0f,
-                        -HalfWidth + static_cast<float>(y) * quadSize);
+                    -halfPatchSize + static_cast<float>(x) * quadSize,
+                    0.0f,
+                    -halfPatchSize + static_cast<float>(y) * quadSize);
             }
         }
         for (uint32_t y = 0; y < PatchSubdivisions; ++y)
         {
             for (uint32_t x = 0; x < PatchSubdivisions; ++x)
             {
-                const uint32_t baseIndex = (y * PatchSubdivisions + x) * 6;
-                const uint32_t v0 = y * verticesOnEdge + x;
-                const uint32_t v1 = v0 + 1;
-                const uint32_t v2 = v0 + verticesOnEdge;
-                const uint32_t v3 = v2 + 1;
+                const uint32_t baseIndex = (y * PatchSubdivisions + x) * 4;
+                const uint32_t lowerLeft = y * verticesOnEdge + x;
+                const uint32_t upperLeft = lowerLeft + verticesOnEdge;
 
-                indices[baseIndex + 0] = v0;
-                indices[baseIndex + 1] = v2;
-                indices[baseIndex + 2] = v1;
-
-                indices[baseIndex + 3] = v1;
-                indices[baseIndex + 4] = v2;
-                indices[baseIndex + 5] = v3;
+                indices[baseIndex + 0] = lowerLeft;
+                indices[baseIndex + 1] = upperLeft;
+                indices[baseIndex + 2] = upperLeft + 1;
+                indices[baseIndex + 3] = lowerLeft + 1;
             }
         }
 
-        const float patchesLowerBound = -HalfWidth + halfPatchSize;
         for (uint32_t y = 0; y < PatchCount; ++y)
         {
             for (uint32_t x = 0; x < PatchCount; ++x)
             {
                 patchPositions[y * PatchCount + x] = glm::vec3(
-                        patchesLowerBound + static_cast<float>(x) * patchSize,
-                        0.0f,
-                        patchesLowerBound + static_cast<float>(y) * patchSize);
+                    -HalfWidth + static_cast<float>(x) * patchSize,
+                    0.0f,
+                    -HalfWidth + static_cast<float>(y) * patchSize);
             }
         }
 
@@ -93,6 +86,22 @@ namespace Core
         delete[] vertexPositions;
         delete[] indices;
         delete[] patchPositions;
+
+        _patchCount = static_cast<int>(patchCount);
+        _elementCount = static_cast<int>(indexCount);
+    }
+
+    void OceanGrid::Draw() const
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glBindVertexArray(_vao);
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
+        glDrawElementsInstanced(GL_PATCHES, _elementCount, GL_UNSIGNED_INT,
+                                nullptr, _patchCount);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDisable(GL_BLEND);
     }
 
     OceanGrid::~OceanGrid()

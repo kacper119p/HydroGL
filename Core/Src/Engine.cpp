@@ -7,12 +7,13 @@
 
 namespace Core
 {
-    Engine::Engine(Platform::Window* Window)
+    Engine::Engine(Platform::Window* Window) : _window(Window),
+                                               _scene(new Scene()),
+                                               _renderer(new Renderer(
+                                                   glm::uvec2(Window->GetWindowWidth(), Window->GetWindowHeight()))),
+                                               _materialManager(new MaterialManager()),
+                                               _waterSystem(new WaterSystem())
     {
-        _window = Window;
-        _scene = new Scene();
-        _renderer = new Renderer(glm::uvec2(Window->GetWindowWidth(), Window->GetWindowHeight()));
-
         MeshManager::Initialize();
 
         spdlog::info("Engine Started.");
@@ -24,6 +25,8 @@ namespace Core
         delete _window;
         delete _scene;
         delete _renderer;
+        delete _materialManager;
+        delete _waterSystem;
 
         MeshManager::FreeResources();
     }
