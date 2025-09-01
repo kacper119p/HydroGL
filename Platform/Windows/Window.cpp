@@ -1,8 +1,12 @@
+#pragma comment(lib, "Shcore.lib")
+
 #include "Window.h"
 
 #include <cstdint>
-#include <windows.h>
+#include <ShellScalingApi.h>
+#include <Windows.h>
 #include <glad/glad.h>
+#include <spdlog/spdlog.h>
 
 #include "Debug.h"
 #include "Input.h"
@@ -123,6 +127,7 @@ namespace Platform
         _windowWidth(WindowWidth),
         _windowHeight(WindowHeight)
     {
+        spdlog::info("Resolution {}x{}", _windowWidth, _windowHeight);
     }
 
     Window::~Window()
@@ -140,6 +145,8 @@ namespace Platform
 
     Window* Window::Create(HINSTANCE HInstance)
     {
+        CHECK(SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) == S_OK);
+
         if (HInstance == nullptr)
         {
             HInstance = GetModuleHandle(nullptr);
@@ -254,6 +261,7 @@ namespace Platform
         Debug::EnableOpenGlDebugging();
 #endif
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+        glEnable(GL_MULTISAMPLE);
 
         Window* window = new Window(hwnd, deviceContext, fullGlContext, windowWidth, windowHeight);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
