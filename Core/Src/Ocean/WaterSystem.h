@@ -15,6 +15,7 @@ namespace Core
         int32_t _viewMatrixLocation;
         int32_t _projectionMatrixLocation;
         int32_t _cameraPositionLocation;
+        int32_t _timeLocation;
 
     public:
         WaterSystem();

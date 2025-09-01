@@ -74,7 +74,6 @@ namespace Core
 
     void MaterialManager::SubmitMaterialToGpu(const MaterialId Id) const
     {
-
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _materialSsbo);
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, Id * static_cast<int64_t>(sizeof(Material)), sizeof(Material),
                         _materials + Id);

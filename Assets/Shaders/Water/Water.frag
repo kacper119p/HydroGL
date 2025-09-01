@@ -15,7 +15,7 @@ layout (early_fragment_tests) in;
 void main()
 {
     vec3 ViewDirection = normalize(CameraPosition - Position);
-    vec3 Color = CalculateLight(vec3(0.0, 0.4, 0.8), 0.1, 0.1, Normal, Position, ViewDirection, 0.0);
+    vec3 Color = CalculateLight(vec3(0.0, 0.4, 0.8), 0.1, 0.1, Normal, Position, ViewDirection, 1.0);
 
     FragColor = vec4(Color, 1.0);
 }

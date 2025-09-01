@@ -93,15 +93,10 @@ namespace Core
 
     void OceanGrid::Draw() const
     {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glBindVertexArray(_vao);
         glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawElementsInstanced(GL_PATCHES, _elementCount, GL_UNSIGNED_INT,
                                 nullptr, _patchCount);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDisable(GL_BLEND);
     }
 
     OceanGrid::~OceanGrid()

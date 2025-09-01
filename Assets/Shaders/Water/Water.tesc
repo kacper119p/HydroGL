@@ -7,16 +7,16 @@ in vec3 Position[];
 out vec3 tcPosition[];
 
 uniform vec3 CameraPosition;
-uniform float MaxDistance = 100.0;
+uniform float MaxDistance = 50.0;
 uniform float MinDistance = 10.0;
 uniform float MaxTessLevel = 64.0;
 uniform float MinTessLevel = 1.0;
 
-float CalculateTessLevel(vec3 patchCenter)
+float CalculateTesselationLevel(vec3 p0, vec3 p1)
 {
-    float distance = distance(patchCenter, CameraPosition);
-    float noramlizedDistance =  clamp((distance - MinDistance) / (MaxDistance - MinDistance), 0.0, 1.0);
-    return mix(MaxTessLevel, MinTessLevel, noramlizedDistance * noramlizedDistance);
+    vec3 center = (p0 + p1) * 0.5;
+    float distance = distance(center, CameraPosition);
+    return mix(MaxTessLevel, MinTessLevel, clamp(distance / MaxDistance, 0.0, 1.0));
 }
 
 void main()
@@ -26,20 +26,10 @@ void main()
 
     if (gl_InvocationID == 0)
     {
-        vec3 center0 = Position[0] + (Position[3] - Position[0]) * 0.5;
-        vec3 center1 = Position[1] + (Position[0] - Position[1]) * 0.5;
-        vec3 center2 = Position[2] + (Position[1] - Position[2]) * 0.5;
-        vec3 center3 = Position[3] + (Position[2] - Position[3]) * 0.5;
-
-        float distance0 = length(center0 - CameraPosition);
-        float distance1 = length(center1 - CameraPosition);
-        float distance2 = length(center2 - CameraPosition);
-        float distance3 = length(center3 - CameraPosition);
-
-        float tess0 = mix(MaxTessLevel, MinTessLevel, clamp(distance0 / MaxDistance, 0.0, 1.0));
-        float tess1 = mix(MaxTessLevel, MinTessLevel, clamp(distance1 / MaxDistance, 0.0, 1.0));
-        float tess2 = mix(MaxTessLevel, MinTessLevel, clamp(distance2 / MaxDistance, 0.0, 1.0));
-        float tess3 = mix(MaxTessLevel, MinTessLevel, clamp(distance3 / MaxDistance, 0.0, 1.0));
+        float tess0 = CalculateTesselationLevel(Position[0], Position[3]);
+        float tess1 = CalculateTesselationLevel(Position[1], Position[0]);
+        float tess2 = CalculateTesselationLevel(Position[2], Position[1]);
+        float tess3 = CalculateTesselationLevel(Position[3], Position[2]);
 
         gl_TessLevelOuter[0] = tess0;
         gl_TessLevelOuter[1] = tess1;
