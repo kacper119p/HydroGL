@@ -2,15 +2,16 @@
 
 #include "Lighting.glsl"
 
+uniform vec3 CameraPosition;
+
 in vec2 TexCoord;
 in vec3 Position;
 in vec3 Normal;
 in vec3 Tangent;
 
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
 
-uniform vec3 CameraPosition;
-
+layout (early_fragment_tests) in;
 void main()
 {
     vec3 ViewDirection = normalize(CameraPosition - Position);

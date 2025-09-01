@@ -36,10 +36,10 @@ void main()
         float distance2 = length(center2 - CameraPosition);
         float distance3 = length(center3 - CameraPosition);
 
-        int tess0 = int(mix(MaxTessLevel, MinTessLevel, clamp(distance0 / MaxDistance, 0.0, 1.0)));
-        int tess1 = int(mix(MaxTessLevel, MinTessLevel, clamp(distance1 / MaxDistance, 0.0, 1.0)));
-        int tess2 = int(mix(MaxTessLevel, MinTessLevel, clamp(distance2 / MaxDistance, 0.0, 1.0)));
-        int tess3 = int(mix(MaxTessLevel, MinTessLevel, clamp(distance3 / MaxDistance, 0.0, 1.0)));
+        float tess0 = mix(MaxTessLevel, MinTessLevel, clamp(distance0 / MaxDistance, 0.0, 1.0));
+        float tess1 = mix(MaxTessLevel, MinTessLevel, clamp(distance1 / MaxDistance, 0.0, 1.0));
+        float tess2 = mix(MaxTessLevel, MinTessLevel, clamp(distance2 / MaxDistance, 0.0, 1.0));
+        float tess3 = mix(MaxTessLevel, MinTessLevel, clamp(distance3 / MaxDistance, 0.0, 1.0));
 
         gl_TessLevelOuter[0] = tess0;
         gl_TessLevelOuter[1] = tess1;

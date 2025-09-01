@@ -137,7 +137,7 @@ namespace Core
         Shader::SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
         Shader::SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
 
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_CUBE_MAP, scene.GetSkybox().GetCubeMap());
 
         CubeRenderer::Draw();
