@@ -6,9 +6,9 @@ namespace Platform
 {
     Input::CallbackId Input::_nextCallbackId = 0;
 
-    std::vector<std::pair<Input::CallbackId, Input::MovementCallback> > Input::_movementCallbacks;
-    std::vector<std::pair<Input::CallbackId, Input::CameraRotationCallback> > Input::_cameraRotationCallbacks;
-    std::vector<std::pair<Input::CallbackId, Input::CameraDragCallback> > Input::_cameraDragCallbacks;
+    std::vector<std::pair<Input::CallbackId, Input::MovementCallback>> Input::_movementCallbacks;
+    std::vector<std::pair<Input::CallbackId, Input::CameraRotationCallback>> Input::_cameraRotationCallbacks;
+    std::vector<std::pair<Input::CallbackId, Input::CameraDragCallback>> Input::_cameraDragCallbacks;
 
     float Input::_inputX = 0.0f;
     float Input::_inputY = 0.0f;
@@ -112,5 +112,20 @@ namespace Platform
             callback(IsDragging);
         }
         _isCameraDragging = IsDragging;
+    }
+
+    void Input::StopMovement()
+    {
+        _inputX = 0.0f;
+        _inputY = 0.0f;
+        _wPressed = false;
+        _aPressed = false;
+        _sPressed = false;
+        _dPressed = false;
+
+        for (const auto& callback : _movementCallbacks | std::views::values)
+        {
+            callback(_inputX, _inputY);
+        }
     }
 }

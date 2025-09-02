@@ -5,7 +5,6 @@
 #include "Lights/DirectionaLight.h"
 #include "Lights/PointLightComponent.h"
 #include "Lights/SpotlightComponent.h"
-#include "Materials/MaterialManager.h"
 #include "Postprocessing/BloomPostprocessingEffect.h"
 #include "RendererHelpers/DrawElementsIndirectCommand.h"
 #include "RendererHelpers/SceneFrameBuffer.h"
@@ -15,6 +14,8 @@
 
 namespace Core
 {
+    class Engine;
+
     class Renderer
     {
     public:
@@ -67,7 +68,7 @@ namespace Core
     public:
         ~Renderer();
 
-        void RenderFrame(const Scene& Scene, const MaterialManager& MaterialManager);
+        void RenderFrame(const Engine& Engine);
 
     private:
         void BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,

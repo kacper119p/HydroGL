@@ -25,8 +25,6 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     std::unique_ptr<Core::Engine> engine = std::make_unique<Core::Engine>(Window);
 
-    std::unique_ptr<Core::MaterialManager> materialManager = std::make_unique<Core::MaterialManager>();
-
     _cameraManager = std::make_unique<CameraManager>(engine.get());
 
     Core::Scene* scene = engine->GetScene();
@@ -52,8 +50,9 @@ int32_t Application::Application::Run(Platform::Window* Window)
     const Core::Texture normalMap = Core::Texture::GetTexture("Assets/Textures/Box/NormalMap.dds");
     const Core::Texture rmaoMap = Core::Texture::GetTexture("Assets/Textures/Box/RmaoMap.dds");
 
-    const Core::MaterialId material = materialManager->CreateMaterial(glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 0.0f,
-                                                                      baseMap, rmaoMap, normalMap, emissiveMap);
+    const Core::MaterialId material = engine->GetMaterialManager()->CreateMaterial(
+        glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 0.0f,
+        baseMap, rmaoMap, normalMap, emissiveMap);
 
     Core::TransformComponent& meshTransform = entityRegistry->emplace<Core::TransformComponent>(meshEntity);
     Core::RenderedMeshComponent& renderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(meshEntity);
@@ -74,11 +73,11 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     const entt::entity directionalLightEntity = entityRegistry->create();
     Core::TransformComponent& directionalLightTransform = entityRegistry->emplace<Core::TransformComponent>(
-            directionalLightEntity);
+        directionalLightEntity);
     Core::DirectionalLightComponent& directionalLight = entityRegistry->emplace<Core::DirectionalLightComponent>(
-            directionalLightEntity);
+        directionalLightEntity);
     directionalLight.Color = glm::vec3(16.0f, 1.0f, 1.0f);
-    directionalLightTransform.SetLocalEulerAngles(glm::vec3(90.0f, 0.0f, 0.0f));
+    directionalLightTransform.SetLocalEulerAngles(glm::vec3(45.0f, 0.0f, 0.0f));
 
     auto lastTime = std::chrono::high_resolution_clock::now();
     while (!Window->ShouldClose())
@@ -91,7 +90,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
         Window->PoolEvents();
         _cameraManager->Update(*scene, deltaTime);
 
-        engine->GetRenderer()->RenderFrame(*scene, *materialManager.get());
+        engine->GetRenderer()->RenderFrame(*engine.get());
         Window->SwapBuffers();
     }
 

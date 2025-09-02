@@ -34,9 +34,9 @@ namespace Platform
         using CameraDragCallback = std::function<void(bool)>;
 
     private:
-        static std::vector<std::pair<CallbackId, MovementCallback> > _movementCallbacks;
-        static std::vector<std::pair<CallbackId, CameraRotationCallback> > _cameraRotationCallbacks;
-        static std::vector<std::pair<CallbackId, CameraDragCallback> > _cameraDragCallbacks;
+        static std::vector<std::pair<CallbackId, MovementCallback>> _movementCallbacks;
+        static std::vector<std::pair<CallbackId, CameraRotationCallback>> _cameraRotationCallbacks;
+        static std::vector<std::pair<CallbackId, CameraDragCallback>> _cameraDragCallbacks;
         static CallbackId _nextCallbackId;
 
         static float _inputX;
@@ -112,5 +112,7 @@ namespace Platform
         static void DispatchCameraRotationEvent(float DeltaX, float DeltaY);
 
         static void DispatchCameraDragEvent(bool IsDragging);
+
+        static void StopMovement();
     };
 }

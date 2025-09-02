@@ -113,6 +113,10 @@ namespace Platform
                     Input::DispatchCameraDragEvent(false);
                 }
                 break;
+            case WM_KILLFOCUS:
+                ShowCursor(TRUE);
+                isDragging = false;
+                Input::StopMovement();
             default:
                 break;
         }
@@ -120,12 +124,11 @@ namespace Platform
     }
 
     Window::Window(HWND WindowHandle, HDC DeviceContext, HGLRC OpenGlContext, const uint32_t WindowWidth,
-                   const uint32_t WindowHeight) :
-        _windowHandle(WindowHandle),
-        _deviceContext(DeviceContext),
-        _openGlContext(OpenGlContext),
-        _windowWidth(WindowWidth),
-        _windowHeight(WindowHeight)
+                   const uint32_t WindowHeight) : _windowHandle(WindowHandle),
+                                                  _deviceContext(DeviceContext),
+                                                  _openGlContext(OpenGlContext),
+                                                  _windowWidth(WindowWidth),
+                                                  _windowHeight(WindowHeight)
     {
         spdlog::info("Resolution {}x{}", _windowWidth, _windowHeight);
     }
@@ -226,15 +229,15 @@ namespace Platform
         }
 
         int contextAttribs[] = {
-                WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-                WGL_CONTEXT_MINOR_VERSION_ARB, 6,
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 6,
 #if DEBUG
-                WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
+            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
 #else
                 WGL_CONTEXT_FLAGS_ARB, 0,
 #endif
-                WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-                0
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
         };
 
         PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =

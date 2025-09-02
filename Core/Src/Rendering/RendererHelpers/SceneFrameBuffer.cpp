@@ -2,8 +2,7 @@
 
 namespace Core
 {
-    SceneFrameBuffer::SceneFrameBuffer(const glm::ivec2& Resolution) :
-        _resolution(Resolution)
+    SceneFrameBuffer::SceneFrameBuffer(const glm::ivec2& Resolution) : _resolution(Resolution)
     {
         glGenFramebuffers(1, &_multiSampledId);
         glGenFramebuffers(1, &_resolvedId);

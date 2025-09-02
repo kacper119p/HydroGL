@@ -5,24 +5,23 @@
 
 namespace Core
 {
-    BloomPostprocessingEffect::BloomPostprocessingEffect(const glm::uvec2 Resolution) :
-        _resolution(Resolution),
+    BloomPostprocessingEffect::BloomPostprocessingEffect(const glm::uvec2 Resolution) : _resolution(Resolution),
         _prefilterShader(ShaderBuilder()
-                .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
-                .SetStage("Assets/Shaders/Bloom/BloomFilter.frag", ShaderStage::FragmentShader)
-                .Build()),
+            .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
+            .SetStage("Assets/Shaders/Bloom/BloomFilter.frag", ShaderStage::FragmentShader)
+            .Build()),
         _downSampleShader(ShaderBuilder()
-                .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
-                .SetStage("Assets/Shaders/Bloom/Downsample.frag", ShaderStage::FragmentShader)
-                .Build()),
+            .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
+            .SetStage("Assets/Shaders/Bloom/Downsample.frag", ShaderStage::FragmentShader)
+            .Build()),
         _upsampleShader(ShaderBuilder()
-                .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
-                .SetStage("Assets/Shaders/Bloom/Upsample.frag", ShaderStage::FragmentShader)
-                .Build()),
+            .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
+            .SetStage("Assets/Shaders/Bloom/Upsample.frag", ShaderStage::FragmentShader)
+            .Build()),
         _outputShader(ShaderBuilder()
-                .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
-                .SetStage("Assets/Shaders/Bloom/BloomOutput.frag", ShaderStage::FragmentShader)
-                .Build())
+            .SetStage("Assets/Shaders/Bloom/Bloom.vert", ShaderStage::VertexShader)
+            .SetStage("Assets/Shaders/Bloom/BloomOutput.frag", ShaderStage::FragmentShader)
+            .Build())
     {
         glGenFramebuffers(1, &_frameBuffer);
 
