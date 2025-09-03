@@ -8,7 +8,7 @@ namespace Core
     private:
         uint32_t _vao = 0;
         uint32_t _vbo = 0;
-        uint32_t _ivbo = 0;
+        uint32_t _patchPositionsVbo = 0;
         uint32_t _ebo = 0;
         int32_t _patchCount = 0;
         int32_t _elementCount = 0;

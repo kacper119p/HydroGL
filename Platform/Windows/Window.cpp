@@ -130,7 +130,6 @@ namespace Platform
                                                   _windowWidth(WindowWidth),
                                                   _windowHeight(WindowHeight)
     {
-        spdlog::info("Resolution {}x{}", _windowWidth, _windowHeight);
     }
 
     Window::~Window()

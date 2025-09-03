@@ -54,7 +54,7 @@ namespace Core
         glDeleteBuffers(1, &_lightsSsbo);
     }
 
-    void Renderer::RenderFrame(const Engine& Engine)
+    void Renderer::RenderFrame(const Engine& Engine, const float DeltaTime)
     {
         const Scene& scene = *Engine.GetScene();
         const entt::registry* entityRegistry = scene.GetEntityRegistry();

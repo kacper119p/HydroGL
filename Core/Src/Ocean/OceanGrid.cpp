@@ -59,7 +59,7 @@ namespace Core
 
         glGenVertexArrays(1, &_vao);
         glGenBuffers(1, &_vbo);
-        glGenBuffers(1, &_ivbo);
+        glGenBuffers(1, &_patchPositionsVbo);
         glGenBuffers(1, &_ebo);
 
         glBindVertexArray(_vao);
@@ -70,7 +70,7 @@ namespace Core
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), reinterpret_cast<void*>(0));
 
-        glBindBuffer(GL_ARRAY_BUFFER, _ivbo);
+        glBindBuffer(GL_ARRAY_BUFFER, _patchPositionsVbo);
         glBufferData(GL_ARRAY_BUFFER, static_cast<int64_t>(sizeof(glm::vec3) * patchCount),
                      patchPositions, GL_STATIC_DRAW);
 
@@ -103,7 +103,7 @@ namespace Core
     {
         glDeleteVertexArrays(1, &_vao);
         glDeleteBuffers(1, &_vbo);
-        glDeleteBuffers(1, &_ivbo);
+        glDeleteBuffers(1, &_patchPositionsVbo);
         glDeleteBuffers(1, &_ebo);
     }
 }
