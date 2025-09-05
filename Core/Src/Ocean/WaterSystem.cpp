@@ -3,6 +3,7 @@
 #include <chrono>
 #include <numbers>
 #include <random>
+#include <spdlog/spdlog.h>
 
 #include "Rendering/Shaders/ShaderBuilder.h"
 
@@ -29,9 +30,6 @@ namespace Core
                                                               ShaderStage::ComputeShader).Build()),
                                  _normalComputeShader(ShaderBuilder().SetStage(
                                      "Assets/Shaders/Water/Normal.comp", ShaderStage::ComputeShader).Build()),
-                                 _orientationComputeShader(ShaderBuilder().SetStage(
-                                     "Assets/Shaders/Water/Orientation.comp",
-                                     ShaderStage::ComputeShader).Build()),
                                  _initialSpectrumComputeShader(ShaderBuilder().SetStage(
                                      "Assets/Shaders/Water/InitialSpectrum.comp",
                                      ShaderStage::ComputeShader).Build()),
@@ -48,6 +46,8 @@ namespace Core
         CreateTexture(&_tmpTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_gaussianNoiseTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,
                       GL_CLAMP_TO_BORDER);
+        spdlog::info("Initial Spectrum Texture: {}", _initialSpectrumTexture);
+        spdlog::info("Gaussian Noise Texture: {}", _gaussianNoiseTexture);
         GenerateInitialSpectrum();
     }
 
@@ -55,12 +55,9 @@ namespace Core
     {
         UpdateSpectrumTexture();
 
-        RunFft(_fftHorizontalShader, _dyTexture);
-        RunFft(_fftVerticalShader, _dyTexture);
-        RunFft(_fftHorizontalShader, _dxTexture);
-        RunFft(_fftVerticalShader, _dxTexture);
-        RunFft(_fftHorizontalShader, _dzTexture);
-        RunFft(_fftVerticalShader, _dzTexture);
+        RunFft(_dyTexture);
+        RunFft(_dxTexture);
+        RunFft(_dzTexture);
 
         UpdateNormalAndDisplacement();
 
@@ -111,6 +108,7 @@ namespace Core
         glBindTexture(GL_TEXTURE_2D, _gaussianNoiseTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TextureResolution, TextureResolution, 0, GL_RGBA, GL_FLOAT,
                      gaussianRnd);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -158,23 +156,37 @@ namespace Core
         glFinish();
     }
 
-    void WaterSystem::RunFft(const Shader& Shader, uint32_t& Texture)
+    void WaterSystem::RunFft(uint32_t& Texture)
     {
-        Shader.Use();
-        Shader.SetUniform("u_resolution", TextureResolution);
+        _fftHorizontalShader.Use();
+        _fftHorizontalShader.SetUniform("u_total_count", TextureResolution);
 
         uint32_t& tmp = _tmpTexture;
 
         bool swap = false;
-        for (int stride = 1, count = TextureResolution; count >= 1; stride <<= 1, count >>= 1)
+        for (int p = 1; p < TextureResolution; p <<= 1)
         {
             glBindImageTexture(0, Texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
             glBindImageTexture(1, tmp, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+            _fftHorizontalShader.SetUniform("u_subseq_count", p);
 
-            Shader.SetUniform("u_stride", stride);
-            Shader.SetUniform("u_count", count);
+            glDispatchCompute(TextureResolution, TextureResolution / 2, 1);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-            glDispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / 2 / WorkGroupDim, 1);
+            std::swap(tmp, Texture);
+            swap = !swap;
+        }
+
+        _fftVerticalShader.Use();
+        _fftVerticalShader.SetUniform("u_total_count", TextureResolution);
+
+        for (int p = 1; p < TextureResolution; p <<= 1)
+        {
+            glBindImageTexture(0, Texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+            glBindImageTexture(1, tmp, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+            _fftVerticalShader.SetUniform("u_subseq_count", p);
+
+            glDispatchCompute(TextureResolution, TextureResolution / 2, 1);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
             std::swap(tmp, Texture);
@@ -186,8 +198,8 @@ namespace Core
         }
     }
 
-    void WaterSystem::CreateTexture(uint32_t* Id, const int32_t Resolution, const GLenum InternalFormat,
-                                    const GLenum Format, const GLenum Type, const GLenum Filter, const GLenum Wrap)
+    void WaterSystem::CreateTexture(uint32_t* Id, const int32_t Resolution, const int32_t InternalFormat,
+                                    const int32_t Format, const int32_t Type, const int32_t Filter, const int32_t Wrap)
     {
         glGenTextures(1, Id);
         glBindTexture(GL_TEXTURE_2D, *Id);

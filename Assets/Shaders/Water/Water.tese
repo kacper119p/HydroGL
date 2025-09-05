@@ -21,9 +21,9 @@ void main()
     vec3 p1 = mix(tcPosition[3], tcPosition[2], u);
     vec3 position = mix(p0, p1, v);
 
-    vec2 texCoord = vec2(position.x, position.z) / 20.0;
+    vec2 texCoord = vec2(position.x, position.z) / 40.0;
 
-    vec3 finalPosition = position + texture(DisplacementMap, texCoord).xyz / 256.0 / 256.0;
+    vec3 finalPosition = position + texture(DisplacementMap, texCoord).xyz / 256.0 / 128.0;
 
     Position = finalPosition;
     TexCoord = texCoord;

@@ -15,7 +15,6 @@ layout (early_fragment_tests) in;
 void main()
 {
     vec3 normal = normalize(texture(NormalMap, TexCoord).rgb);
-    normal *= -1.0f;
     vec3 ViewDirection = normalize(CameraPosition - Position);
     vec3 Color = CalculateLight(vec3(0.0, 0.4, 0.8), 0.05, 0.5, normal, Position, ViewDirection, 1.0);
 

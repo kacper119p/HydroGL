@@ -49,7 +49,7 @@ void main()
 
     vec2 h0 = imageLoad(u_initial_spectrum, pixel_coord).rg;
     ivec2 inv_pixel_coord = (u_resolution - pixel_coord);
-    vec2 h0_est = conj(imageLoad(u_initial_spectrum, inv_pixel_coord).rg);
+    vec2 h0_est = conj(h0);
 
     vec2 h = prod(h0, euler(phase)) + prod(h0_est, euler(-phase));
     vec2 nx = prod(vec2(0, 1), h) * wave_vector.x;

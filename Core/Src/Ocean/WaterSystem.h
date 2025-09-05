@@ -54,9 +54,9 @@ namespace Core
 
         void UpdateNormalAndDisplacement() const;
 
-        void RunFft(const Shader& Shader, uint32_t& Texture);
+        void RunFft(uint32_t& Texture);
 
-        static void CreateTexture(uint32_t* Id, int32_t Resolution, GLenum InternalFormat, GLenum Format, GLenum Type,
-                                  GLenum Filter, GLenum Wrap);
+        static void CreateTexture(uint32_t* Id, int32_t Resolution, int32_t InternalFormat, int32_t Format,
+                                  int32_t Type, int32_t Filter, int32_t Wrap);
     };
 }
