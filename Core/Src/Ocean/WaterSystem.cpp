@@ -3,7 +3,6 @@
 #include <chrono>
 #include <numbers>
 #include <random>
-#include <spdlog/spdlog.h>
 
 #include "Rendering/Shaders/ShaderBuilder.h"
 
@@ -23,6 +22,7 @@ namespace Core
                                  _projectionMatrixLocation(_waterShader.GetUniformLocation("ProjectionMatrix")),
                                  _cameraPositionLocation(_waterShader.GetUniformLocation("CameraPosition")),
                                  _timeLocation(_waterShader.GetUniformLocation("Time")),
+                                 _gridOriginLocation(_waterShader.GetUniformLocation("GridOrigin")),
                                  _fftHorizontalShader(ShaderBuilder().SetStage(
                                      "Assets/Shaders/Water/FftHorizontal.comp", ShaderStage::ComputeShader).Build()),
                                  _fftVerticalShader(
@@ -46,8 +46,6 @@ namespace Core
         CreateTexture(&_tmpTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_gaussianNoiseTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,
                       GL_CLAMP_TO_BORDER);
-        spdlog::info("Initial Spectrum Texture: {}", _initialSpectrumTexture);
-        spdlog::info("Gaussian Noise Texture: {}", _gaussianNoiseTexture);
         GenerateInitialSpectrum();
     }
 
@@ -67,12 +65,17 @@ namespace Core
 
         const float currentTime
                 = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
+        const float quadSize = _oceanGrid.GetQuadSize();
+        const glm::vec2 gridOrigin =
+                glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
 
         _waterShader.Use();
         Shader::SetUniform(_viewMatrixLocation, glm::inverse(CameraTransform.GetLocalToWorldMatrix()));
         Shader::SetUniform(_projectionMatrixLocation, Camera.ProjectionMatrix);
-        Shader::SetUniform(_cameraPositionLocation, CameraTransform.GetWorldPosition());
+        Shader::SetUniform(_cameraPositionLocation, cameraPosition);
         Shader::SetUniform(_timeLocation, currentTime);
+        Shader::SetUniform(_gridOriginLocation, gridOrigin);
 
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, _displacementTexture);

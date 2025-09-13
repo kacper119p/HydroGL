@@ -23,6 +23,7 @@ namespace Core
         int32_t _projectionMatrixLocation;
         int32_t _cameraPositionLocation;
         int32_t _timeLocation;
+        int32_t _gridOriginLocation;
 
         Shader _fftHorizontalShader;
         Shader _fftVerticalShader;
