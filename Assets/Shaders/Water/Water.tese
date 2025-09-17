@@ -6,7 +6,7 @@ in vec3 tcPosition[];
 out vec2 TexCoord;
 out vec3 Position;
 
-uniform vec3 CameraPosition;
+uniform float OceanSize;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
@@ -21,9 +21,9 @@ void main()
     vec3 p1 = mix(tcPosition[3], tcPosition[2], u);
     vec3 position = mix(p0, p1, v);
 
-    vec2 texCoord = vec2(position.x, position.z) / 40.0;
+    vec2 texCoord = vec2(position.x, position.z) / OceanSize;
 
-    vec3 finalPosition = position + texture(DisplacementMap, texCoord).xyz / 256.0 / 128.0;
+    vec3 finalPosition = position + texture(DisplacementMap, texCoord).xyz;
 
     Position = finalPosition;
     TexCoord = texCoord;

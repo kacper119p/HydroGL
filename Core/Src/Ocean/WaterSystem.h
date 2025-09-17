@@ -12,7 +12,7 @@ namespace Core
         static constexpr int32_t TextureResolution = 256;
         static constexpr int32_t WorkGroupDim = 16;
 
-        const int _oceanSize = 512;
+        const int _oceanSize = 4;
         const float _amplitude = 12.0f;
 
     private:

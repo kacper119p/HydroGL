@@ -76,6 +76,7 @@ namespace Core
         Shader::SetUniform(_cameraPositionLocation, cameraPosition);
         Shader::SetUniform(_timeLocation, currentTime);
         Shader::SetUniform(_gridOriginLocation, gridOrigin);
+        _waterShader.SetUniform("OceanSize", static_cast<float>(_oceanSize));
 
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, _displacementTexture);
@@ -148,6 +149,7 @@ namespace Core
     void WaterSystem::UpdateNormalAndDisplacement() const
     {
         _normalComputeShader.Use();
+        _normalComputeShader.SetUniform("OceanSize", static_cast<float>(_oceanSize));
 
         glBindImageTexture(0, _dyTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(1, _dxTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
