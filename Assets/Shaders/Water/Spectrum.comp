@@ -45,7 +45,6 @@ void main()
     float phase = omega(k) * u_time;
 
     vec2 h0 = imageLoad(u_initial_spectrum, pixel_coord).rg;
-    ivec2 inv_pixel_coord = (u_resolution - pixel_coord);
     vec2 h0_est = conj(h0);
 
     vec2 h = prod(h0, euler(phase)) + prod(h0_est, euler(-phase));

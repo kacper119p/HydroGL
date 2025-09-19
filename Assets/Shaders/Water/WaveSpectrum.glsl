@@ -21,12 +21,17 @@ float CalculateSigma(float Omega, float OmegaP)
 float CalculateAlpha()
 {
     const float windSpeed2 = dot(WindVelocity, WindVelocity);
-    return 0.076 * pow(windSpeed2/ (Fetch * G), 0.22);
+    return 0.076 * pow(windSpeed2 / (Fetch * G), 0.22);
 }
 
 float CalculateOmegaP(float WindSpeed, float Fetch)
 {
     return 22.0 * G2 / (WindSpeed * Fetch);
+}
+
+float CalculateROmega(float Omega, float OmegaP)
+{
+    return Omega / OmegaP;
 }
 
 float calulateR(float Omega, float OmegaP)
@@ -45,36 +50,36 @@ float CalculateTheta(vec2 k)
     return atan(k.y, k.x) - theta0;
 }
 
-float CalculateBs(float R)
+float CalculateBs(float ROmega)
 {
-    if (R < 0.95)
+    if (ROmega < 0.95)
     {
-        return max(2.61 * pow(R, 1.3), 0.00005);
+        return 2.61 * pow(ROmega, 1.3);
     }
-    if (R < 1.6)
+    if (ROmega < 1.6)
     {
-        return 2.28 * pow(R, -1.3);
+        return 2.28 * pow(ROmega, -1.3);
     }
-    float epsilon = 0.8393 * exp (-0.567 * log(R * R)) - 0.4;
+    float epsilon = 0.8393 * exp (-0.567 * log(ROmega * ROmega)) - 0.4;
     return pow(10.0, epsilon);
 
 }
 
-float CalculateQdbe(float R)
+float CalculateQdbe(float ROmega)
 {
-    if (R < 0.94)
+    if (ROmega < 0.94)
     {
-        return (7.1467551 * R - 13.4662001) * R + 7.75651088;
+        return (7.1467551 * ROmega - 13.4662001) * ROmega + 7.75651088;
     }
-    if (R < 5.0)
+    if (ROmega < 5.0)
     {
-        return (-0.69906109 * R + 0.77975933) * R + 0.10169164;
+        return (-0.69906109 * ROmega + 0.77975933) * ROmega + 0.10169164;
     }
-    if (R < 100.0)
+    if (ROmega < 100.0)
     {
-        return (-2.1860997 * R + 0.0269209) * R + 0.00016283;
+        return (-2.1860997 * ROmega + 0.0269209) * ROmega + 0.00016283;
     }
-    return 1.2038847 * R + 0.0008147;
+    return 1.2038847 * ROmega + 0.0008147;
 }
 
 float CalculateQdb(float Bs)
@@ -93,9 +98,9 @@ float CalculateDdbe(float Qdbe, float Ddb, float De)
     return Qdbe * Ddb * De;
 }
 
-float CalculateDe(float Theta, float R)
+float CalculateDe(float Theta, float Omega)
 {
-    return pow(abs(cos(Theta / 2.0)), 32.0 * tanh(1.0 / R) * Swell * Swell);
+    return pow(abs(cos(Theta / 2.0)), 32.0 * tanh(1.0 / Omega) * Swell * Swell);
 }
 
 float Jonswap(float alpha, float omega, float wp, float r)
@@ -113,24 +118,23 @@ float Jonswap(float alpha, float omega, float wp, float r)
 float CalculateSpectrum(vec2 k, float CascadeSize)
 {
     float k_length = length(k);
-    k_length = max(k_length, 0.00005);
 
     float omega = CalculateOmega(k_length);
     float omegaP = CalculateOmegaP(length(WindVelocity), Fetch);
     float alpha = CalculateAlpha();
     float theta = CalculateTheta(k);
     float r = calulateR(omega, omegaP);
-    float bs = CalculateBs(r);
+    float rOmega = CalculateROmega(omega, omegaP);
+    float bs = CalculateBs(rOmega);
     float qdb = CalculateQdb(bs);
 
-    float de = CalculateDe(theta, r);
+    float de = CalculateDe(theta, rOmega);
     float ddb = CalculateDdb(qdb, bs, theta);
-    float Qdbe = CalculateQdbe(r);
+    float Qdbe = CalculateQdbe(rOmega);
 
     float ddbe = CalculateDdbe(Qdbe, ddb, de);
     float frequencySpectrum = Jonswap(alpha, omega, omegaP, r);
     float directionalSpectrum = (1 - Delta) / 2.0 / PI + Delta * ddbe;
-    //float directionalSpectrum = 1.0 / (2.0 * PI);
     return max(sqrt(4 * PI / CascadeSize * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega))), 0.0);
 }
 
