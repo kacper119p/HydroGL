@@ -24,6 +24,8 @@ void main()
 {
     ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
 
-    imageStore(u_normal_map, pixel_coord, vec4(normalize(load_normal(pixel_coord)), 1.0f));
-    imageStore(u_displacement_map, pixel_coord, vec4(load_disp(pixel_coord), 1.0f));
+    float phaseChange =  (((pixel_coord.x + pixel_coord.y) % 2)) * 2.0 - 1.0;
+
+    imageStore(u_normal_map, pixel_coord, vec4(normalize(load_normal(pixel_coord)) * phaseChange, 1.0f));
+    imageStore(u_displacement_map, pixel_coord, vec4(load_disp(pixel_coord) * phaseChange, 1.0f));
 }

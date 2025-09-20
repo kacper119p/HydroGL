@@ -1,8 +1,7 @@
 #include "Application.h"
 
-#include <chrono>
-
 #include "Engine.h"
+#include "TimeManager.h"
 #include "Camera/CameraComponent.h"
 #include "Meshes/MeshManager.h"
 #include "Rendering/Renderer.h"
@@ -76,16 +75,15 @@ int32_t Application::Application::Run(Platform::Window* Window)
         directionalLightEntity);
     Core::DirectionalLightComponent& directionalLight = entityRegistry->emplace<Core::DirectionalLightComponent>(
         directionalLightEntity);
-    directionalLight.Color = glm::vec3(0.0f, 0.0f, 0.0f);
+    directionalLight.Color = glm::vec3(16.0f, 0.0f, 0.0f);
     directionalLightTransform.SetLocalEulerAngles(glm::vec3(90.0f, 0.0f, 0.0f));
 
-    auto lastTime = std::chrono::high_resolution_clock::now();
+    float lastTime = Platform::TimeManager::GetTime();
     while (!Window->ShouldClose())
     {
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> delta = currentTime - lastTime;
+        const float currentTime = Platform::TimeManager::GetTime();
+        const float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
-        float deltaTime = delta.count();
 
         Window->PoolEvents();
         _cameraManager->Update(*scene, deltaTime);

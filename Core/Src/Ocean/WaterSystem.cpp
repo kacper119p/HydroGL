@@ -3,7 +3,9 @@
 #include <chrono>
 #include <numbers>
 #include <random>
+#include <spdlog/spdlog.h>
 
+#include "TimeManager.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 
 namespace Core
@@ -63,8 +65,6 @@ namespace Core
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        const float currentTime
-                = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const float quadSize = _oceanGrid.GetQuadSize();
         const glm::vec2 gridOrigin =
@@ -74,7 +74,7 @@ namespace Core
         Shader::SetUniform(_viewMatrixLocation, glm::inverse(CameraTransform.GetLocalToWorldMatrix()));
         Shader::SetUniform(_projectionMatrixLocation, Camera.ProjectionMatrix);
         Shader::SetUniform(_cameraPositionLocation, cameraPosition);
-        Shader::SetUniform(_timeLocation, currentTime);
+        Shader::SetUniform(_timeLocation, Platform::TimeManager::GetTime());
         Shader::SetUniform(_gridOriginLocation, gridOrigin);
         _waterShader.SetUniform("OceanSize", static_cast<float>(_oceanSize));
 
@@ -133,9 +133,7 @@ namespace Core
         _spectrumComputeShader.SetUniform("u_resolution", TextureResolution);
         _spectrumComputeShader.SetUniform("u_ocean_size", _oceanSize);
         _spectrumComputeShader.SetUniform("u_choppiness", 1.5f);
-        const float currentTime
-                = std::chrono::duration<float>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-        _spectrumComputeShader.SetUniform("u_time", currentTime);
+        _spectrumComputeShader.SetUniform("u_time", Platform::TimeManager::GetTime());
 
         glBindImageTexture(0, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(1, _dyTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);

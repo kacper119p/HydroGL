@@ -1,4 +1,4 @@
-uniform vec2 WindVelocity = vec2(1.0, 1.0);
+uniform vec2 WindVelocity = vec2(5.0, 5.0);
 uniform float Fetch = 1000.0;
 uniform float Delta = 0.5;
 uniform float Swell = 0.5;

@@ -2,10 +2,13 @@
 
 #include <windows.h>
 
+#include "TimeManager.h"
+
 namespace Platform
 {
     int Launcher::Start(HINSTANCE HInstance)
     {
+        TimeManager::Initialize();
         Window* window = Window::Create(HInstance);
         if (window == nullptr)
         {

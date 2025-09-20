@@ -37,7 +37,7 @@ void main()
     ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
 
     ivec2 center_offset = ivec2(u_resolution >> 1);
-    ivec2 wrapped_coord = (pixel_coord + center_offset) % u_resolution - center_offset;
+    ivec2 wrapped_coord = pixel_coord - center_offset;
     vec2 wave_vector = (2.f * PI * wrapped_coord) / u_ocean_size;
 
     float k = length(wave_vector);
