@@ -1,6 +1,6 @@
-uniform vec2 WindVelocity = vec2(5.0, 5.0);
-uniform float Fetch = 1000.0;
-uniform float Delta = 0.5;
+uniform vec2 WindVelocity = vec2(16.0, 16.0);
+uniform float Fetch = 10000.0;
+uniform float Delta = 1.0;
 uniform float Swell = 0.5;
 
 const float GAMMA = 3.3;
@@ -41,7 +41,7 @@ float calulateR(float Omega, float OmegaP)
     float numerator = Omega - OmegaP;
     float denominator = 2.0 * sigma * sigma * OmegaP * OmegaP;
 
-    return exp(-1.0 * (numerator * numerator) / denominator);
+    return exp(-(numerator * numerator) / denominator);
 }
 
 float CalculateTheta(vec2 k)
@@ -98,9 +98,9 @@ float CalculateDdbe(float Qdbe, float Ddb, float De)
     return Qdbe * Ddb * De;
 }
 
-float CalculateDe(float Theta, float Omega)
+float CalculateDe(float Theta, float rOmega)
 {
-    return pow(abs(cos(Theta / 2.0)), 32.0 * tanh(1.0 / Omega) * Swell * Swell);
+    return pow(abs(cos(Theta / 2.0)), 32.0 * tanh(1.0 / rOmega) * Swell * Swell);
 }
 
 float Jonswap(float alpha, float omega, float wp, float r)
@@ -115,14 +115,14 @@ float Jonswap(float alpha, float omega, float wp, float r)
     return alpha * G2 / omega5 * exp(-5.0 / 4.0 * omegaPByOmega4) * pow(GAMMA, r);
 }
 
-float CalculateSpectrum(vec2 k, float CascadeSize)
+float CalculateSpectrum(vec2 waveVector, float CascadeSize)
 {
-    float k_length = length(k);
+    float k = length(waveVector);
 
-    float omega = CalculateOmega(k_length);
+    float omega = CalculateOmega(k);
     float omegaP = CalculateOmegaP(length(WindVelocity), Fetch);
     float alpha = CalculateAlpha();
-    float theta = CalculateTheta(k);
+    float theta = CalculateTheta(waveVector);
     float r = calulateR(omega, omegaP);
     float rOmega = CalculateROmega(omega, omegaP);
     float bs = CalculateBs(rOmega);
@@ -134,7 +134,7 @@ float CalculateSpectrum(vec2 k, float CascadeSize)
 
     float ddbe = CalculateDdbe(Qdbe, ddb, de);
     float frequencySpectrum = Jonswap(alpha, omega, omegaP, r);
-    float directionalSpectrum = (1 - Delta) / 2.0 / PI + Delta * ddbe;
-    return max(sqrt(4 * PI / CascadeSize * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega))), 0.0);
+    float directionalSpectrum = mix(1.0 / (2.0 * PI), ddbe, Delta);
+    return max(sqrt(4 * PI / (CascadeSize * k) * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega))), 0.0);
 }
 
