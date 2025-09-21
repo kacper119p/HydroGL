@@ -6,7 +6,7 @@ layout (binding = 0, rgba32f) uniform image2D HDx;
 layout (binding = 1, rgba32f) uniform image2D DzDfhx;
 layout (binding = 2, rgba32f) uniform image2D DfhzDfdxx;
 layout (binding = 3, rgba32f) uniform image2D DfdzxDfdzz;
-layout (binding = 4, rg32f) uniform image2D InitialSpectrum;
+layout (binding = 4, rgba32f) uniform image2D InitialSpectrum;
 
 uniform int TextureResolution;
 uniform int CascadeSize;
@@ -45,8 +45,9 @@ void main()
 
     float phase = Dispersion(k) * Time;
 
-    vec2 h0 = imageLoad(InitialSpectrum, pixelCoords).rg;
-    vec2 h0Star = vec2(h0.x, -h0.y);
+    vec4 initialSpectrum = imageLoad(InitialSpectrum, pixelCoords);
+    vec2 h0 = initialSpectrum.rg;
+    vec2 h0Star = initialSpectrum.ba;
 
     vec2 h = ComplexProduct(h0, Euler(phase)) + ComplexProduct(h0Star, Euler(-phase));
 

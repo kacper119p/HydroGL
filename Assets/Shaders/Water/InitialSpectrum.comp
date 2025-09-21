@@ -2,7 +2,7 @@
 
 #include "WaveSpectrum.glsl"
 
-layout (binding = 0, rg32f) writeonly uniform image2D Output;
+layout (binding = 0, rgba32f) writeonly uniform image2D Output;
 layout (binding = 1, rg32f) readonly uniform image2D GaussianNoise;
 
 uniform int TextureResolution;
@@ -20,6 +20,8 @@ void main()
     vec2 gaussSample = imageLoad(GaussianNoise, pixelCoords).rg;
 
     vec2 h0 = gaussSample * CalculateSpectrum(waveVector, CascadeSize);
+    vec2 h0Star = gaussSample * CalculateSpectrum(-waveVector, CascadeSize);
+    h0Star.y = -h0Star.y;
 
-    imageStore(Output, pixelCoords, vec4(h0, 0.f, 0.f));
+    imageStore(Output, pixelCoords, vec4(h0, h0Star));
 }

@@ -38,7 +38,7 @@ namespace Core
                                  _spectrumComputeShader(ShaderBuilder().SetStage(
                                      "Assets/Shaders/Water/Spectrum.comp", ShaderStage::ComputeShader).Build())
     {
-        CreateTexture(&_initialSpectrumTexture, TextureResolution, GL_RG32F, GL_RG, GL_FLOAT, GL_NEAREST,GL_REPEAT);
+        CreateTexture(&_initialSpectrumTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_hDxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_dzDfhxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_dfhzDfdxxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
@@ -114,7 +114,7 @@ namespace Core
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-        glBindImageTexture(0, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG32F);
+        glBindImageTexture(0, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
 
         glDispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / WorkGroupDim, 1);
@@ -134,7 +134,7 @@ namespace Core
         glBindImageTexture(1, _dzDfhxTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(2, _dfhzDfdxxTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(3, _dfdzxDfdzzTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(4, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
+        glBindImageTexture(4, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
         glDispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / WorkGroupDim, 1);
         glFinish();
