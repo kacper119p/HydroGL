@@ -8,7 +8,7 @@ const float G = 9.80665;
 const float G2 = G * G;
 const float PI = 3.141592653589793;
 
-float CalculateOmega(float k)
+float Dispersion(float k)
 {
     return sqrt(G * k);
 }
@@ -119,7 +119,7 @@ float CalculateSpectrum(vec2 waveVector, float CascadeSize)
 {
     float k = length(waveVector);
 
-    float omega = CalculateOmega(k);
+    float omega = Dispersion(k);
     float omegaP = CalculateOmegaP(length(WindVelocity), Fetch);
     float alpha = CalculateAlpha();
     float theta = CalculateTheta(waveVector);

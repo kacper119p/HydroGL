@@ -27,15 +27,16 @@ namespace Core
 
         Shader _fftHorizontalShader;
         Shader _fftVerticalShader;
-        Shader _normalComputeShader;
+        Shader _assembleComputeShader;
         Shader _orientationComputeShader;
         Shader _initialSpectrumComputeShader;
         Shader _spectrumComputeShader;
 
         uint32_t _initialSpectrumTexture = 0;
-        uint32_t _dxTexture = 0;
-        uint32_t _dyTexture = 0;
-        uint32_t _dzTexture = 0;
+        uint32_t _hDxTexture = 0;
+        uint32_t _dzDfhxTexture = 0;
+        uint32_t _dfhzDfdxxTexture = 0;
+        uint32_t _dfdzxDfdzzTexture = 0;
         uint32_t _spectrumTexture = 0;
         uint32_t _normalTexture = 0;
         uint32_t _displacementTexture = 0;
@@ -49,11 +50,11 @@ namespace Core
         void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera);
 
     private:
-        void GenerateInitialSpectrum();
+        void UpdateInitialSpectrum() const;
 
         void UpdateSpectrumTexture() const;
 
-        void UpdateNormalAndDisplacement() const;
+        void AssembleTextures() const;
 
         void RunFft(uint32_t& Texture);
 

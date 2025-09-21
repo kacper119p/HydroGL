@@ -117,6 +117,7 @@ namespace Platform
                 ShowCursor(TRUE);
                 isDragging = false;
                 Input::StopMovement();
+                break;
             default:
                 break;
         }

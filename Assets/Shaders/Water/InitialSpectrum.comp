@@ -1,35 +1,25 @@
 #version 460 core
 
-#define WORK_GROUP_DIM 16
-
 #include "WaveSpectrum.glsl"
 
-layout (binding = 0, rgba32f) writeonly uniform image2D u_initial_spectrum;
-layout (binding = 1, rgba32f) readonly uniform image2D u_gaussian_noise;
+layout (binding = 0, rg32f) writeonly uniform image2D Output;
+layout (binding = 1, rg32f) readonly uniform image2D GaussianNoise;
 
-uniform int u_resolution;
-uniform int u_ocean_size;
+uniform int TextureResolution;
+uniform int CascadeSize;
 
-vec2 conj(const vec2 a){
-    return vec2(a.x, -a.y);
-}
-
-layout (local_size_x = WORK_GROUP_DIM, local_size_y = WORK_GROUP_DIM) in;
+layout (local_size_x = 16, local_size_y = 16) in;
 void main()
 {
-    ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
 
-    ivec2 center_offset = ivec2(u_resolution >> 1);
-    ivec2 wrapped_coord = pixel_coord  - center_offset;
-    vec2 wave_vector = (2.f * PI * wrapped_coord) / u_ocean_size;
+    ivec2 textureCenter = ivec2(TextureResolution >> 1);
+    ivec2 waveCoords = pixelCoords - textureCenter;
+    vec2 waveVector = (2.f * PI * waveCoords) / CascadeSize;
 
-    vec2 E_p = imageLoad(u_gaussian_noise, pixel_coord).ra;
+    vec2 gaussSample = imageLoad(GaussianNoise, pixelCoords).rb;
 
-    float vp = CalculateSpectrum(wave_vector, u_ocean_size);
-    float vn = CalculateSpectrum(-wave_vector, u_ocean_size);
+    vec2 h0 = gaussSample * CalculateSpectrum(waveVector, CascadeSize);
 
-    vec2 h = E_p*vp;
-    vec2 h_est = conj(E_p*vn);
-
-    imageStore(u_initial_spectrum, pixel_coord, vec4(h, h_est));
+    imageStore(Output, pixelCoords, vec4(h0, 0.f, 0.f));
 }

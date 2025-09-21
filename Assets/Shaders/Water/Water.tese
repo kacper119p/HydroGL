@@ -23,7 +23,7 @@ void main()
 
     vec2 texCoord = vec2(position.x, position.z) / OceanSize;
 
-    vec3 finalPosition = position + texture(DisplacementMap, texCoord).xyz / OceanSize;
+    vec3 finalPosition = position + texture(DisplacementMap, texCoord).xyz;
 
     Position = finalPosition;
     TexCoord = texCoord;

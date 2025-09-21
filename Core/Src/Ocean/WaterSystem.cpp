@@ -30,36 +30,38 @@ namespace Core
                                  _fftVerticalShader(
                                      ShaderBuilder().SetStage("Assets/Shaders/Water/FftVertical.comp",
                                                               ShaderStage::ComputeShader).Build()),
-                                 _normalComputeShader(ShaderBuilder().SetStage(
-                                     "Assets/Shaders/Water/Normal.comp", ShaderStage::ComputeShader).Build()),
+                                 _assembleComputeShader(ShaderBuilder().SetStage(
+                                     "Assets/Shaders/Water/Assemble.comp", ShaderStage::ComputeShader).Build()),
                                  _initialSpectrumComputeShader(ShaderBuilder().SetStage(
                                      "Assets/Shaders/Water/InitialSpectrum.comp",
                                      ShaderStage::ComputeShader).Build()),
                                  _spectrumComputeShader(ShaderBuilder().SetStage(
                                      "Assets/Shaders/Water/Spectrum.comp", ShaderStage::ComputeShader).Build())
     {
-        CreateTexture(&_initialSpectrumTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
-        CreateTexture(&_dxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
-        CreateTexture(&_dyTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
-        CreateTexture(&_dzTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
+        CreateTexture(&_initialSpectrumTexture, TextureResolution, GL_RG32F, GL_RG, GL_FLOAT, GL_NEAREST,GL_REPEAT);
+        CreateTexture(&_hDxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
+        CreateTexture(&_dzDfhxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
+        CreateTexture(&_dfhzDfdxxTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
+        CreateTexture(&_dfdzxDfdzzTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_spectrumTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
         CreateTexture(&_normalTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_LINEAR,GL_REPEAT);
         CreateTexture(&_displacementTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_LINEAR,GL_REPEAT);
         CreateTexture(&_tmpTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT);
-        CreateTexture(&_gaussianNoiseTexture, TextureResolution, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,
+        CreateTexture(&_gaussianNoiseTexture, TextureResolution, GL_RG32F, GL_RG, GL_FLOAT, GL_NEAREST,
                       GL_CLAMP_TO_BORDER);
-        GenerateInitialSpectrum();
+        UpdateInitialSpectrum();
     }
 
     void WaterSystem::Render(const TransformComponent& CameraTransform, const CameraComponent& Camera)
     {
         UpdateSpectrumTexture();
 
-        RunFft(_dyTexture);
-        RunFft(_dxTexture);
-        RunFft(_dzTexture);
+        RunFft(_hDxTexture);
+        RunFft(_dzDfhxTexture);
+        RunFft(_dfhzDfdxxTexture);
+        RunFft(_dfdzxDfdzzTexture);
 
-        UpdateNormalAndDisplacement();
+        AssembleTextures();
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -89,19 +91,13 @@ namespace Core
         glDisable(GL_BLEND);
     }
 
-    void WaterSystem::GenerateInitialSpectrum()
+    void WaterSystem::UpdateInitialSpectrum() const
     {
         _initialSpectrumComputeShader.Use();
-        _initialSpectrumComputeShader.SetUniform("u_resolution", TextureResolution);
-        _initialSpectrumComputeShader.SetUniform("u_ocean_size", _oceanSize);
-        _initialSpectrumComputeShader.SetUniform("u_amplitude", _amplitude);
+        _initialSpectrumComputeShader.SetUniform("TextureResolution", TextureResolution);
+        _initialSpectrumComputeShader.SetUniform("CascadeSize", _oceanSize);
 
-        float wind_angle_rad = std::numbers::pi_v<float> * 30 / 180.f;
-        constexpr float windMagnitude = 50.0f;
-        _initialSpectrumComputeShader.SetUniform(
-            "u_wind", glm::vec2(windMagnitude * cos(wind_angle_rad), windMagnitude * sin(wind_angle_rad)));
-
-        constexpr uint32_t count = 4 * TextureResolution * TextureResolution;
+        constexpr uint32_t count = 2 * TextureResolution * TextureResolution;
         float* gaussianRnd = new float[count];
         std::random_device rndDevice;
         std::mt19937 rng(rndDevice());
@@ -110,7 +106,7 @@ namespace Core
             gaussianRnd[i] = dist(rng);
 
         glBindTexture(GL_TEXTURE_2D, _gaussianNoiseTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TextureResolution, TextureResolution, 0, GL_RGBA, GL_FLOAT,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, TextureResolution, TextureResolution, 0, GL_RG, GL_FLOAT,
                      gaussianRnd);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -118,8 +114,8 @@ namespace Core
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-        glBindImageTexture(0, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(0, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG32F);
+        glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
 
         glDispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / WorkGroupDim, 1);
         glFinish();
@@ -130,30 +126,31 @@ namespace Core
     void WaterSystem::UpdateSpectrumTexture() const
     {
         _spectrumComputeShader.Use();
-        _spectrumComputeShader.SetUniform("u_resolution", TextureResolution);
-        _spectrumComputeShader.SetUniform("u_ocean_size", _oceanSize);
-        _spectrumComputeShader.SetUniform("u_choppiness", 1.5f);
-        _spectrumComputeShader.SetUniform("u_time", Platform::TimeManager::GetTime());
+        _spectrumComputeShader.SetUniform("TextureResolution", TextureResolution);
+        _spectrumComputeShader.SetUniform("CascadeSize", _oceanSize);
+        _spectrumComputeShader.SetUniform("Time", Platform::TimeManager::GetTime());
 
-        glBindImageTexture(0, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _dyTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(2, _dxTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(3, _dzTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(0, _hDxTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(1, _dzDfhxTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, _dfhzDfdxxTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(3, _dfdzxDfdzzTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(4, _initialSpectrumTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
 
         glDispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / WorkGroupDim, 1);
         glFinish();
     }
 
-    void WaterSystem::UpdateNormalAndDisplacement() const
+    void WaterSystem::AssembleTextures() const
     {
-        _normalComputeShader.Use();
-        _normalComputeShader.SetUniform("OceanSize", static_cast<float>(_oceanSize));
+        _assembleComputeShader.Use();
+        _assembleComputeShader.SetUniform("OceanSize", static_cast<float>(_oceanSize));
 
-        glBindImageTexture(0, _dyTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _dxTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(2, _dzTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(3, _normalTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(4, _displacementTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(0, _hDxTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(1, _dzDfhxTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, _dfhzDfdxxTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(3, _dfdzxDfdzzTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(4, _normalTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(5, _displacementTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
         glDispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / WorkGroupDim, 1);
         glFinish();
@@ -162,7 +159,7 @@ namespace Core
     void WaterSystem::RunFft(uint32_t& Texture)
     {
         _fftHorizontalShader.Use();
-        _fftHorizontalShader.SetUniform("u_total_count", TextureResolution);
+        _fftHorizontalShader.SetUniform("TotalCount", TextureResolution);
 
         uint32_t& tmp = _tmpTexture;
 
@@ -171,7 +168,7 @@ namespace Core
         {
             glBindImageTexture(0, Texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
             glBindImageTexture(1, tmp, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-            _fftHorizontalShader.SetUniform("u_subseq_count", p);
+            _fftHorizontalShader.SetUniform("Subcount", p);
 
             glDispatchCompute(TextureResolution, TextureResolution / 2, 1);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -181,13 +178,13 @@ namespace Core
         }
 
         _fftVerticalShader.Use();
-        _fftVerticalShader.SetUniform("u_total_count", TextureResolution);
+        _fftVerticalShader.SetUniform("TotalCount", TextureResolution);
 
         for (int p = 1; p < TextureResolution; p <<= 1)
         {
             glBindImageTexture(0, Texture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
             glBindImageTexture(1, tmp, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-            _fftVerticalShader.SetUniform("u_subseq_count", p);
+            _fftVerticalShader.SetUniform("subCount", p);
 
             glDispatchCompute(TextureResolution, TextureResolution / 2, 1);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
