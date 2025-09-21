@@ -137,4 +137,3 @@ float CalculateSpectrum(vec2 waveVector, float CascadeSize)
     float directionalSpectrum = mix(1.0 / (2.0 * PI), ddbe, Delta);
     return max(sqrt(4 * PI / (CascadeSize * k) * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega))), 0.0);
 }
-

@@ -17,7 +17,7 @@ void main()
     ivec2 waveCoords = pixelCoords - textureCenter;
     vec2 waveVector = (2.f * PI * waveCoords) / CascadeSize;
 
-    vec2 gaussSample = imageLoad(GaussianNoise, pixelCoords).rb;
+    vec2 gaussSample = imageLoad(GaussianNoise, pixelCoords).rg;
 
     vec2 h0 = gaussSample * CalculateSpectrum(waveVector, CascadeSize);
 
