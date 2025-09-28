@@ -6,7 +6,6 @@
 #include "Meshes/MeshManager.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Components/RenderedMeshComponent.h"
-#include "Rendering/Shaders/Shader.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 #include "Rendering/Textures/Texture.h"
 #include "Scene/TransformComponent.h"
@@ -88,7 +87,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
         Window->PoolEvents();
         _cameraManager->Update(*scene, deltaTime);
 
-        engine->GetRenderer()->RenderFrame(*engine.get(), deltaTime);
+        engine->GetRenderer()->RenderFrame(*engine, deltaTime);
         Window->SwapBuffers();
     }
 

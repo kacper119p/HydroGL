@@ -1,69 +1,58 @@
 #version 460 core
 
-#include "WaveSpectrum.glsl"
+#include "WaterCommon.glsl"
+#include "Complex.glsl"
 
-layout (binding = 0, rgba32f) uniform image2D HDx;
-layout (binding = 1, rgba32f) uniform image2D DzDfhx;
-layout (binding = 2, rgba32f) uniform image2D DfhzDfdxx;
-layout (binding = 3, rgba32f) uniform image2D DfdzxDfdzz;
-layout (binding = 4, rgba32f) uniform image2D InitialSpectrum;
+layout (binding = 0, rgba32f) uniform image2DArray HDx;
+layout (binding = 1, rgba32f) uniform image2DArray DzDfhx;
+layout (binding = 2, rgba32f) uniform image2DArray DfhzDfdxx;
+layout (binding = 3, rgba32f) uniform image2DArray DfdzxDfdzz;
+layout (binding = 4, rgba32f) uniform image2DArray InitialSpectrum;
 
-uniform int TextureResolution;
-uniform int CascadeSize;
+layout(std430, binding = 0) buffer CascadeSettingsBuffer
+{
+    int TextureResolution;
+    int CascadeCount;
+    float padding[2];
+    cascadeSettings CascadeSettings[];
+};
+
 uniform float Time;
 
-const float gamma = 3.3;
-const float g = 9.80665;
-
-vec2 ComplexProduct(const vec2 a, const vec2 b)
-{
-    return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
-}
-
-vec2 MultiplyByI(const vec2 x){
-    return vec2(-x.y, x.x);
-}
-
-vec2 MultiplyByMinusI(const vec2 x){
-    return vec2(x.y, -x.x);
-}
-
-vec2 Euler(const float x){
-    return vec2(cos(x), sin(x));
-}
-
-layout (local_size_x = 16, local_size_y = 16) in;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 void main()
 {
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    const int cascadeIndex = int(gl_GlobalInvocationID.z);
+    const ivec3 sampleCoords = ivec3(pixelCoords, cascadeIndex);
 
-    ivec2 textureCenter = ivec2(TextureResolution >> 1);
-    ivec2 waveCoords = pixelCoords - textureCenter;
-    vec2 waveVector = (2.f * PI * waveCoords) / CascadeSize;
+    const ivec2 textureCenter = ivec2(TextureResolution >> 1);
+    const ivec2 waveCoords = pixelCoords - textureCenter;
+    const vec2 waveVector = (2.f * PI * waveCoords) / CascadeSettings[cascadeIndex].Length;
 
     float k = length(waveVector);
 
-    float phase = Dispersion(k) * Time;
+    const float phase = CalculateDispersion(k) * Time;
 
-    vec4 initialSpectrum = imageLoad(InitialSpectrum, pixelCoords);
-    vec2 h0 = initialSpectrum.rg;
-    vec2 h0Star = initialSpectrum.ba;
+    const vec4 initialSpectrum = imageLoad(InitialSpectrum, sampleCoords);
+    const vec2 h0 = initialSpectrum.rg;
+    const vec2 h0Star = initialSpectrum.ba;
 
-    vec2 h = ComplexProduct(h0, Euler(phase)) + ComplexProduct(h0Star, Euler(-phase));
+    const vec2 h = ComplexProduct(h0, Euler(phase)) + ComplexProduct(h0Star, Euler(-phase));
 
     k = max(k, 0.00005);
-    vec2 dx = MultiplyByI(h) / k * waveVector.x;
-    vec2 dz = MultiplyByI(h) / k * waveVector.y;
+    const vec2 dx = MultiplyByI(h) / k * waveVector.x;
+    const vec2 dz = MultiplyByI(h) / k * waveVector.y;
 
-    vec2 dfdxx = -MultiplyByMinusI(dx) * waveVector.x;
-    vec2 dfdzx = -MultiplyByMinusI(dz) * waveVector.x;
-    vec2 dfdzz = -MultiplyByMinusI(dz) * waveVector.y;
+    const vec2 dfdxx = -MultiplyByMinusI(dx) * waveVector.x;
+    const vec2 dfdzx = -MultiplyByMinusI(dz) * waveVector.x;
+    const vec2 dfdzz = -MultiplyByMinusI(dz) * waveVector.y;
 
-    vec2 dfhx = k * dx;
-    vec2 dfhz = k * dz;
+    const vec2 dfhx = k * dx;
+    const vec2 dfhz = k * dz;
 
-    imageStore(HDx, pixelCoords, vec4(h, dx));
-    imageStore(DzDfhx, pixelCoords, vec4(dz, dfhx));
-    imageStore(DfhzDfdxx, pixelCoords, vec4(dfhz, dfdxx));
-    imageStore(DfdzxDfdzz, pixelCoords, vec4(dfdzx, dfdzz));
+    imageStore(HDx, sampleCoords, vec4(h, dx));
+    imageStore(DzDfhx, sampleCoords, vec4(dz, dfhx));
+    imageStore(DfhzDfdxx, sampleCoords, vec4(dfhz, dfdxx));
+    imageStore(DfdzxDfdzz, sampleCoords, vec4(dfdzx, dfdzz));
 }

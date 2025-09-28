@@ -39,6 +39,12 @@ namespace Core
             glDispatchCompute(WorkGroupCount.x, WorkGroupCount.y, WorkGroupCount.z);
         }
 
+        static void DispatchCompute(const int32_t WorkGroupCountX, const int32_t WorkGroupCountY,
+                                    const int32_t WorkGroupCountZ)
+        {
+            glDispatchCompute(WorkGroupCountX, WorkGroupCountY, WorkGroupCountZ);
+        }
+
         static void DispatchCompute()
         {
             glDispatchCompute(1, 1, 1);

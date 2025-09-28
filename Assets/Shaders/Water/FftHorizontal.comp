@@ -1,48 +1,43 @@
 #version 460 core
 
+#include "Complex.glsl"
+#include "Constants.glsl"
+
 #define WORK_GROUP_DIM 256
 
-#define PI 3.14159265358979323846
-
-layout (local_size_x = WORK_GROUP_DIM) in;
-
-layout (binding = 0, rgba32f) uniform readonly image2D Input;
-layout (binding = 1, rgba32f) uniform writeonly image2D Output;
+layout (binding = 0, rgba32f) uniform readonly image2DArray Input;
+layout (binding = 1, rgba32f) uniform writeonly image2DArray Output;
 
 uniform int TotalCount;
 uniform int Subcount;
 
-vec2 MultiplyComplex(vec2 a, vec2 b)
-{
-    return vec2(a[0] * b[0] - a[1] * b[1], a[1] * b[0] + a[0] * b[1]);
-}
-
 vec4 ButterflyOperation(vec2 a, vec2 b, vec2 twiddle)
 {
-    vec2 twiddleB = MultiplyComplex(twiddle, b);
-    vec4 result = vec4(a + twiddleB, a - twiddleB);
-    return result;
+    const vec2 twiddleB = ComplexProduct(twiddle, b);
+    return vec4(a + twiddleB, a - twiddleB);
 }
 
+layout (local_size_x = WORK_GROUP_DIM, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-    ivec2 pixelCoords = ivec2(gl_LocalInvocationID.x, gl_WorkGroupID.x);
+    const ivec2 pixelCoords = ivec2(gl_LocalInvocationID.x, gl_WorkGroupID.x);
+    const int layerId = int(gl_GlobalInvocationID.z);
 
-    int thread_count = int(TotalCount * 0.5f);
-    int threadIdx = pixelCoords.x;
+    const int thread_count = int(TotalCount * 0.5f);
+    const int threadIdx = pixelCoords.x;
 
-    int inIdx = threadIdx & (Subcount - 1);
-    int outIdx = ((threadIdx - inIdx) << 1) + inIdx;
+    const int inIdx = threadIdx & (Subcount - 1);
+    const int outIdx = ((threadIdx - inIdx) << 1) + inIdx;
 
-    float angle = -PI * (float(inIdx) / float(Subcount));
-    vec2 twiddle = vec2(cos(angle), sin(angle));
+    const float angle = -PI * (float(inIdx) / float(Subcount));
+    const vec2 twiddle = Euler(angle);
 
-    vec4 a = imageLoad(Input, pixelCoords);
-    vec4 b = imageLoad(Input, ivec2(pixelCoords.x + thread_count, pixelCoords.y));
+    const vec4 a = imageLoad(Input, ivec3(pixelCoords, layerId));
+    const vec4 b = imageLoad(Input, ivec3(pixelCoords.x + thread_count, pixelCoords.y, layerId));
 
-    vec4 result0 = ButterflyOperation(a.xy, b.xy, twiddle);
-    vec4 result1 = ButterflyOperation(a.zw, b.zw, twiddle);
+    const  vec4 result0 = ButterflyOperation(a.xy, b.xy, twiddle);
+    const  vec4 result1 = ButterflyOperation(a.zw, b.zw, twiddle);
 
-    imageStore(Output, ivec2(outIdx, pixelCoords.y), vec4(result0.xy, result1.xy));
-    imageStore(Output, ivec2(outIdx + Subcount, pixelCoords.y), vec4(result0.zw, result1.zw));
+    imageStore(Output, ivec3(outIdx, pixelCoords.y, layerId), vec4(result0.xy, result1.xy));
+    imageStore(Output, ivec3(outIdx + Subcount, pixelCoords.y, layerId), vec4(result0.zw, result1.zw));
 }
