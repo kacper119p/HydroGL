@@ -16,8 +16,8 @@ namespace Core
 
         constexpr glm::vec2 DefaultWindVelocity{16.0f, 16.0f};
         constexpr float DefaultFetch = 10000.0f;
-        constexpr float DefaultDelta = 1.0;
-        constexpr float DefaultSwell = 0.5;
+        constexpr float DefaultDelta = 1.0f;
+        constexpr float DefaultSwell = 0.5f;
     }
 
 

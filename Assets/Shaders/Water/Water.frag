@@ -1,6 +1,7 @@
 #version 460 core
 
 #include "WaterCommon.glsl"
+#include "Normal.glsl"
 #include "Lighting.glsl"
 
 uniform vec3 CameraPosition;
@@ -30,15 +31,27 @@ layout (early_fragment_tests) in;
 void main()
 {
     vec3 geometryNormal = normalize(cross(dFdy(Position), dFdx(Position)));
-    // vec3 normal = normalize(texture(NormalMap, TexCoord).rgb);
+
+    const vec2 texCoord = vec2(Position.x, Position.z) / CascadeSettings[0].Length;
+    vec3 normal =  texture(NormalMap, vec3(texCoord, 0)).xyz;
+    for (int i = 1; i < CascadeCount; ++i)
+    {
+        const vec2 texCoord = vec2(Position.x, Position.z) / CascadeSettings[i].Length;
+        normal = BlendNormals(normal, texture(NormalMap, vec3(texCoord, i)).xyz);
+    }
+
+    normal = normalize(normal);
     vec3 ViewDirection = normalize(CameraPosition - Position);
     //vec3 color = CalculateLight(vec3(1.0, 1.0, 1.0), 0.0, 1.0, geometryNormal, Position, ViewDirection, 1.0);
     //vec3 color = CalculateLight(vec3(1.0, 1.0, 1.0), 1.0, 0.0, normal, Position, ViewDirection, 1.0);
-    //vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.8, normal, Position, ViewDirection, 1.0);
-    vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.8, geometryNormal, Position, ViewDirection, 1.0);
+    vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.5, normal, Position, ViewDirection, 1.0);
+    //vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.8, geometryNormal, Position, ViewDirection, 1.0);
 
     FragColor = vec4(color, 1.0);
+    // FragColor = vec4(vec3((1.0 - clamp(0.0, 1.0, abs(dot(normal, geometryNormal))))) * 100000.0, 1.0);
     // FragColor = vec4(normal, 1.0);
     //FragColor = vec4(texture(DisplacementMap, TexCoord).rgb + 0.1, 1.0);
     //FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+    //FragColor = vec4(geometryNormal, 1.0);
+    //FragColor = vec4(abs(normal - geometryNormal), 1.0);
 }

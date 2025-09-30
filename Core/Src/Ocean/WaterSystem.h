@@ -38,6 +38,20 @@ namespace Core
             float Alpha;
             float PeakWaveFrequency;
             float Padding;
+
+            InitialSpectrumSettingsBuffer() = default;
+
+            InitialSpectrumSettingsBuffer(const glm::vec2& WindVelocity, const float Fetch, const float Delta,
+                                          const float Swell, const float Alpha, const float PeakWaveFrequency)
+                : WindVelocity(WindVelocity),
+                  Fetch(Fetch),
+                  Delta(Delta),
+                  Swell(Swell),
+                  Alpha(Alpha),
+                  PeakWaveFrequency(PeakWaveFrequency),
+                  Padding(0.0f)
+            {
+            }
         };
 
         class CascadeSettingsBuffer
@@ -185,8 +199,8 @@ namespace Core
         static float CalculateInitialSpectrumAlpha(const glm::vec2 WindVelocity, const float Fetch,
                                                    const float Gravity)
         {
-            const float windSpeed = glm::length(WindVelocity);
-            return 0.076f * std::powf(windSpeed * windSpeed / (Fetch * Gravity), 0.22f);
+            const float windSpeed2 = glm::dot(WindVelocity, WindVelocity);
+            return 0.076f * std::powf(windSpeed2 / (Fetch * Gravity), 0.22f);
         }
 
         static float CalculateInitialSpectrumPeakWaveFrequency(
