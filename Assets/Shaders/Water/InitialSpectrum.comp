@@ -3,7 +3,7 @@
 #include "WaterCommon.glsl"
 
 layout (binding = 0, rgba32f) writeonly uniform image2DArray Output;
-layout (binding = 1, rg32f) readonly uniform image2D GaussianNoise;
+layout (binding = 1, rgba32f) readonly uniform image2D GaussianNoise;
 
 layout(std430, binding = 0) buffer CascadeSettingsBuffer
 {
@@ -135,10 +135,10 @@ void main()
         return;
     }
 
-    const vec2 gaussSample = imageLoad(GaussianNoise, pixelCoords).rg;
+    const vec4 gaussSample = imageLoad(GaussianNoise, pixelCoords);
 
-    const vec2 h0 = gaussSample * CalculateInitialSpectrum(waveVector, k, cascadeLength);
-    vec2 h0Star = gaussSample * CalculateInitialSpectrum(-waveVector, k, cascadeLength);
+    const vec2 h0 = gaussSample.rg * CalculateInitialSpectrum(waveVector, k, cascadeLength);
+    vec2 h0Star = gaussSample.ba * CalculateInitialSpectrum(-waveVector, k, cascadeLength);
     h0Star.y = -h0Star.y;
 
     imageStore(Output, ivec3(pixelCoords, cascadeIndex), vec4(h0, h0Star));

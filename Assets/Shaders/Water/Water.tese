@@ -5,8 +5,8 @@
 layout (quads, equal_spacing, ccw) in;
 
 in vec3 tcPosition[];
-out vec2 TexCoord;
-out vec3 Position;
+out vec3 OriginalPosition;
+out vec3 DisplacedPosition;
 
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
@@ -40,8 +40,8 @@ void main()
     }
     vec3 finalPosition = position + displacement;
 
-    Position = finalPosition;
-    TexCoord = vec2(0.0);
+    OriginalPosition = position;
+    DisplacedPosition = finalPosition;
 
     gl_Position = ProjectionMatrix * ViewMatrix * vec4(finalPosition, 1.0);
 }

@@ -69,7 +69,7 @@ namespace Core
                                              CalculateInitialSpectrumPeakWaveFrequency(
                                                  DefaultWindVelocity, DefaultFetch, Gravity)),
           _cascadeSettings(TextureResolution, {
-                               {0.0f, 0.75f * Pi, 256},
+                               {1e-5f, 0.75f * Pi, 256},
                                {0.75f * Pi, 3.0f * Pi, 16},
                                {3.0f * Pi, std::numeric_limits<float>::max(), 4}
                            }),
@@ -104,7 +104,7 @@ namespace Core
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _initialSpectrumSettingsSsbo);
 
         glBindImageTexture(0, _initialSpectrumTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG32F);
+        glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim, TextureResolution / WorkGroupDim, CascadeCount);
         glFinish();
@@ -115,17 +115,17 @@ namespace Core
         uint32_t textureId;
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
-        const uint32_t count = 2 * Resolution * Resolution;
+        const size_t count = 4 * Resolution * Resolution;
         float* textureData = new float[count];
         std::random_device rndDevice;
         std::mt19937 rng(rndDevice());
         std::normal_distribution<float> dist(0.0f, 1.0f);
-        for (uint32_t i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             textureData[i] = dist(rng);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, TextureResolution, TextureResolution, 0, GL_RG, GL_FLOAT,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TextureResolution, TextureResolution, 0, GL_RGBA, GL_FLOAT,
                      textureData);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
