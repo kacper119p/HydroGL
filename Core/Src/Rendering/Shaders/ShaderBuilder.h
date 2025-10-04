@@ -80,9 +80,9 @@ namespace Core
         [[nodiscard]] Shader Build() const;
 
     private:
-        Shader CreateShader() const;
+        [[nodiscard]] Shader CreateShader() const;
 
-        Shader CreateComputeShader() const;
+        [[nodiscard]] Shader CreateComputeShader() const;
     };
 } // namespace Core
 

@@ -9,7 +9,7 @@ namespace Core
     {
         const float patchSize = (HalfWidth * 2.0f) / static_cast<float>(PatchCount);
         const float halfPatchSize = patchSize * 0.5f;
-        const float quadSize = patchSize / static_cast<float>(PatchSubdivisions);
+        _quadSize = patchSize / static_cast<float>(PatchSubdivisions);
 
         const uint32_t verticesOnEdge = PatchSubdivisions + 1;
 
@@ -26,9 +26,9 @@ namespace Core
             for (uint32_t x = 0; x < verticesOnEdge; ++x)
             {
                 vertexPositions[y * verticesOnEdge + x] = glm::vec3(
-                    -halfPatchSize + static_cast<float>(x) * quadSize,
+                    -halfPatchSize + static_cast<float>(x) * _quadSize,
                     0.0f,
-                    -halfPatchSize + static_cast<float>(y) * quadSize);
+                    -halfPatchSize + static_cast<float>(y) * _quadSize);
             }
         }
         for (uint32_t y = 0; y < PatchSubdivisions; ++y)
@@ -59,7 +59,7 @@ namespace Core
 
         glGenVertexArrays(1, &_vao);
         glGenBuffers(1, &_vbo);
-        glGenBuffers(1, &_ivbo);
+        glGenBuffers(1, &_patchPositionsVbo);
         glGenBuffers(1, &_ebo);
 
         glBindVertexArray(_vao);
@@ -70,7 +70,7 @@ namespace Core
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), reinterpret_cast<void*>(0));
 
-        glBindBuffer(GL_ARRAY_BUFFER, _ivbo);
+        glBindBuffer(GL_ARRAY_BUFFER, _patchPositionsVbo);
         glBufferData(GL_ARRAY_BUFFER, static_cast<int64_t>(sizeof(glm::vec3) * patchCount),
                      patchPositions, GL_STATIC_DRAW);
 
@@ -103,7 +103,7 @@ namespace Core
     {
         glDeleteVertexArrays(1, &_vao);
         glDeleteBuffers(1, &_vbo);
-        glDeleteBuffers(1, &_ivbo);
+        glDeleteBuffers(1, &_patchPositionsVbo);
         glDeleteBuffers(1, &_ebo);
     }
 }

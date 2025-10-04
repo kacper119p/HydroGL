@@ -68,7 +68,7 @@ namespace Core
     public:
         ~Renderer();
 
-        void RenderFrame(const Engine& Engine);
+        void RenderFrame(const Engine& Engine, float DeltaTime);
 
     private:
         void BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,
