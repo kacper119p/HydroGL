@@ -6,3 +6,5 @@ const float SQRT3 = 1.732050807568877;
 const float PHI = 1.618033988749894;
 const float EULER = 2.718281828459045;
 const float EPSILON = 0.00005;
+const float INV_SQRT2 = 1.0 / SQRT2;
+const float INV_SQRT3 = 1.0 / SQRT3;

@@ -33,7 +33,7 @@ void main()
     const vec2 dfdzxDfdzz = imageLoad(DfdzxDfdzz, sampleCoords).rb * normalizationFactor * phaseCorrection;
 
     const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x);
-    const vec2 slope = vec2(dzdfhxx.y, dfhzDfdxx.x);
+    const vec2 slope = vec2(-dzdfhxx.y, -dfhzDfdxx.x);
 
     imageStore(SlopeTextures, sampleCoords, vec4(slope, 0.0, 0.0));
     imageStore(DisplacementTexture, sampleCoords, vec4(displacement, 1.0f));

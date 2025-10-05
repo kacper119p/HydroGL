@@ -27,7 +27,7 @@ void main()
     const int inIdx = threadIdx & (Subcount - 1);
     const int outIdx = ((threadIdx - inIdx) << 1) + inIdx;
 
-    const float angle = -PI * (float(inIdx) / float(Subcount));
+    const float angle = PI * (float(inIdx) / float(Subcount));
     const vec2 twiddle = Euler(angle);
 
     const vec4 a = imageLoad(Input, ivec3(pixelCoords, layerId));
