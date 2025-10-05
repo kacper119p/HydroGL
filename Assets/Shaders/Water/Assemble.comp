@@ -35,6 +35,9 @@ void main()
     const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x);
     const vec2 slope = vec2(-dzdfhxx.y, -dfhzDfdxx.x);
 
-    imageStore(SlopeTextures, sampleCoords, vec4(slope, 0.0, 0.0));
-    imageStore(DisplacementTexture, sampleCoords, vec4(displacement, 1.0f));
+    const vec3 JacobianDerivatives = vec3(dfhzDfdxx.y, dfdzxDfdzz.y, dfdzxDfdzz.x);
+    const float Jacobian = (1.0 + dfhzDfdxx.y) * (1.0 + dfdzxDfdzz.y) - dfdzxDfdzz.x * dfdzxDfdzz.x;
+
+    imageStore(SlopeTextures, sampleCoords, vec4(slope, JacobianDerivatives.xy));
+    imageStore(DisplacementTexture, sampleCoords, vec4(displacement, JacobianDerivatives.z));
 }
