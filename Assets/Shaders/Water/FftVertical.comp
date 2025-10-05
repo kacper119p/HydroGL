@@ -3,8 +3,6 @@
 #include "Complex.glsl"
 #include "Constants.glsl"
 
-#define WORK_GROUP_DIM 256
-
 layout (binding = 0, rgba32f) uniform readonly image2DArray Input;
 layout (binding = 1, rgba32f) uniform writeonly image2DArray Output;
 
