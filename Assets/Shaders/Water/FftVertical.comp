@@ -17,10 +17,10 @@ vec4 ButterflyOperation(vec2 a, vec2 b, vec2 twiddle)
     return vec4(a + twiddleB, a - twiddleB);
 }
 
-layout (local_size_x = WORK_GROUP_DIM, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
-    const ivec2 pixelCoords = ivec2(gl_WorkGroupID.x, gl_LocalInvocationID.x);
+    const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.yx);
     const int layerId = int(gl_GlobalInvocationID.z);
 
     const int threadCount = int(TotalCount * 0.5f);

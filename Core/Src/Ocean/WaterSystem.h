@@ -144,7 +144,6 @@ namespace Core
     private:
         static constexpr int32_t CascadeCount = 3;
         static constexpr int32_t TextureResolution = 256;
-        static constexpr int32_t WorkGroupDim = 16;
 
         const int _oceanSize = 128;
         const float _amplitude = 12.0f;
