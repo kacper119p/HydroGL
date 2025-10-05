@@ -58,7 +58,7 @@ namespace Core
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_NEAREST,GL_REPEAT)),
           _spectrumTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
-          _normalTextures(
+          _slopeTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_LINEAR,GL_REPEAT)),
           _displacementTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_LINEAR, GL_REPEAT)),
@@ -189,7 +189,7 @@ namespace Core
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D_ARRAY, _displacementTextures);
         glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, _normalTextures);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, _slopeTextures);
 
         _oceanGrid.Draw();
 
@@ -222,7 +222,7 @@ namespace Core
         glBindImageTexture(1, _dzDfhxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(2, _dfhzDfdxxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(3, _dfdzxDfdzzTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(4, _normalTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(4, _slopeTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(5, _displacementTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);

@@ -171,7 +171,7 @@ namespace Core
         uint32_t _dfhzDfdxxTextures;
         uint32_t _dfdzxDfdzzTextures;
         uint32_t _spectrumTextures;
-        uint32_t _normalTextures;
+        uint32_t _slopeTextures;
         uint32_t _displacementTextures;
         uint32_t _tmpTextures;
         uint32_t _gaussianNoiseTexture = 0;
