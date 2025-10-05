@@ -32,7 +32,7 @@ void main()
     const float dfhz = imageLoad(DfhzDfdxx, sampleCoords).r / TextureResolution;
 
     const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x) * phaseChange;
-    const vec3 normal = normalize(vec3(-dzdfhxx.y, phaseChange, -dfhz)) * phaseChange;
+    const vec3 normal = normalize(vec3(dzdfhxx.y, phaseChange, dfhz)) * phaseChange;
 
     imageStore(NormalTexture, sampleCoords, vec4(normal, 1.0f));
     imageStore(DisplacementTexture, sampleCoords, vec4(displacement, 1.0f));
