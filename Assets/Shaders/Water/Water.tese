@@ -19,7 +19,7 @@ layout(std430, binding = 0) buffer CascadeSettingsBuffer
     cascadeSettings CascadeSettings[];
 };
 
-layout (binding = 3) uniform sampler2DArray DisplacementMap;
+layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 
 
 void main()
@@ -36,7 +36,7 @@ void main()
     for (int i = 0; i < CascadeCount; ++i)
     {
         const vec2 texCoord = vec2(position.x, position.z) / CascadeSettings[i].Length;
-        displacement += texture(DisplacementMap, vec3(texCoord, i)).xyz;
+        displacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
     }
     vec3 finalPosition = position + displacement;
 

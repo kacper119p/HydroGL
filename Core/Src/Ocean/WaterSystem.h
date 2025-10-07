@@ -144,7 +144,6 @@ namespace Core
     private:
         static constexpr int32_t CascadeCount = 3;
         static constexpr int32_t TextureResolution = 256;
-        static constexpr int32_t WorkGroupDim = 16;
 
         const int _oceanSize = 128;
         const float _amplitude = 12.0f;
@@ -172,7 +171,7 @@ namespace Core
         uint32_t _dfhzDfdxxTextures;
         uint32_t _dfdzxDfdzzTextures;
         uint32_t _spectrumTextures;
-        uint32_t _normalTextures;
+        uint32_t _slopeTextures;
         uint32_t _displacementTextures;
         uint32_t _tmpTextures;
         uint32_t _gaussianNoiseTexture = 0;

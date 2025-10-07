@@ -6,7 +6,7 @@ layout (binding = 0, rgba32f) uniform image2DArray HDx;
 layout (binding = 1, rgba32f) uniform image2DArray DzDfhx;
 layout (binding = 2, rgba32f) uniform image2DArray DfhzDfdxx;
 layout (binding = 3, rgba32f) uniform image2DArray DfdzxDfdzz;
-layout (binding = 4, rgba32f) writeonly uniform image2DArray NormalTexture;
+layout (binding = 4, rgba32f) writeonly uniform image2DArray SlopeTextures;
 layout (binding = 5, rgba32f) writeonly uniform image2DArray DisplacementTexture;
 
 layout(std430, binding = 0) buffer CascadeSettingsBuffer
@@ -17,23 +17,27 @@ layout(std430, binding = 0) buffer CascadeSettingsBuffer
     cascadeSettings CascadeSettings[];
 };
 
-layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
     const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
-    const float phaseChange = (((pixelCoords.x + pixelCoords.y) % 2)) * 2.0 - 1.0;
+    const float phaseCorrection = (((pixelCoords.x + pixelCoords.y) % 2)) * 2.0 - 1.0;
     int cascadeIndex = int(gl_GlobalInvocationID.z);
 
     const ivec3 sampleCoords = ivec3(pixelCoords, cascadeIndex);
-    const float cascadeLength = CascadeSettings[cascadeIndex].Length;
+    const float normalizationFactor =  1.0f / TextureResolution;
 
-    const vec2 dxdy = imageLoad(HDx, sampleCoords).br / TextureResolution;
-    const vec2 dzdfhxx = imageLoad(DzDfhx, sampleCoords).rb / TextureResolution;
-    const float dfhz = imageLoad(DfhzDfdxx, sampleCoords).r / TextureResolution;
+    const vec2 dxdy = imageLoad(HDx, sampleCoords).br * normalizationFactor * phaseCorrection;
+    const vec2 dzdfhxx = imageLoad(DzDfhx, sampleCoords).rb * normalizationFactor * phaseCorrection;
+    const vec2 dfhzDfdxx = imageLoad(DfhzDfdxx, sampleCoords).rb * normalizationFactor * phaseCorrection;
+    const vec2 dfdzxDfdzz = imageLoad(DfdzxDfdzz, sampleCoords).rb * normalizationFactor * phaseCorrection;
 
-    const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x) * phaseChange;
-    const vec3 normal = normalize(vec3(-dzdfhxx.y, phaseChange, -dfhz)) * phaseChange;
+    const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x);
+    const vec2 slope = vec2(-dzdfhxx.y, -dfhzDfdxx.x);
 
-    imageStore(NormalTexture, sampleCoords, vec4(normal, 1.0f));
-    imageStore(DisplacementTexture, sampleCoords, vec4(displacement, 1.0f));
+    const vec3 JacobianDerivatives = vec3(dfhzDfdxx.y, dfdzxDfdzz.y, dfdzxDfdzz.x);
+    const float Jacobian = (1.0 + dfhzDfdxx.y) * (1.0 + dfdzxDfdzz.y) - dfdzxDfdzz.x * dfdzxDfdzz.x;
+
+    imageStore(SlopeTextures, sampleCoords, vec4(slope, JacobianDerivatives.xy));
+    imageStore(DisplacementTexture, sampleCoords, vec4(displacement, JacobianDerivatives.z));
 }
