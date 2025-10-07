@@ -21,7 +21,7 @@ void main()
     const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
     const int layerId = int(gl_GlobalInvocationID.z);
 
-    const int thread_count = int(TotalCount * 0.5f);
+    const int thread_count = TotalCount / 2;
     const int threadIdx = pixelCoords.x;
 
     const int inIdx = threadIdx & (Subcount - 1);

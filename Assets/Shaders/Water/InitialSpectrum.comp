@@ -24,7 +24,7 @@ layout(std430, binding = 1) buffer SpectrumParams
     float _padding;
 };
 
-float calulateR(const float Omega, const float OmegaP)
+float calculateR(const float Omega, const float OmegaP)
 {
     const float sigma = (Omega <= OmegaP) ? 0.07 : 0.09;
 
@@ -80,7 +80,7 @@ float CalculateDe(const float WindBias, const float R)
 
 float Jonswap(const float omega)
 {
-    const float r = calulateR(omega, PeakWaveFrequency);
+    const float r = calculateR(omega, PeakWaveFrequency);
 
     const float omega2 = omega * omega;
     const float omega5 = omega2 * omega2 * omega;
@@ -113,7 +113,7 @@ float CalculateInitialSpectrum(const vec2 WaveVector, const float K, const float
 
     const float frequencySpectrum = Jonswap(omega);
     const float directionalSpectrum = DirectionalSpectrum(WaveVector, omega);
-    return max(sqrt(4 * PI / (CascadeLength * K) * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega))), 0.0);
+    return sqrt(max(4 * PI / (CascadeLength * K) * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega)), 0.0));
 }
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
@@ -126,7 +126,7 @@ void main()
 
     const ivec2 textureCenter = ivec2(TextureResolution >> 1);
     const ivec2 waveCoords = pixelCoords - textureCenter;
-    const vec2 waveVector = (2.f * PI * waveCoords) / cascadeLength;
+    const vec2 waveVector = (2.0 * PI * waveCoords) / cascadeLength;
     const float k = length(waveVector);
 
     if (k < CascadeSettings[cascadeIndex].WaveLengthLowerBound || k >= CascadeSettings[cascadeIndex].WaveLengthUpperBound)

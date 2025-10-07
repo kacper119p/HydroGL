@@ -19,7 +19,7 @@ namespace Core
         constexpr glm::vec2 DefaultWindVelocity{16.0f, 16.0f};
         constexpr float DefaultFetch = 10000.0f;
         constexpr float DefaultDelta = 1.0f;
-        constexpr float DefaultSwell = 0.5f;
+        constexpr float DefaultSwell = 0.0f;
     }
 
 
@@ -243,9 +243,9 @@ namespace Core
             glBindImageTexture(1, tmp, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
             _fftHorizontalShader.SetUniform("Subcount", p);
 
-            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D,
+            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D / 2, TextureResolution / WorkGroupDim2D,
                                     CascadeCount);
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
             std::swap(tmp, Texture);
             swap = !swap;
@@ -258,11 +258,11 @@ namespace Core
         {
             glBindImageTexture(0, Texture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
             glBindImageTexture(1, tmp, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-            _fftVerticalShader.SetUniform("subCount", p);
+            _fftVerticalShader.SetUniform("Subcount", p);
 
-            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D,
+            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D / 2, TextureResolution / WorkGroupDim2D,
                                     CascadeCount);
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
             std::swap(tmp, Texture);
             swap = !swap;

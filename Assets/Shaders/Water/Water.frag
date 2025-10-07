@@ -49,7 +49,7 @@ void main()
 
     const float FoamThreshold = 1.1;
     const float FoamExponent  = 1.0;
-    const float FoamIntensity = 1.0;
+    const float FoamIntensity = 5.0;
 
     float compression = clamp((jacobian - FoamThreshold) / FoamThreshold, 0.0, 1.0);
     float foamMask = clamp(FoamIntensity * pow(compression, FoamExponent), 0.0, 1.0);
