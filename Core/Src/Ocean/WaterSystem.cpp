@@ -106,7 +106,7 @@ namespace Core
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _initialSpectrumSettingsSsbo);
 
         glBindImageTexture(0, _initialSpectrumTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(1, _gaussianNoiseTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
         glFinish();
@@ -117,7 +117,7 @@ namespace Core
         uint32_t textureId;
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
-        const size_t count = 4 * Resolution * Resolution;
+        const size_t count = 2 * Resolution * Resolution;
         float* textureData = new float[count];
         std::random_device rndDevice;
         std::mt19937 rng(rndDevice());
@@ -127,7 +127,7 @@ namespace Core
             textureData[i] = dist(rng);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TextureResolution, TextureResolution, 0, GL_RGBA, GL_FLOAT,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, TextureResolution, TextureResolution, 0, GL_RG, GL_FLOAT,
                      textureData);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -243,7 +243,7 @@ namespace Core
             glBindImageTexture(1, tmp, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
             _fftHorizontalShader.SetUniform("Subcount", p);
 
-            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D / 2, TextureResolution / WorkGroupDim2D,
+            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D,
                                     CascadeCount);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
@@ -260,7 +260,7 @@ namespace Core
             glBindImageTexture(1, tmp, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
             _fftVerticalShader.SetUniform("Subcount", p);
 
-            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D / 2, TextureResolution / WorkGroupDim2D,
+            Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D,
                                     CascadeCount);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
