@@ -25,12 +25,11 @@ void main()
     int cascadeIndex = int(gl_GlobalInvocationID.z);
 
     const ivec3 sampleCoords = ivec3(pixelCoords, cascadeIndex);
-    const float normalizationFactor =  1.0f / TextureResolution;
 
-    const vec2 dxdy = imageLoad(HDx, sampleCoords).br * normalizationFactor * phaseCorrection;
-    const vec2 dzdfhxx = imageLoad(DzDfhx, sampleCoords).rb * normalizationFactor * phaseCorrection;
-    const vec2 dfhzDfdxx = imageLoad(DfhzDfdxx, sampleCoords).rb * normalizationFactor * phaseCorrection;
-    const vec2 dfdzxDfdzz = imageLoad(DfdzxDfdzz, sampleCoords).rb * normalizationFactor * phaseCorrection;
+    const vec2 dxdy = imageLoad(HDx, sampleCoords).br * phaseCorrection;
+    const vec2 dzdfhxx = imageLoad(DzDfhx, sampleCoords).rb * phaseCorrection;
+    const vec2 dfhzDfdxx = imageLoad(DfhzDfdxx, sampleCoords).rb * phaseCorrection;
+    const vec2 dfdzxDfdzz = imageLoad(DfdzxDfdzz, sampleCoords).rb * phaseCorrection;
 
     const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x);
     const vec2 slope = vec2(-dzdfhxx.y, -dfhzDfdxx.x);
