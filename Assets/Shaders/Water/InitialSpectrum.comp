@@ -49,31 +49,14 @@ float CalculateBeta(const float ROmega)
 
 }
 
-float CalculateQdbe(const float R)
-{
-    if (R < 0.94)
-    {
-        return (7.1467551 * R - 13.4662001) * R + 7.75651088;
-    }
-    if (R < 5.0)
-    {
-        return (-0.69906109 * R + 0.77975933) * R + 0.10169164;
-    }
-    if (R < 100.0)
-    {
-        return (-2.1860997 * R + 0.0269209) * R + 0.00016283;
-    }
-    return 1.2038847 * R + 0.0008147;
-}
-
-float CalculateDdb(const float Beta, const float WindBias)
+float DonelanBannerDirectionalSpread(const float Beta, const float WindBias)
 {
     const float qdb = 1.0 / tanh(Beta * PI);
     const float sech = 1.0 / cosh(Beta * WindBias);
     return 0.5 * qdb * Beta * sech * sech;
 }
 
-float CalculateDe(const float WindBias, const float ROmega)
+float CalculateSwellDirectionalSpread(const float WindBias, const float ROmega)
 {
     return pow(abs(cos(WindBias / 2.0)), 32.0 * tanh(1.0 / ROmega) * Swell * Swell);
 }
@@ -89,22 +72,39 @@ float Jonswap(const float omega)
     const float omegaPByOmega2 = omegaPByOmega * omegaPByOmega;
     const float omegaPByOmega4 = omegaPByOmega2 * omegaPByOmega2;
 
-    return Alpha * G2 / omega5 * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
+    return Alpha * G2 / (omega5 * 16.0 * PI * PI * PI * PI) * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
+}
+
+float CalculateNormalizationFactor(const float ROmega, const float Beta)
+{
+    const float interval = 0.001;
+    float sampleCount = 0.0;
+    float result = 0.0;
+    for (float theta = -PI + interval * 0.5; theta <= PI; theta += interval)
+    {
+        sampleCount += 1.0;
+        const float swellSpread = CalculateSwellDirectionalSpread(theta, ROmega);
+        const float donelanBannerSpread = DonelanBannerDirectionalSpread(Beta, theta);
+
+        result += donelanBannerSpread * swellSpread;
+    }
+
+    return sampleCount / (result * 2.0 * PI);
 }
 
 float DirectionalSpectrum(const vec2 WaveVector, const float Omega)
 {
-    const float r = Omega / PeakWaveFrequency;
+    const float rOmega = Omega / PeakWaveFrequency;
     const float windBias = atan(WaveVector.y, WaveVector.x) - atan(WindVelocity.y, WindVelocity.x);
-    const float beta = CalculateBeta(r);
+    const float beta = CalculateBeta(rOmega);
 
-    const float qdbe = CalculateQdbe(r);
-    const float de = CalculateDe(windBias, r);
-    const float ddb = CalculateDdb(beta, windBias);
+    const float normalizationFactor = CalculateNormalizationFactor(rOmega, beta);
+    const float donelanBannerSpread = DonelanBannerDirectionalSpread(beta, windBias);
+    const float swellSpread = CalculateSwellDirectionalSpread(windBias, rOmega);
 
-    const float ddbe = qdbe * ddb * de;
+    const float finalSpectrum = donelanBannerSpread * swellSpread * normalizationFactor;
 
-    return mix(1.0 / (2.0 * PI), ddbe, Delta);
+    return mix(1.0 / (2.0 * PI), finalSpectrum, Delta);
 }
 
 float CalculateInitialSpectrum(const vec2 WaveVector, const float K, const float CascadeLength)
@@ -112,7 +112,7 @@ float CalculateInitialSpectrum(const vec2 WaveVector, const float K, const float
     const float omega = CalculateDispersion(K);
     const float frequencySpectrum = Jonswap(omega);
     const float directionalSpectrum = DirectionalSpectrum(WaveVector, omega);
-    return sqrt(max(4 * PI / (CascadeLength * K) * frequencySpectrum * directionalSpectrum * abs(G / (2 * omega)), 0.0));
+    return sqrt(max(4 * PI / (CascadeLength * K) * frequencySpectrum * directionalSpectrum * G / (2 * omega), 0.0));
 }
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
