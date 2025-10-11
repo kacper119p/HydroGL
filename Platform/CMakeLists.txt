@@ -23,12 +23,14 @@ endif ()
 find_package(OpenGL REQUIRED)
 
 #find third party libraries
+find_package(imgui CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 #Link OpenGL
 target_link_libraries(${LIBRARY_NAME} PRIVATE ${OPENGL_LIBRARIES})
 
 #link third party libraries
+target_link_libraries(${LIBRARY_NAME} PUBLIC imgui::imgui)
 target_link_libraries(${LIBRARY_NAME} PRIVATE glad)
 target_link_libraries(${LIBRARY_NAME} PRIVATE wgl)
 target_link_libraries(${LIBRARY_NAME} PRIVATE spdlog::spdlog)

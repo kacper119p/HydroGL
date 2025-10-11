@@ -8,6 +8,7 @@ namespace Platform
     class Window
     {
         friend class Launcher;
+        friend class ImGuiContext;
 
     private:
         HWND _windowHandle = nullptr;
