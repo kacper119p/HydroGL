@@ -29,8 +29,8 @@ namespace Application
             ImGui::Text("RAM: %dGB", ramGB);
             ImGui::Text("OpenGL version: %s", reinterpret_cast<const char*>(version));
             ImGui::Text("Shading Language version: %s", reinterpret_cast<const char*>(shadingLanguageVersion));
-            ImGui::Separator();
             ImGui::Text("Resolution: %dx%d", WindowWidth, WindowHeight);
+            ImGui::Separator();
             ImGui::Text("Application average: %.3f ms/frame\n%.1f FPS",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
