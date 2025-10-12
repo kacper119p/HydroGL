@@ -1,7 +1,11 @@
+#pragma comment(lib, "Shcore.lib")
+
 #include "Launcher.h"
 
-#include <windows.h>
+#include <ShellScalingApi.h>
+#include <Windows.h>
 
+#include "Debug.h"
 #include "TimeManager.h"
 
 namespace Platform
@@ -20,10 +24,12 @@ namespace Platform
 
 int WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 {
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     return Platform::Launcher::Start(hInstance);
 }
 
 int main(int, char**)
 {
+    CHECK(SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) == S_OK);
     return Platform::Launcher::Start(nullptr);
 }
