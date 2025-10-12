@@ -13,10 +13,9 @@ namespace Core
     {
         constexpr int32_t WorkGroupDim2D = 8;
 
-        constexpr float Gravity = 9.80665f;
         constexpr float Pi = std::numbers::pi_v<float>;
 
-        constexpr glm::vec2 DefaultWindVelocity{16.0f, 16.0f};
+        constexpr glm::vec2 DefaultWindVelocity{-16.0f, 16.0f};
         constexpr float DefaultFetch = 10000.0f;
         constexpr float DefaultDelta = 1.0f;
         constexpr float DefaultSwell = 0.0f;

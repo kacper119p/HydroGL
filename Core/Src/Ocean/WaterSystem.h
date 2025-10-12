@@ -142,11 +142,9 @@ namespace Core
         };
 
     private:
+        static constexpr float Gravity = 9.80665f;
         static constexpr int32_t CascadeCount = 3;
         static constexpr int32_t TextureResolution = 256;
-
-        const int _oceanSize = 128;
-        const float _amplitude = 12.0f;
 
     private:
         OceanGrid _oceanGrid;
@@ -207,6 +205,67 @@ namespace Core
             const float Gravity)
         {
             return 22.0f * Gravity * Gravity / (glm::length(WindVelocity) * Fetch);
+        }
+
+    public:
+        void SetWindVelocity(const glm::vec2 WindVelocity)
+        {
+            glm::vec2 value = WindVelocity;
+            value.x *= -1.0f;
+            _initialSpectrumSettingsBufferData.WindVelocity = value;
+            _initialSpectrumSettingsBufferData.PeakWaveFrequency = CalculateInitialSpectrumPeakWaveFrequency(
+                _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
+            _initialSpectrumSettingsBufferData.Alpha = CalculateInitialSpectrumAlpha(
+                _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
+            SendInitialSpectrumSettingsToGpu();
+            UpdateInitialSpectrum();
+        }
+
+        [[nodiscard]] glm::vec2 GetWindVelocity() const
+        {
+            glm::vec2 value = _initialSpectrumSettingsBufferData.WindVelocity;
+            value.x *= -1.0f;
+            return value;
+        }
+
+        void SetFetch(const float Fetch)
+        {
+            _initialSpectrumSettingsBufferData.Fetch = Fetch;
+            _initialSpectrumSettingsBufferData.PeakWaveFrequency = CalculateInitialSpectrumPeakWaveFrequency(
+                _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
+            _initialSpectrumSettingsBufferData.Alpha = CalculateInitialSpectrumAlpha(
+                _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
+            SendInitialSpectrumSettingsToGpu();
+            UpdateInitialSpectrum();
+        }
+
+        [[nodiscard]] float GetFetch() const
+        {
+            return _initialSpectrumSettingsBufferData.Fetch;
+        }
+
+        void SetDelta(const float Delta)
+        {
+            _initialSpectrumSettingsBufferData.Delta = Delta;
+            SendInitialSpectrumSettingsToGpu();
+            UpdateInitialSpectrum();
+        }
+
+        [[nodiscard]] float GetDelta() const
+        {
+            return _initialSpectrumSettingsBufferData.Delta;
+        }
+
+        void SetSwell(const float Swell)
+        {
+            _initialSpectrumSettingsBufferData.Swell = Swell;
+            SendInitialSpectrumSettingsToGpu();
+            UpdateInitialSpectrum();
+        }
+
+        [[nodiscard]] float GetSwell() const
+        {
+            return _initialSpectrumSettingsBufferData.Swell;
         }
 
     public:

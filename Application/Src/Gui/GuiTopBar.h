@@ -5,6 +5,6 @@ namespace Application
     class GuiTopBar
     {
     public:
-        void Render();
+        static void Render(bool& ShowSpectrumSettings);
     };
 }

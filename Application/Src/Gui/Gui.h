@@ -1,15 +1,16 @@
 #pragma once
 #include "ImGuiContext.h"
-#include "Gui/GuiTopBar.h"
+#include "Ocean/WaterSystem.h"
 
 namespace Application
 {
     class Gui
     {
-        GuiTopBar _topBar;
+        Core::WaterSystem* _waterSystem = nullptr;
+        bool _showSpectrumSettings = false;
 
     public:
-        explicit Gui(const Platform::Window& Window);
+        explicit Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem);
 
     public:
         ~Gui();

@@ -1,13 +1,14 @@
 #include "Gui.h"
 
 #include <imgui.h>
-#include <iostream>
 
 #include "ImGuiContext.h"
+#include "Gui/GuiTopBar.h"
+#include "Gui/SpectrumSettingsWindow.h"
 
 namespace Application
 {
-    Gui::Gui(const Platform::Window& Window)
+    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem) : _waterSystem(&WaterSystem)
     {
         Platform::ImGuiContext::InitializeImGui(Window);
         constexpr float defaultImGuiFontSize = 13.0f;
@@ -23,7 +24,11 @@ namespace Application
     void Gui::Render()
     {
         Platform::ImGuiContext::ImGuiBeginFrame();
-        _topBar.Render();
+        GuiTopBar::Render(_showSpectrumSettings);
+        if (_showSpectrumSettings)
+        {
+            SpectrumSettingsWindow::Render(_showSpectrumSettings, *_waterSystem);
+        }
         Platform::ImGuiContext::ImGuiEndFrame();
     }
 }

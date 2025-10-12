@@ -3,6 +3,7 @@
 #include "Window.h"
 
 #include <cstdint>
+#include <imgui.h>
 #include <ShellScalingApi.h>
 #include <Windows.h>
 #include <glad/glad.h>
@@ -12,6 +13,9 @@
 #include "Input.h"
 #include "GL/wglext.h"
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
+    HWND HWnd, UINT Msg, WPARAM WParam, LPARAM LParam);
+
 namespace Platform
 {
     static LRESULT CALLBACK WndProc(HWND Hwnd, const UINT Msg, const WPARAM WParam, const LPARAM LParam)
@@ -20,6 +24,9 @@ namespace Platform
         static POINT oldMousePosition;
 
         const Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(Hwnd, GWLP_USERDATA));
+
+        if (ImGui_ImplWin32_WndProcHandler(Hwnd, Msg, WParam, LParam))
+            return 1LL;
 
         switch (Msg)
         {
