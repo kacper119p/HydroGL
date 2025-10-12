@@ -89,7 +89,7 @@ namespace Core
             {
                 _buffer = static_cast<InternalBuffer*>(malloc(InternalBuffer::CalculateSize(_capacity)));
                 _buffer->TextureResolution = TextureResolution;
-                _buffer->CascadeCount = InitialValues.size();
+                _buffer->CascadeCount = static_cast<int32_t>(InitialValues.size());
                 memcpy(_buffer->CascadeSettings, InitialValues.begin(), InitialValues.size() * sizeof(CascadeSettings));
             }
 
@@ -172,7 +172,7 @@ namespace Core
         uint32_t _slopeTextures;
         uint32_t _displacementTextures;
         uint32_t _tmpTextures;
-        uint32_t _gaussianNoiseTexture = 0;
+        uint32_t _gaussianNoiseTexture;
 
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
         CascadeSettingsBuffer _cascadeSettings;
