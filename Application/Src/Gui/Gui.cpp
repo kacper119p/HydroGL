@@ -9,7 +9,9 @@
 
 namespace Application
 {
-    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem) : _waterSystem(&WaterSystem)
+    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem) : _waterSystem(&WaterSystem),
+                                                                               _windowWidth(Window.GetWindowWidth()),
+                                                                               _windowHeight(Window.GetWindowHeight())
     {
         Platform::ImGuiContext::InitializeImGui(Window);
         constexpr float defaultImGuiFontSize = 13.0f;
@@ -32,7 +34,7 @@ namespace Application
         }
         if (_showSystemInfo)
         {
-            SystemInfoWindow::Render(_showSystemInfo);
+            SystemInfoWindow::Render(_showSystemInfo, _windowWidth, _windowHeight);
         }
         Platform::ImGuiContext::ImGuiEndFrame();
     }

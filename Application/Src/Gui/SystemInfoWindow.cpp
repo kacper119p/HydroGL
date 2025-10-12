@@ -10,7 +10,7 @@
 
 namespace Application
 {
-    void SystemInfoWindow::Render(bool& ShowSystemInfo)
+    void SystemInfoWindow::Render(bool& ShowSystemInfo, uint32_t WindowWidth, uint32_t WindowHeight)
     {
         constexpr ImGuiWindowFlags windowFlags =
                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize |
@@ -30,7 +30,8 @@ namespace Application
             ImGui::Text("OpenGL version: %s", reinterpret_cast<const char*>(version));
             ImGui::Text("Shading Language version: %s", reinterpret_cast<const char*>(shadingLanguageVersion));
             ImGui::Separator();
-            ImGui::Text("Application average %.3f ms/frame\n%.1f FPS",
+            ImGui::Text("Resolution: %dx%d", WindowWidth, WindowHeight);
+            ImGui::Text("Application average: %.3f ms/frame\n%.1f FPS",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
         ImGui::End();

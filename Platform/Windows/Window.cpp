@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <imgui.h>
-#include <ShellScalingApi.h>
 #include <Windows.h>
 #include <glad/glad.h>
 #include <spdlog/spdlog.h>
@@ -155,8 +154,6 @@ namespace Platform
 
     Window* Window::Create(HINSTANCE HInstance)
     {
-        CHECK(SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) == S_OK);
-
         if (HInstance == nullptr)
         {
             HInstance = GetModuleHandle(nullptr);
@@ -241,7 +238,7 @@ namespace Platform
 #if DEBUG
             WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
 #else
-                WGL_CONTEXT_FLAGS_ARB, 0,
+            WGL_CONTEXT_FLAGS_ARB, 0,
 #endif
             WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
             0

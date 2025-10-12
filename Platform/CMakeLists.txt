@@ -38,16 +38,4 @@ target_link_libraries(${LIBRARY_NAME} PRIVATE spdlog::spdlog)
 target_include_directories(${LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
         ${glad_SOURCE_DIR})
 
-#Disable console for Release builds
-if (MSVC)
-    if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-    else ()
-        set_target_properties(${LIBRARY_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
-    endif ()
-
-    target_compile_definitions(${LIBRARY_NAME} PRIVATE NOMINMAX)
-endif ()
-
-
 target_compile_definitions(${LIBRARY_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
