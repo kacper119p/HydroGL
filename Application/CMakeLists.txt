@@ -20,7 +20,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE Tracy::TracyClient)
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
-target_link_libraries(${PROJECT_NAME} PRIVATE imguizmo::imguizmo)
 
 #Link local third party packages
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
@@ -31,7 +30,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Core)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRARY_SUFFIX="")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Src)
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX)

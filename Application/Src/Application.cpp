@@ -23,6 +23,8 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     std::unique_ptr<Core::Engine> engine = std::make_unique<Core::Engine>(Window);
 
+    _gui = std::make_unique<Gui>(*Window, *engine->GetWaterSystem());
+
     _cameraManager = std::make_unique<CameraManager>(engine.get());
 
     Core::Scene* scene = engine->GetScene();
@@ -88,6 +90,9 @@ int32_t Application::Application::Run(Platform::Window* Window)
         _cameraManager->Update(*scene, deltaTime);
 
         engine->GetRenderer()->RenderFrame(*engine, deltaTime);
+
+        _gui->Render();
+
         Window->SwapBuffers();
     }
 
