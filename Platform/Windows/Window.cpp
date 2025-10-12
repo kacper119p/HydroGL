@@ -175,7 +175,7 @@ namespace Platform
         const int32_t windowWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
         const int32_t windowHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
 
-        HWND hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP,
+        HWND hwnd = CreateWindowEx(WS_EX_TOPMOST,
                                    className,
                                    "HydroGL",
                                    WS_POPUP,
