@@ -18,7 +18,7 @@ namespace Application
             ShowSystemInfo = !ShowSystemInfo;
         }
 
-        const std::string rightText = std::format("Application average {:.3f} ms/frame({:.1f} FPS)",
+        const std::string rightText = std::format("Application average: {:.3f} ms/frame({:.1f} FPS)",
                                                   1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
         const ImGuiStyle& style = ImGui::GetStyle();
