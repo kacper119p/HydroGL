@@ -5,6 +5,7 @@
 #include "ImGuiContext.h"
 #include "Gui/GuiTopBar.h"
 #include "Gui/SpectrumSettingsWindow.h"
+#include "Gui/SystemInfoWindow.h"
 
 namespace Application
 {
@@ -24,10 +25,14 @@ namespace Application
     void Gui::Render()
     {
         Platform::ImGuiContext::ImGuiBeginFrame();
-        GuiTopBar::Render(_showSpectrumSettings);
+        GuiTopBar::Render(_showSpectrumSettings, _showSystemInfo);
         if (_showSpectrumSettings)
         {
             SpectrumSettingsWindow::Render(_showSpectrumSettings, *_waterSystem);
+        }
+        if (_showSystemInfo)
+        {
+            SystemInfoWindow::Render(_showSystemInfo);
         }
         Platform::ImGuiContext::ImGuiEndFrame();
     }

@@ -6,12 +6,16 @@
 
 namespace Application
 {
-    void GuiTopBar::Render(bool& ShowSpectrumSettings)
+    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowSystemInfo)
     {
         ImGui::BeginMainMenuBar();
         if (ImGui::Button("Spectrum Settings"))
         {
             ShowSpectrumSettings = !ShowSpectrumSettings;
+        }
+        if (ImGui::Button("System Info"))
+        {
+            ShowSystemInfo = !ShowSystemInfo;
         }
 
         const std::string rightText = std::format("Application average {:.3f} ms/frame({:.1f} FPS)",

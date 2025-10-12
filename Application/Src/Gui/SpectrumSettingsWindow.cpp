@@ -14,7 +14,7 @@ namespace Application
         constexpr ImGuiWindowFlags windowFlags =
                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize |
                 ImGuiWindowFlags_NoResize;
-        if (ImGui::Begin("Floating Window", &ShowSpectrumSettings, windowFlags))
+        if (ImGui::Begin("Spectrum Settings", &ShowSpectrumSettings, windowFlags))
         {
             glm::vec2 windVelocity = WaterSystem.GetWindVelocity();
             if (ImGui::DragFloat2("Wind Velocity [m/s]", &windVelocity[0]))

@@ -8,6 +8,7 @@ namespace Application
     {
         Core::WaterSystem* _waterSystem = nullptr;
         bool _showSpectrumSettings = false;
+        bool _showSystemInfo = false;
 
     public:
         explicit Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem);
