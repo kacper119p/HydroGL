@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera/CameraComponent.h"
 #include "Ocean/OceanGrid.h"
+#include "Ocean/WaterTriangleProcessor.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
 
@@ -148,6 +149,7 @@ namespace Core
 
     private:
         OceanGrid _oceanGrid;
+        WaterTriangleProcessor _waterTriangleProcessor;
 
         Shader _waterShader;
         int32_t _viewMatrixLocation;

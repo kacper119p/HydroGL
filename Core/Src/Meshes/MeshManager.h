@@ -29,6 +29,16 @@ namespace Core
         static uint32_t _glVertexBuffer;
 
     public:
+        [[nodiscard]] static uint32_t GetVertexBufferId()
+        {
+            return _glVertexBuffer;
+        }
+
+        [[nodiscard]] static uint32_t GetElementBufferId()
+        {
+            return _glElementBuffer;
+        }
+
         static void Initialize();
 
         static void FreeResources();
