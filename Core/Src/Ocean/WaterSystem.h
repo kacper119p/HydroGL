@@ -177,7 +177,7 @@ namespace Core
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
         CascadeSettingsBuffer _cascadeSettings;
 
-        uint32_t _initialSpectrumSettingsSsbo = 0;
+        uint32_t _initialSpectrumSettingsUbo = 0;
         uint32_t _cascadeSettingsSsbo = 0;
 
     public:
@@ -189,7 +189,7 @@ namespace Core
 
         static uint32_t CreateGaussianNoise(int32_t Resolution);
 
-        static uint32_t CreateInitialSpectrumSettingsSsbo(const InitialSpectrumSettingsBuffer& InitialData);
+        static uint32_t CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData);
 
         static uint32_t CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData);
 
