@@ -11,7 +11,7 @@ out vec3 DisplacedPosition;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
-layout(std430, binding = 0) buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
