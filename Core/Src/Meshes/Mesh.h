@@ -14,17 +14,15 @@ namespace Core
         uint32_t _indicesCount;
 
     public:
-        Mesh() :
-            _verticesIndex(0), _verticesCount(0), _indicesIndex(0), _indicesCount(0)
+        Mesh() : _verticesIndex(0), _verticesCount(0), _indicesIndex(0), _indicesCount(0)
         {
         }
 
         Mesh(const uint32_t VerticesIndex, const uint32_t VerticesCount, const uint32_t FacesIndex,
-             const uint32_t FacesCount) :
-            _verticesIndex(VerticesIndex),
-            _verticesCount(VerticesCount),
-            _indicesIndex(FacesIndex),
-            _indicesCount(FacesCount)
+             const uint32_t FacesCount) : _verticesIndex(VerticesIndex),
+                                          _verticesCount(VerticesCount),
+                                          _indicesIndex(FacesIndex),
+                                          _indicesCount(FacesCount)
         {
         }
 
@@ -52,9 +50,19 @@ namespace Core
             return _indicesCount;
         }
 
+        [[nodiscard]] uint32_t GetTriangleCount() const
+        {
+            return _indicesCount / 3;
+        }
+
         bool operator==(const Mesh& Mesh) const
         {
             return memcmp(this, &Mesh, sizeof(Mesh)) == 0;
+        }
+
+        bool operator!=(const Mesh& Mesh) const
+        {
+            return !(*this == Mesh);
         }
     };
 }
