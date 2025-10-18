@@ -4,9 +4,12 @@
 #include <Utility/FileUtility.h>
 #include <spdlog/spdlog.h>
 
+#include "Debug.h"
+
 namespace Core
 {
     std::filesystem::path GlslPreprocessor::_includeDirectory("Assets/Shaders/Include/");
+    std::filesystem::path GlslPreprocessor::_shadersDirectory("Assets/Shaders");
 
     std::string GlslPreprocessor::PreprocessFile(const std::string_view& Path)
     {
@@ -41,6 +44,7 @@ namespace Core
                 if (!IncludedFiles.contains(filename))
                 {
                     std::string filePath = FindFile(filename, Path);
+                    CHECK_MESSAGE(!filePath.empty(), "Couldn't find file to include");
                     if (filePath.empty())
                     {
                         return std::string();
@@ -74,6 +78,18 @@ namespace Core
 
         // Search in Include directory.
         path = _includeDirectory / Path;
+
+        if (exists(path))
+        {
+            std::filesystem::perms permissions = status(path).permissions();
+            if ((permissions & std::filesystem::perms::owner_read) == std::filesystem::perms::owner_read)
+            {
+                return path.string();
+            }
+        }
+
+        //Search in shaders directory
+        path = _shadersDirectory / Path;
 
         if (exists(path))
         {

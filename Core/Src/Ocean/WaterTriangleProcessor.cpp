@@ -1,6 +1,7 @@
 #include "WaterTriangleProcessor.h"
 
 #include "glad/glad.h"
+#include "Math/Math.h"
 #include "Meshes/MeshManager.h"
 #include "Ocean/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
@@ -13,14 +14,25 @@ namespace Core
         constexpr int32_t WorkGroupDim1D = 64;
         constexpr size_t DefaultTriangleBufferSize = 4096;
         constexpr GLenum TriangleBufferUsage = GL_DYNAMIC_READ;
+        constexpr int32_t AggregatorElementsPerThread = 4;
+        constexpr int32_t AggregatorElementsPerGroup = WorkGroupDim1D * AggregatorElementsPerThread;
     }
 
-    WaterTriangleProcessor::WaterTriangleProcessor() : _triangleBuffer(CreateTriangleBuffer()),
-                                                       _triangleProcessorShader(
-                                                           ShaderBuilder().SetStage(
-                                                               "Assets/Shaders/Water/Buoyancy/TriangleProcessor.comp",
-                                                               ShaderStage::ComputeShader).Build()),
-                                                       _meshDataUbo(CreateMeshDataUbo())
+    WaterTriangleProcessor::WaterTriangleProcessor()
+        : _triangleBuffer(CreateTriangleBuffers()),
+          _triangleProcessorComputeShader(
+              ShaderBuilder().SetStage(
+                  "Assets/Shaders/Water/Buoyancy/TriangleProcessor.comp",
+                  ShaderStage::ComputeShader).Build()),
+          _triangleAggregationComputeShader(
+              ShaderBuilder().SetStage(
+                  "Assets/Shaders/Water/Buoyancy/TriangleAggregator.comp",
+                  ShaderStage::ComputeShader).Build()),
+          _outputComputeShader(
+              ShaderBuilder().SetStage(
+                  "Assets/Shaders/Water/Buoyancy/TriangleOutput.comp",
+                  ShaderStage::ComputeShader).Build()),
+          _meshDataUbo(CreateMeshDataUbo())
     {
     }
 
@@ -45,7 +57,7 @@ namespace Core
         const uint32_t triangleCount = Mesh.GetTriangleCount();
         if (triangleCount > _triangleBuffer.Capacity)
         {
-            ResizeTriangleBuffer(triangleCount);
+            ResizeTriangleBuffers(triangleCount);
         }
 
         const ShaderMeshData meshData{
@@ -54,34 +66,85 @@ namespace Core
             0.0f
         };
 
-        _triangleProcessorShader.Use();
+        _triangleProcessorComputeShader.Use();
 
         glBindBuffer(GL_UNIFORM_BUFFER, _meshDataUbo);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ShaderMeshData), &meshData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _meshDataUbo);
 
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.Id);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.MainBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, MeshManager::GetVertexBufferId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, MeshManager::GetElementBufferId());
 
-        Shader::DispatchCompute(triangleCount / WorkGroupDim1D, 1, 1);
+        Shader::DispatchCompute(Math::IntegerCeilDiv(triangleCount, WorkGroupDim1D), 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        _triangleAggregationComputeShader.Use();
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
+        const int32_t aggregationGroups = Math::IntegerCeilDiv(sizeof(TriangleProperties) * triangleCount,
+                                                               AggregatorElementsPerGroup);
+
+        Shader::DispatchCompute(aggregationGroups, 1, 1);
+
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        _outputComputeShader.Use();
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
+        Shader::DispatchCompute(Math::IntegerCeilDiv(aggregationGroups, WorkGroupDim1D), 1, 1);
+
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.OutputBufferId);
+
+        constexpr int32_t bufferSize = sizeof(TriangleProperties);
+        const void* mappedBuffer = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleProperties),
+                                                    GL_MAP_READ_BIT);
+
+        std::vector<TriangleProperties> cpuData(bufferSize / sizeof(float));
+        memcpy(cpuData.data(), mappedBuffer, bufferSize);
+
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    void WaterTriangleProcessor::ResizeTriangleBuffer(const uint32_t TriangleCount) const
+    void WaterTriangleProcessor::ResizeTriangleBuffers(const uint32_t TriangleCount) const
     {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.Id);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleProperties) * TriangleCount, nullptr,
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.MainBufferId);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<int64_t>(sizeof(TriangleProperties) * TriangleCount),
+                     nullptr,
                      TriangleBufferUsage);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.PartialSumsBufferId);
+        glBufferData(
+            GL_SHADER_STORAGE_BUFFER,
+            Math::IntegerCeilDiv(sizeof(TriangleProperties) * TriangleCount, AggregatorElementsPerGroup),
+            nullptr,
+            TriangleBufferUsage);
     }
 
-    WaterTriangleProcessor::TriangleBuffer WaterTriangleProcessor::CreateTriangleBuffer()
+    WaterTriangleProcessor::TriangleBuffer WaterTriangleProcessor::CreateTriangleBuffers()
     {
-        uint32_t id = 0;
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+        uint32_t ids[3]{};
+        glGenBuffers(3, ids);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ids[0]);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleProperties) * DefaultTriangleBufferSize, nullptr,
                      TriangleBufferUsage);
-        return TriangleBuffer{id, DefaultTriangleBufferSize};
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ids[1]);
+        glBufferData(
+            GL_SHADER_STORAGE_BUFFER,
+            static_cast<int64_t>(Math::IntegerCeilDiv(
+                sizeof(TriangleProperties) * DefaultTriangleBufferSize,
+                AggregatorElementsPerGroup)),
+            nullptr, TriangleBufferUsage);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ids[2]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleProperties), nullptr,
+                     TriangleBufferUsage);
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleProperties), nullptr,
+                        GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT);
+
+        TriangleProperties* ptr = static_cast<TriangleProperties*>(glMapBufferRange(
+            GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleProperties),
+            GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT));
+
+        return TriangleBuffer{ids[0], ids[1], ids[2], DefaultTriangleBufferSize, ptr};
     }
 
     uint32_t WaterTriangleProcessor::CreateMeshDataUbo()

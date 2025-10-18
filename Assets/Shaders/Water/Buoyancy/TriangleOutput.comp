@@ -1,0 +1,47 @@
+#version 460
+
+#include "TriangleProperties.glsl"
+
+const int LOCAL_SIZE = 64;
+
+layout(std430, binding = 1) buffer Partials {
+    float partials[];// numPartials = numWorkGroups from first pass
+} partialSSBO;
+
+layout(std430, binding = 2) buffer Output {
+    float result;// single float result
+} outputSSBO;
+
+uniform uint PartialsCount;
+
+shared float sharedBuffer[LOCAL_SIZE];
+
+layout(local_size_x = LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
+void main() {
+    uint localId = gl_LocalInvocationID.x;
+    uint localSize = LOCAL_SIZE;
+
+    // Each thread loads zero or more partials into shared memory, summing them.
+    float sum = 0.0;
+    // Threads may need to load multiple partials if numPartials > LOCAL_SIZE
+    for (uint idx = localId; idx < PartialsCount; idx += localSize) {
+        sum += partialSSBO.partials[idx];
+    }
+
+    sharedBuffer[localId] = sum;
+    memoryBarrierShared();
+    barrier();
+
+    // reduce in shared memory (assumes LOCAL_SIZE is power of two)
+    for (uint offset = localSize >> 1; offset > 0; offset >>= 1) {
+        if (localId < offset) {
+            sharedBuffer[localId] += sharedBuffer[localId + offset];
+        }
+        memoryBarrierShared();
+        barrier();
+    }
+
+    if (localId == 0) {
+        outputSSBO.result = sharedBuffer[0];
+    }
+}

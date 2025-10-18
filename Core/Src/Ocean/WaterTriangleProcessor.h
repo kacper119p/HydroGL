@@ -23,8 +23,11 @@ namespace Core
 
         struct TriangleBuffer
         {
-            uint32_t Id;
+            uint32_t MainBufferId;
+            uint32_t PartialSumsBufferId;
+            uint32_t OutputBufferId;
             uint32_t Capacity;
+            TriangleProperties* MappedOutputBuffer;
         };
 
         struct ShaderMeshData
@@ -38,7 +41,9 @@ namespace Core
 
     private:
         TriangleBuffer _triangleBuffer;
-        Shader _triangleProcessorShader;
+        Shader _triangleProcessorComputeShader;
+        Shader _triangleAggregationComputeShader;
+        Shader _outputComputeShader;
         uint32_t _meshDataUbo;
 
     public:
@@ -50,9 +55,9 @@ namespace Core
     private:
         void ProcessMesh(const Mesh& Mesh, const TransformComponent& Transform) const;
 
-        void ResizeTriangleBuffer(uint32_t TriangleCount) const;
+        void ResizeTriangleBuffers(uint32_t TriangleCount) const;
 
-        static TriangleBuffer CreateTriangleBuffer();
+        static TriangleBuffer CreateTriangleBuffers();
 
         static uint32_t CreateMeshDataUbo();
     };
