@@ -3,7 +3,7 @@
 #include "glad/glad.h"
 #include "Math/Math.h"
 #include "Meshes/MeshManager.h"
-#include "Ocean/WaterEffectorComponent.h"
+#include "Components/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 #include "Scene/TransformComponent.h"
 
@@ -76,12 +76,12 @@ namespace Core
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, MeshManager::GetVertexBufferId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, MeshManager::GetElementBufferId());
 
-        Shader::DispatchCompute(Math::IntegerCeilDiv(triangleCount, WorkGroupDim1D), 1, 1);
+        Shader::DispatchCompute(Math::IntegerDivCeil(triangleCount, WorkGroupDim1D), 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
         _triangleAggregationComputeShader.Use();
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
-        const int32_t aggregationGroups = Math::IntegerCeilDiv(sizeof(TriangleProperties) * triangleCount,
+        const int32_t aggregationGroups = Math::IntegerDivCeil(sizeof(TriangleProperties) * triangleCount,
                                                                AggregatorElementsPerGroup);
 
         Shader::DispatchCompute(aggregationGroups, 1, 1);
@@ -89,7 +89,7 @@ namespace Core
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         _outputComputeShader.Use();
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
-        Shader::DispatchCompute(Math::IntegerCeilDiv(aggregationGroups, WorkGroupDim1D), 1, 1);
+        Shader::DispatchCompute(Math::IntegerDivCeil(aggregationGroups, WorkGroupDim1D), 1, 1);
 
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.OutputBufferId);
@@ -113,7 +113,7 @@ namespace Core
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.PartialSumsBufferId);
         glBufferData(
             GL_SHADER_STORAGE_BUFFER,
-            Math::IntegerCeilDiv(sizeof(TriangleProperties) * TriangleCount, AggregatorElementsPerGroup),
+            Math::IntegerDivCeil(sizeof(TriangleProperties) * TriangleCount, AggregatorElementsPerGroup),
             nullptr,
             TriangleBufferUsage);
     }
@@ -129,7 +129,7 @@ namespace Core
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ids[1]);
         glBufferData(
             GL_SHADER_STORAGE_BUFFER,
-            static_cast<int64_t>(Math::IntegerCeilDiv(
+            static_cast<int64_t>(Math::IntegerDivCeil(
                 sizeof(TriangleProperties) * DefaultTriangleBufferSize,
                 AggregatorElementsPerGroup)),
             nullptr, TriangleBufferUsage);

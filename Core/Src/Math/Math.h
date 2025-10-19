@@ -21,9 +21,9 @@ namespace Core
 
     public:
         template<std::integral T, std::integral U>
-        [[nodiscard]] static std::common_type_t<T, U> IntegerCeilDiv(const T Numerator, const U Denominator)
+        [[nodiscard]] static constexpr std::common_type_t<T, U> IntegerDivCeil(const T Numerator, const U Denominator)
         {
-            return (Numerator + Denominator - 1) / Denominator;
+            return Numerator / Denominator + !!(Numerator % Denominator);
         }
     };
 }
