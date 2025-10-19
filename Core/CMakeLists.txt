@@ -69,6 +69,8 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_HEADER_FILES})
 
 add_executable(${TESTS_NAME} ${TEST_HEADER_FILES} ${TEST_FILES})
 
+target_include_directories(${TESTS_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Test)
+
 target_link_libraries(${TESTS_NAME} PRIVATE ${LIBRARY_NAME})
 target_link_libraries(${TESTS_NAME} PRIVATE GTest::gtest_main)
 target_link_libraries(${TESTS_NAME} PRIVATE glm::glm)

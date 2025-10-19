@@ -2,7 +2,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <gtest/gtest.h>
 
-#include "../TestsCommonUtilities/TestChecks.h"
+#include "TestsCommonUtilities/TestChecks.h"
 #include "Scene/TransformComponent.h"
 
 
