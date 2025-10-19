@@ -14,7 +14,8 @@
     "spdlog",
     "tracy",
     "entt",
-    "assimp"
+    "assimp",
+    "joltphysics"
   ],
   "overrides": [
     {

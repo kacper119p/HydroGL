@@ -8,11 +8,12 @@
 namespace Core
 {
     Engine::Engine(Platform::Window* Window) : _window(Window),
-                                               _scene(new Scene()),
-                                               _renderer(new Renderer(
+                                               _scene(std::make_unique<Scene>()),
+                                               _renderer(std::make_unique<Renderer>(
                                                    glm::uvec2(Window->GetWindowWidth(), Window->GetWindowHeight()))),
-                                               _materialManager(new MaterialManager()),
-                                               _waterSystem(new WaterSystem())
+                                               _materialManager(std::make_unique<MaterialManager>()),
+                                               _waterSystem(std::make_unique<WaterSystem>()),
+                                               _physicsSystem(std::make_unique<PhysicsSystem>())
     {
         MeshManager::Initialize();
 
@@ -22,11 +23,6 @@ namespace Core
     Engine::~Engine()
     {
         spdlog::info("Engine Shutdown.");
-        delete _window;
-        delete _scene;
-        delete _renderer;
-        delete _materialManager;
-        delete _waterSystem;
 
         MeshManager::FreeResources();
     }

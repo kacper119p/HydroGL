@@ -21,8 +21,7 @@ namespace Core
         entt::entity _entityId;
 
     public:
-        SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) :
-            _entityRegistry(EntityRegistry),
+        SceneNode(entt::registry* EntityRegistry, const entt::entity EntityId) : _entityRegistry(EntityRegistry),
             _entityId(EntityId)
         {
         }
@@ -94,7 +93,7 @@ namespace Core
             return _children.end();
         }
 
-        const TransformComponent& GetTransformComponent() const;
+        [[nodiscard]] const TransformComponent& GetTransformComponent() const;
 
     private:
         void UpdateMatrices(TransformComponent& Transform) const;
