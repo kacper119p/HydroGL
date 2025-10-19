@@ -4,6 +4,8 @@
 #include "TimeManager.h"
 #include "Camera/CameraComponent.h"
 #include "Meshes/MeshManager.h"
+#include "Physics/MeshColliderFactory.h"
+#include "Physics/PhysicsSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Components/RenderedMeshComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
@@ -43,6 +45,9 @@ int32_t Application::Application::Run(Platform::Window* Window)
                                                         / static_cast<float>(Window->GetWindowHeight()),
                                                         0.1f, 1000.0f);
 
+    JPH::RefConst<JPH::Shape> colliderShape = Core::MeshColliderFactory::CreateConvexHullCollider(
+        Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx"));
+
     const entt::entity meshEntity = entityRegistry->create();
 
     const Core::Texture baseMap = Core::Texture::GetTexture("Assets/Textures/Box/BaseMap.dds");
@@ -59,7 +64,13 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     renderedMesh.Mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
     renderedMesh.Material = material;
-    meshTransform.SetWorldPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
+    meshTransform.SetWorldPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+
+    Core::RigidbodyComponent rigidbodyComponent = engine->GetPhysicsSystem()->CreateRigidbodyComponent(
+        meshTransform, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
+        Core::Physics::Layers::Dynamic);
+
+    entityRegistry->emplace<Core::RigidbodyComponent>(meshEntity, rigidbodyComponent);
 
     const entt::entity meshEntity2 = entityRegistry->create();
 
@@ -68,8 +79,11 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     renderedMesh2.Mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
     renderedMesh2.Material = material;
-    meshTransform2.SetWorldPosition(glm::vec3(1.0f, 0.0f, 0.0f));
-
+    meshTransform2.SetWorldPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    Core::RigidbodyComponent rigidbodyComponent2 = engine->GetPhysicsSystem()->CreateRigidbodyComponent(
+        meshTransform2, colliderShape, JPH::EMotionType::Static, JPH::EActivation::Activate,
+        Core::Physics::Layers::Static);
+    entityRegistry->emplace<Core::RigidbodyComponent>(meshEntity2, rigidbodyComponent2);
 
     const entt::entity directionalLightEntity = entityRegistry->create();
     Core::TransformComponent& directionalLightTransform = entityRegistry->emplace<Core::TransformComponent>(
@@ -79,6 +93,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
     directionalLight.Color = glm::vec3(0.0f, 0.0f, 0.0f);
     directionalLightTransform.SetLocalEulerAngles(glm::vec3(90.0f, 0.0f, 0.0f));
 
+    float physicsAccumulatedTime = 0.0f;
     float lastTime = Platform::TimeManager::GetTime();
     while (!Window->ShouldClose())
     {
@@ -87,6 +102,14 @@ int32_t Application::Application::Run(Platform::Window* Window)
         lastTime = currentTime;
 
         Window->PoolEvents();
+
+        physicsAccumulatedTime += deltaTime;
+        while (physicsAccumulatedTime >= PhysicsTimeStep)
+        {
+            engine->GetPhysicsSystem()->Step(*entityRegistry, PhysicsTimeStep);
+            physicsAccumulatedTime -= PhysicsTimeStep;
+        }
+
         _cameraManager->Update(*scene, deltaTime);
 
         engine->GetRenderer()->RenderFrame(*engine, deltaTime);

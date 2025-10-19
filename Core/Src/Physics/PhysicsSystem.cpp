@@ -1,11 +1,12 @@
 #include "PhysicsSystem.h"
 
 #include <thread>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
 
+#include "Components/RigidbodyComponent.h"
 #include "Physics/BroadPhaseLayerInterface.h"
 #include "Physics/ObjectLayerPairFilter.h"
 #include "Physics/ObjectVsBroadPhaseLayerFilter.h"
-#include "Components/RigidbodyComponent.h"
 #include "Scene/TransformComponent.h"
 
 namespace
@@ -14,6 +15,7 @@ namespace
     constexpr uint32_t MaxBodies = 65536;
     constexpr uint32_t MaxObjectPairs = 65536;
     constexpr uint32_t MaxContactConstraints = 1024;
+    constexpr float Gravity = 9.80665f;
 }
 
 namespace Core
@@ -33,17 +35,32 @@ namespace Core
         _jphPhysicsSystem = std::make_unique<JPH::PhysicsSystem>();
 
 
-        const Physics::BroadPhaseLayerInterface broadPhaseLayerInterface;
-        const Physics::ObjectVsBroadPhaseLayerFilter objectVsBroadPhaseLayerFilter;
-        const Physics::ObjectLayerPairFilter objectVsObjectLayerFilter;
-
         _jphPhysicsSystem->Init(MaxBodies, 0, MaxObjectPairs, MaxContactConstraints, broadPhaseLayerInterface,
                                 objectVsBroadPhaseLayerFilter, objectVsObjectLayerFilter);
+        _jphPhysicsSystem->SetGravity(JPH::Vec3(0.0f, -Gravity, 0.0f));
     }
 
     PhysicsSystem::~PhysicsSystem()
     {
         delete JPH::Factory::sInstance;
+    }
+
+    RigidbodyComponent PhysicsSystem::CreateRigidbodyComponent(const TransformComponent& Transform,
+                                                               const JPH::RefConst<JPH::Shape>& Shape,
+                                                               const JPH::EMotionType MotionType,
+                                                               const JPH::EActivation Activation,
+                                                               const uint32_t CollisionLayer)
+    const
+    {
+        const glm::vec3 worldPosition = Transform.GetWorldPosition();
+        const glm::quat worldRotation = Transform.GetWorldRotation();
+        const JPH::BodyCreationSettings creationSettings(Shape,
+                                                         JPH::RVec3(worldPosition.x, worldPosition.y, worldPosition.z),
+                                                         JPH::Quat(worldRotation.x, worldRotation.y, worldRotation.z,
+                                                                   worldRotation.w),
+                                                         MotionType,
+                                                         CollisionLayer);
+        return RigidbodyComponent(_jphPhysicsSystem->GetBodyInterface().CreateAndAddBody(creationSettings, Activation));
     }
 
     void PhysicsSystem::Step(entt::registry& Registry, const float DeltaTime) const
@@ -57,17 +74,18 @@ namespace Core
     {
         const auto view = Registry.view<Core::TransformComponent, Core::RigidbodyComponent>();
 
-        for (auto [entity, transform, bodyComp] : view.each())
+        for (auto [entity, transformComponent, rigidbodyComponent] : view.each())
         {
-            const JPH::BodyLockRead lock(_jphPhysicsSystem->GetBodyLockInterfaceNoLock(), bodyComp.GetBodyId());
+            const JPH::BodyLockRead lock(_jphPhysicsSystem->GetBodyLockInterfaceNoLock(),
+                                         rigidbodyComponent.GetBodyId());
             const JPH::Body& body = lock.GetBody();
 
             const JPH::RMat44& mat = body.GetWorldTransform();
             const JPH::Vec3 pos = mat.GetTranslation();
             const JPH::Quat rot = mat.GetRotation().GetQuaternion();
 
-            transform.SetWorldPosition(glm::vec3(pos.GetX(), pos.GetY(), pos.GetZ()));
-            transform.SetLocalRotation(glm::quat(rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()));
+            transformComponent.SetWorldPosition(glm::vec3(pos.GetX(), pos.GetY(), pos.GetZ()));
+            transformComponent.SetLocalRotation(glm::quat(rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()));
         }
     }
 }

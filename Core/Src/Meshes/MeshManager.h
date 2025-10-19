@@ -39,6 +39,31 @@ namespace Core
             return _glElementBuffer;
         }
 
+        [[nodiscard]] static glm::vec3* GetPositionsBufferData(const uint32_t VertexIndex)
+        {
+            return _vertexBuffer.Positions + VertexIndex;
+        }
+
+        [[nodiscard]] static glm::vec2* GetTexCoordsBufferData(const uint32_t VertexIndex)
+        {
+            return _vertexBuffer.TexCoords + VertexIndex;
+        }
+
+        [[nodiscard]] static glm::vec3* GetNormalsBufferData(const uint32_t VertexIndex)
+        {
+            return _vertexBuffer.Normals + VertexIndex;
+        }
+
+        [[nodiscard]] static glm::vec3* GetTangentsBufferData(const uint32_t VertexIndex)
+        {
+            return _vertexBuffer.Tangents + VertexIndex;
+        }
+
+        [[nodiscard]] static uint32_t* GetIndicesBufferData(const uint32_t IndexIndex)
+        {
+            return _faceBuffer.Indices + IndexIndex;
+        }
+
         static void Initialize();
 
         static void FreeResources();

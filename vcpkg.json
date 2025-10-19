@@ -8,7 +8,6 @@
         "docking-experimental"
       ]
     },
-    "imguizmo",
     "glm",
     "gtest",
     "spdlog",

@@ -10,16 +10,17 @@ add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 
 #Find Vcpkg packages
 find_package(imgui CONFIG REQUIRED)
-find_package(imguizmo CONFIG REQUIRED)
 find_package(Tracy CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(Jolt CONFIG REQUIRED)
 
 #Link Vcpkg packages
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE Tracy::TracyClient)
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
+target_link_libraries(${PROJECT_NAME} PRIVATE Jolt::Jolt)
 
 #Link local third party packages
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)

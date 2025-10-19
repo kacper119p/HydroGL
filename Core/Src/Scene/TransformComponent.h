@@ -8,7 +8,7 @@
 
 namespace Core
 {
-    struct  TransformComponent
+    struct TransformComponent
     {
         friend class SceneNode;
 
@@ -51,7 +51,20 @@ namespace Core
 
         [[nodiscard]] const glm::quat& GetLocalRotation() const
         {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
             return _rotation;
+        }
+
+        [[nodiscard]] glm::quat GetWorldRotation() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::quat_cast(_localToWorldMatrix);
         }
 
         void SetLocalRotation(const glm::quat& Rotation)
@@ -68,6 +81,10 @@ namespace Core
 
         [[nodiscard]] glm::vec3 GetWorldPosition() const
         {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
             return glm::vec3(GetLocalToWorldMatrix()[3]);
         }
 
@@ -90,6 +107,15 @@ namespace Core
         [[nodiscard]] glm::vec3 GetLocalEulerAngles() const
         {
             return glm::degrees(glm::eulerAngles(_rotation));
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldEulerAngles() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::degrees(glm::eulerAngles(GetWorldRotation()));
         }
 
         [[nodiscard]] glm::vec3 GetWorldRight() const
