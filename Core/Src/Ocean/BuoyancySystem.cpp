@@ -1,9 +1,10 @@
-#include "WaterTriangleProcessor.h"
+#include "BuoyancySystem.h"
 
+#include "spdlog/spdlog.h"
+#include "Components/WaterEffectorComponent.h"
 #include "glad/glad.h"
 #include "Math/Math.h"
 #include "Meshes/MeshManager.h"
-#include "Components/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 #include "Scene/TransformComponent.h"
 
@@ -13,12 +14,13 @@ namespace Core
     {
         constexpr int32_t WorkGroupDim1D = 64;
         constexpr size_t DefaultTriangleBufferSize = 4096;
-        constexpr GLenum TriangleBufferUsage = GL_DYNAMIC_READ;
+        constexpr GLenum TriangleBufferUsage = GL_DYNAMIC_COPY;
         constexpr int32_t AggregatorElementsPerThread = 4;
         constexpr int32_t AggregatorElementsPerGroup = WorkGroupDim1D * AggregatorElementsPerThread;
+        int32_t i = 0;
     }
 
-    WaterTriangleProcessor::WaterTriangleProcessor()
+    BuoyancySystem::BuoyancySystem()
         : _triangleBuffer(CreateTriangleBuffers()),
           _triangleProcessorComputeShader(
               ShaderBuilder().SetStage(
@@ -36,23 +38,25 @@ namespace Core
     {
     }
 
-    void WaterTriangleProcessor::ProcessMeshes(Scene& Scene, const uint32_t DisplacementTextures) const
+    void BuoyancySystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, const uint32_t DisplacementTextures,
+                                       const uint32_t CascadeSettingsBuffer) const
     {
         entt::registry* entityRegistry = Scene.GetEntityRegistry();
-        auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent>();
+        const auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent, RigidbodyComponent>();
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D_ARRAY, DisplacementTextures);
-
-        for (const entt::entity entity : view)
+        i = 0;
+        for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
-            WaterEffectorComponent& waterEffector = view.get<WaterEffectorComponent>(entity);
-            TransformComponent& transform = view.get<TransformComponent>(entity);
-            ProcessMesh(waterEffector.GetMesh(), transform);
+            ProcessMesh(PhysicsSystem, waterEffector.GetMesh(), transform, rigidbody, CascadeSettingsBuffer);
         }
     }
 
-    void WaterTriangleProcessor::ProcessMesh(const Mesh& Mesh, const TransformComponent& Transform) const
+    void BuoyancySystem::ProcessMesh(PhysicsSystem& PhysicsSystem, const Mesh& Mesh,
+                                     const TransformComponent& Transform,
+                                     const RigidbodyComponent& Rigidbody,
+                                     const uint32_t CascadeSettingsBuffer) const
     {
         const uint32_t triangleCount = Mesh.GetTriangleCount();
         if (triangleCount > _triangleBuffer.Capacity)
@@ -72,39 +76,48 @@ namespace Core
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ShaderMeshData), &meshData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _meshDataUbo);
 
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadeSettingsBuffer);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.MainBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, MeshManager::GetVertexBufferId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, MeshManager::GetElementBufferId());
 
-        Shader::DispatchCompute(Math::IntegerDivCeilPositive(triangleCount, WorkGroupDim1D), 1, 1);
+        Shader::DispatchCompute(static_cast<int32_t>(Math::IntegerDivCeilPositive(triangleCount, WorkGroupDim1D)),
+                                1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
         _triangleAggregationComputeShader.Use();
+        _triangleAggregationComputeShader.SetUniform("TriangleCount", static_cast<int32_t>(triangleCount));
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.MainBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
-        const int32_t aggregationGroups = Math::IntegerDivCeilPositive(sizeof(TriangleProperties) * triangleCount,
-                                                                       AggregatorElementsPerGroup);
+        const int32_t aggregationGroups = static_cast<int32_t>(Math::IntegerDivCeilPositive(
+            triangleCount, AggregatorElementsPerGroup));
 
         Shader::DispatchCompute(aggregationGroups, 1, 1);
 
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         _outputComputeShader.Use();
+        _outputComputeShader.SetUniform("PartialsCount", static_cast<uint32_t>(aggregationGroups));
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
-        Shader::DispatchCompute(Math::IntegerDivCeilPositive(aggregationGroups, WorkGroupDim1D), 1, 1);
+        Shader::DispatchCompute(1, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
 
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.OutputBufferId);
+        GLsync fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+        glDeleteSync(fence);
 
         constexpr int32_t bufferSize = sizeof(TriangleProperties);
-        const void* mappedBuffer = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleProperties),
-                                                    GL_MAP_READ_BIT);
+        TriangleProperties properties{};
+        memcpy(&properties, _triangleBuffer.MappedOutputBuffer, bufferSize);
 
-        std::vector<TriangleProperties> cpuData(bufferSize / sizeof(float));
-        memcpy(cpuData.data(), mappedBuffer, bufferSize);
-
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * 1000.0f, 0.0f);
+        // spdlog::info("{} BuoyancySystem: SubmergedVolume: {}, Buoyancy: {} SubmergedArea:{}", i++,
+        //              properties.SubmergedVolume,
+        //              buoyancy.y, properties.SubmergedArea);
+        PhysicsSystem.AddForce(Rigidbody, buoyancy);
     }
 
-    void WaterTriangleProcessor::ResizeTriangleBuffers(const uint32_t TriangleCount) const
+    void BuoyancySystem::ResizeTriangleBuffers(const uint32_t TriangleCount) const
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.MainBufferId);
         glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<int64_t>(sizeof(TriangleProperties) * TriangleCount),
@@ -113,12 +126,13 @@ namespace Core
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.PartialSumsBufferId);
         glBufferData(
             GL_SHADER_STORAGE_BUFFER,
-            Math::IntegerDivCeilPositive(sizeof(TriangleProperties) * TriangleCount, AggregatorElementsPerGroup),
+            static_cast<int64_t>(Math::IntegerDivCeilPositive(sizeof(TriangleProperties) * TriangleCount,
+                                                              AggregatorElementsPerGroup)),
             nullptr,
             TriangleBufferUsage);
     }
 
-    WaterTriangleProcessor::TriangleBuffer WaterTriangleProcessor::CreateTriangleBuffers()
+    BuoyancySystem::TriangleBuffer BuoyancySystem::CreateTriangleBuffers()
     {
         uint32_t ids[3]{};
         glGenBuffers(3, ids);
@@ -135,19 +149,17 @@ namespace Core
             nullptr, TriangleBufferUsage);
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ids[2]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleProperties), nullptr,
-                     TriangleBufferUsage);
         glBufferStorage(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleProperties), nullptr,
-                        GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT);
+                        GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
 
         TriangleProperties* ptr = static_cast<TriangleProperties*>(glMapBufferRange(
             GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleProperties),
-            GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT));
+            GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT));
 
         return TriangleBuffer{ids[0], ids[1], ids[2], DefaultTriangleBufferSize, ptr};
     }
 
-    uint32_t WaterTriangleProcessor::CreateMeshDataUbo()
+    uint32_t BuoyancySystem::CreateMeshDataUbo()
     {
         uint32_t id = 0;
         glGenBuffers(1, &id);

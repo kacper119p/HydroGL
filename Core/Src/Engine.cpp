@@ -13,6 +13,7 @@ namespace Core
                                                    glm::uvec2(Window->GetWindowWidth(), Window->GetWindowHeight()))),
                                                _materialManager(std::make_unique<MaterialManager>()),
                                                _waterSystem(std::make_unique<WaterSystem>()),
+                                               _buoyancySystem(std::make_unique<BuoyancySystem>()),
                                                _physicsSystem(std::make_unique<PhysicsSystem>())
     {
         MeshManager::Initialize();

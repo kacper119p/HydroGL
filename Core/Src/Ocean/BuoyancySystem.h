@@ -2,6 +2,8 @@
 #include <glm/vec3.hpp>
 
 #include "Meshes/Mesh.h"
+#include "Physics/PhysicsSystem.h"
+#include "Physics/Components/RigidbodyComponent.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/Scene.h"
 
@@ -9,7 +11,7 @@ namespace Core
 {
     struct TransformComponent;
 
-    class WaterTriangleProcessor
+    class BuoyancySystem
     {
     private:
         struct alignas(sizeof(float) * 4) TriangleProperties
@@ -47,13 +49,16 @@ namespace Core
         uint32_t _meshDataUbo;
 
     public:
-        WaterTriangleProcessor();
+        BuoyancySystem();
 
     public:
-        void ProcessMeshes(Scene& Scene, uint32_t DisplacementTextures) const;
+        void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
+                           uint32_t CascadeSettingsBuffer) const;
 
     private:
-        void ProcessMesh(const Mesh& Mesh, const TransformComponent& Transform) const;
+        void ProcessMesh(PhysicsSystem& PhysicsSystem, const Mesh& Mesh, const TransformComponent& Transform,
+                         const RigidbodyComponent& Rigidbody,
+                         uint32_t CascadeSettingsBuffer) const;
 
         void ResizeTriangleBuffers(uint32_t TriangleCount) const;
 

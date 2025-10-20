@@ -1,7 +1,6 @@
 #pragma once
 #include "Camera/CameraComponent.h"
 #include "Ocean/OceanGrid.h"
-#include "Ocean/WaterTriangleProcessor.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
 
@@ -149,7 +148,6 @@ namespace Core
 
     private:
         OceanGrid _oceanGrid;
-        WaterTriangleProcessor _waterTriangleProcessor;
 
         Shader _waterShader;
         int32_t _viewMatrixLocation;
@@ -270,7 +268,16 @@ namespace Core
             return _initialSpectrumSettingsBufferData.Swell;
         }
 
-    public:
+        [[nodiscard]] uint32_t GetDisplacementTextures() const
+        {
+            return _displacementTextures;
+        }
+
+        [[nodiscard]] uint32_t GetCascadeSettingsSsbo() const
+        {
+            return _cascadeSettingsSsbo;
+        }
+
         void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera);
 
     private:

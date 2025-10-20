@@ -8,9 +8,8 @@ layout(std140, binding = 0) uniform meshData
     mat4 ObjectToWorldMatrix;
     uint VerticesIndex;
     uint IndicesIndex;
-    uint TrianglesIndex;
     uint TrianglesCount;
-
+    float Padding;
 } MeshData;
 
 layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
@@ -115,7 +114,7 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out
 
             // Create submerged sub-triangle p1-v0-p2
             SubmergedArea = 0.5 * length(cross(p1 - v0, p2 - v0));
-            VolumeContribution = TriangleArea * centerDepth * TriangleNormal.y;
+            VolumeContribution = SubmergedArea * centerDepth * TriangleNormal.y;
             return;
         }
         else
@@ -154,7 +153,7 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out
             float depth2 = vertexDepths[(aboveWaterIndex + 2) % 3] - centroid2.y;
 
             SubmergedArea = areaTriangle1 + areaTriangle2;
-            VolumeContribution = TriangleArea * centerDepth * TriangleNormal.y;
+            VolumeContribution = SubmergedArea * centerDepth * TriangleNormal.y;
         }
     }
 }
@@ -185,6 +184,6 @@ void main()
     ProcessTriangle(vertexPositionsWorldSpace, triangleNormal, submergedArea, volumeContribution, triangleArea);
 
     TriangleProperties[triangleIndex].SubmergedArea = submergedArea;
-    TriangleProperties[triangleIndex].SubmergedVolume = volumeContribution;
+    TriangleProperties[triangleIndex].SubmergedVolume = max(volumeContribution, 0.0);
     TriangleProperties[triangleIndex].Drag = vec3(0.0);
 }

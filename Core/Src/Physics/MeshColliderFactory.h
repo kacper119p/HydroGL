@@ -7,5 +7,5 @@
 
 namespace Core::MeshColliderFactory
 {
-    JPH::RefConst<JPH::Shape> CreateConvexHullCollider(const Mesh& Mesh);
+    JPH::RefConst<JPH::Shape> CreateConvexHullCollider(const Mesh& Mesh, float Density);
 }

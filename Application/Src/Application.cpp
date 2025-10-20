@@ -4,6 +4,7 @@
 #include "TimeManager.h"
 #include "Camera/CameraComponent.h"
 #include "Meshes/MeshManager.h"
+#include "Ocean/Components/WaterEffectorComponent.h"
 #include "Physics/MeshColliderFactory.h"
 #include "Physics/PhysicsSystem.h"
 #include "Rendering/Renderer.h"
@@ -46,7 +47,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
                                                         0.1f, 1000.0f);
 
     JPH::RefConst<JPH::Shape> colliderShape = Core::MeshColliderFactory::CreateConvexHullCollider(
-        Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx"));
+        Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx"), 750.0f);
 
     const entt::entity meshEntity = entityRegistry->create();
 
@@ -59,8 +60,37 @@ int32_t Application::Application::Run(Platform::Window* Window)
         glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 0.0f,
         baseMap, rmaoMap, normalMap, emissiveMap);
 
+    Core::Mesh mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
+
+    for (int32_t i = -2; i <= 2; ++i)
+    {
+        for (int32_t j = -2; j <= 2; ++j)
+        {
+            const entt::entity boxEntity = entityRegistry->create();
+
+            Core::TransformComponent& boxTransform = entityRegistry->emplace<Core::TransformComponent>(boxEntity);
+            Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
+                boxEntity);
+            Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
+                boxEntity, mesh);
+
+            boxRenderedMesh.Mesh = mesh;
+            boxRenderedMesh.Material = material;
+            boxTransform.SetWorldPosition(glm::vec3(static_cast<float>(i) * 3.0f, 20.0f,
+                                                    static_cast<float>(j) * 3.0f));
+
+            Core::RigidbodyComponent boxRigidbodyComponent = engine->GetPhysicsSystem()->CreateRigidbodyComponent(
+                boxTransform, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
+                Core::Physics::Layers::Dynamic);
+
+            entityRegistry->emplace<Core::RigidbodyComponent>(boxEntity, boxRigidbodyComponent);
+        }
+    }
+
     Core::TransformComponent& meshTransform = entityRegistry->emplace<Core::TransformComponent>(meshEntity);
     Core::RenderedMeshComponent& renderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(meshEntity);
+    Core::WaterEffectorComponent& waterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
+        meshEntity, Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx"));
 
     renderedMesh.Mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
     renderedMesh.Material = material;
@@ -76,13 +106,15 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     Core::TransformComponent& meshTransform2 = entityRegistry->emplace<Core::TransformComponent>(meshEntity2);
     Core::RenderedMeshComponent& renderedMesh2 = entityRegistry->emplace<Core::RenderedMeshComponent>(meshEntity2);
+    Core::WaterEffectorComponent& waterEffector2 = entityRegistry->emplace<Core::WaterEffectorComponent>(
+        meshEntity2, Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx"));
 
     renderedMesh2.Mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
     renderedMesh2.Material = material;
     meshTransform2.SetWorldPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     Core::RigidbodyComponent rigidbodyComponent2 = engine->GetPhysicsSystem()->CreateRigidbodyComponent(
-        meshTransform2, colliderShape, JPH::EMotionType::Static, JPH::EActivation::Activate,
-        Core::Physics::Layers::Static);
+        meshTransform2, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
+        Core::Physics::Layers::Dynamic);
     entityRegistry->emplace<Core::RigidbodyComponent>(meshEntity2, rigidbodyComponent2);
 
     const entt::entity directionalLightEntity = entityRegistry->create();
@@ -103,9 +135,15 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
         Window->PoolEvents();
 
+        // engine->GetBuoyancySystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
+        //                                            engine->GetWaterSystem()->GetDisplacementTextures(),
+        //                                            engine->GetWaterSystem()->GetCascadeSettingsSsbo());
         physicsAccumulatedTime += deltaTime;
         while (physicsAccumulatedTime >= PhysicsTimeStep)
         {
+            engine->GetBuoyancySystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
+                                                       engine->GetWaterSystem()->GetDisplacementTextures(),
+                                                       engine->GetWaterSystem()->GetCascadeSettingsSsbo());
             engine->GetPhysicsSystem()->Step(*entityRegistry, PhysicsTimeStep);
             physicsAccumulatedTime -= PhysicsTimeStep;
         }

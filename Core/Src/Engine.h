@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Window.h"
+#include "Ocean/BuoyancySystem.h"
 #include "Ocean/WaterSystem.h"
 #include "Physics/PhysicsSystem.h"
 #include "Rendering/Renderer.h"
@@ -17,6 +18,7 @@ namespace Core
         std::unique_ptr<Renderer> _renderer;
         std::unique_ptr<MaterialManager> _materialManager;
         std::unique_ptr<WaterSystem> _waterSystem;
+        std::unique_ptr<BuoyancySystem> _buoyancySystem;
         std::unique_ptr<PhysicsSystem> _physicsSystem;
 
     public:
@@ -38,6 +40,11 @@ namespace Core
         [[nodiscard]] MaterialManager* GetMaterialManager() const
         {
             return _materialManager.get();
+        }
+
+        [[nodiscard]] BuoyancySystem* GetBuoyancySystem() const
+        {
+            return _buoyancySystem.get();
         }
 
         [[nodiscard]] WaterSystem* GetWaterSystem() const

@@ -5,7 +5,7 @@
 
 namespace Core
 {
-    JPH::RefConst<JPH::Shape> MeshColliderFactory::CreateConvexHullCollider(const Mesh& Mesh)
+    JPH::RefConst<JPH::Shape> MeshColliderFactory::CreateConvexHullCollider(const Mesh& Mesh, const float Density)
     {
         JPH::Array<JPH::Vec3> joltVertices;
         joltVertices.reserve(Mesh.GetVerticesCount());
@@ -17,7 +17,9 @@ namespace Core
             joltVertices.emplace_back(v.x, v.y, v.z);
         }
 
-        const JPH::ConvexHullShapeSettings shapeSettings(joltVertices);
+        JPH::ConvexHullShapeSettings shapeSettings(joltVertices);
+        shapeSettings.SetDensity(Density);
+
         return shapeSettings.Create().Get();
     }
 }

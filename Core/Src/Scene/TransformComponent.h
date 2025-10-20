@@ -73,10 +73,29 @@ namespace Core
             _sceneHierarchyNode->MarkDirty();
         }
 
+        void SetWorldRotation(const glm::quat& Rotation)
+        {
+            if (_sceneHierarchyNode->GetParent())
+            {
+                const SceneNode* parentNode = _sceneHierarchyNode->GetParent();
+                const glm::quat parentWorldRotation = parentNode->GetTransformComponent().GetWorldRotation();
+                _rotation = glm::inverse(parentWorldRotation) * Rotation;
+            } else
+            {
+                _rotation = Rotation;
+            }
+            _sceneHierarchyNode->MarkDirty();
+        }
+
         void SetLocalEulerAngles(const glm::vec3& EulerAngles)
         {
             _rotation = glm::quat(glm::radians(EulerAngles));
             _sceneHierarchyNode->MarkDirty();
+        }
+
+        void SetWorldEulerAngles(const glm::vec3& EulerAngles)
+        {
+            SetWorldRotation(glm::quat(glm::radians(EulerAngles)));
         }
 
         [[nodiscard]] glm::vec3 GetWorldPosition() const

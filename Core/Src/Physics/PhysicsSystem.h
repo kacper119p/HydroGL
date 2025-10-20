@@ -36,6 +36,8 @@ namespace Core
                                                                   JPH::EActivation Activation,
                                                                   uint32_t CollisionLayer) const;
 
+        void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force);
+
     public:
         void Step(entt::registry& Registry, float DeltaTime) const;
 

@@ -63,6 +63,13 @@ namespace Core
         return RigidbodyComponent(_jphPhysicsSystem->GetBodyInterface().CreateAndAddBody(creationSettings, Activation));
     }
 
+    void PhysicsSystem::AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force)
+    {
+        const JPH::BodyID bodyId = Rigidbody.GetBodyId();
+        const JPH::Vec3 joltForce(Force.x, Force.y, Force.z);
+        _jphPhysicsSystem->GetBodyInterface().AddForce(bodyId, joltForce);
+    }
+
     void PhysicsSystem::Step(entt::registry& Registry, const float DeltaTime) const
     {
         _jphPhysicsSystem->Update(DeltaTime, 1, _jphTempAllocator.get(), _jphJobSystem.get());
@@ -85,7 +92,7 @@ namespace Core
             const JPH::Quat rot = mat.GetRotation().GetQuaternion();
 
             transformComponent.SetWorldPosition(glm::vec3(pos.GetX(), pos.GetY(), pos.GetZ()));
-            transformComponent.SetLocalRotation(glm::quat(rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()));
+            transformComponent.SetWorldRotation(glm::quat(rot.GetW(), rot.GetX(), rot.GetY(), rot.GetZ()));
         }
     }
 }
