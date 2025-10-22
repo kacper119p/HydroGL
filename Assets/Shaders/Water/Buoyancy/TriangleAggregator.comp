@@ -7,14 +7,13 @@ layout(std430, binding = 0) readonly buffer InputBuffer
     triangleProperties InputData[];
 };
 
-// Tune these to your GPU
-const int LOCAL_SIZE = 64;// local workgroup size
-const int ELEMENTS_PER_THREAD = 4;// each thread will load this many elements (helps coalescing)
-const int GROUP_SIZE = LOCAL_SIZE * ELEMENTS_PER_THREAD;// total elements processed by one workgroup
+const int LOCAL_SIZE = 64;
+const int ELEMENTS_PER_THREAD = 4;
+const int GROUP_SIZE = LOCAL_SIZE * ELEMENTS_PER_THREAD;
 
-// Binding 1: partials output (one float per workgroup)
-layout(std430, binding = 1) writeonly buffer Partials {
-    triangleProperties partials[];// length >= numWorkGroupsX
+layout(std430, binding = 1) writeonly buffer Partials
+{
+    triangleProperties partials[];
 } partialSSBO;
 
 uniform int TriangleCount;
@@ -28,14 +27,13 @@ void main() {
 
     uint base = groupId * GROUP_SIZE;
 
-    // each thread accumulates a small sum over its assigned indices
     triangleProperties sum;
     sum.Drag = vec3(0.0);
     sum.SubmergedArea = 0.0;
     sum.SubmergedVolume = 0.0;
 
-    // For k in 0..ELEMS_PER_THREAD-1, thread reads base + localId + k * localSize
-    for (uint k = 0; k < ELEMENTS_PER_THREAD; ++k) {
+    for (uint k = 0; k < ELEMENTS_PER_THREAD; ++k)
+    {
         uint idx = base + localId + k *  LOCAL_SIZE;
         if (idx < TriangleCount)
         {
@@ -45,14 +43,14 @@ void main() {
         }
     }
 
-    // store into shared memory
     sharedBuffer[localId] = sum;
     memoryBarrierShared();
     barrier();
 
     // Parallel tree-reduction in shared memory (power-of-two reduction)
-    // LOCAL_SIZE must be power of two for this loop to work nicely.
-    for (uint offset = LOCAL_SIZE >> 1; offset > 0; offset >>= 1) {
+    // LOCAL_SIZE must be power of two for this loop to work.
+    for (uint offset = LOCAL_SIZE >> 1; offset > 0; offset >>= 1)
+    {
         if (localId < offset) {
             sharedBuffer[localId].Drag += sharedBuffer[localId + offset].Drag;
             sharedBuffer[localId].SubmergedArea += sharedBuffer[localId + offset].SubmergedArea;
@@ -62,8 +60,8 @@ void main() {
         barrier();
     }
 
-    // thread 0 writes the partial result
-    if (localId == 0) {
+    if (localId == 0)
+    {
         partialSSBO.partials[groupId] = sharedBuffer[0];
     }
 }

@@ -53,14 +53,14 @@ namespace Core
 
     public:
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
-                           uint32_t CascadeSettingsBuffer) const;
+                           uint32_t CascadeSettingsBuffer);
 
     private:
         void ProcessMesh(PhysicsSystem& PhysicsSystem, const Mesh& Mesh, const TransformComponent& Transform,
                          const RigidbodyComponent& Rigidbody,
-                         uint32_t CascadeSettingsBuffer) const;
+                         uint32_t CascadeSettingsBuffer);
 
-        void ResizeTriangleBuffers(uint32_t TriangleCount) const;
+        void ResizeTriangleBuffers(uint32_t TriangleCount);
 
         static TriangleBuffer CreateTriangleBuffers();
 

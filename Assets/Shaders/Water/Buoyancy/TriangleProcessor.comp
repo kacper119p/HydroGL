@@ -2,6 +2,7 @@
 
 #include "TriangleProperties.glsl"
 #include "Water/WaterCommon.glsl"
+#include "Constants.glsl"
 
 layout(std140, binding = 0) uniform meshData
 {
@@ -27,7 +28,7 @@ layout(std430, binding = 1) writeonly buffer TrianglePropertiesBuffer
 
 layout(std430, binding = 2) readonly buffer VertexBuffer
 {
-    vec3 VertexPositions[];
+    float VertexPositions[];
 };
 
 layout(std430, binding = 3) readonly buffer IndexBuffer
@@ -56,7 +57,7 @@ float RetrieveWaterHeight(vec2 position)
     return displacement.y;
 }
 
-void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out float SubmergedArea, out float VolumeContribution, out float TriangleArea)
+void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], const float TriangleNormalY, out float SubmergedArea, out float VolumeContribution, out float TriangleArea)
 {
     float vertexDepths[3];
     for (int i = 0; i < 3; ++i)
@@ -68,17 +69,17 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out
     vec3 center = (1.0 / 3.0) * (VertexPositionsWorldSpace[0] + VertexPositionsWorldSpace[1] + VertexPositionsWorldSpace[2]);
     float centerDepth = (1.0 / 3.0) * (vertexDepths[0] + vertexDepths[1] + vertexDepths[2]);
 
-    bvec3 trianglesAboveWater = greaterThanEqual(vec3(vertexDepths[0], vertexDepths[1], vertexDepths[2]), vec3(0.0));
-    if (all(trianglesAboveWater))
+    bvec3 verticesAboveWater = greaterThanEqual(vec3(vertexDepths[0], vertexDepths[1], vertexDepths[2]), vec3(EPSILON));
+    if (all(verticesAboveWater))
     {
         SubmergedArea = 0.0;
         VolumeContribution = 0.0;
         return;
     }
-    else if (all(not(trianglesAboveWater)))
+    else if (all(not(verticesAboveWater)))
     {
         SubmergedArea = TriangleArea;
-        VolumeContribution = TriangleArea * centerDepth * TriangleNormal.y;
+        VolumeContribution = TriangleArea * centerDepth * TriangleNormalY;
         return;
     }
     else
@@ -88,7 +89,7 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out
 
         for (int i = 0; i < 3; ++i)
         {
-            if (trianglesAboveWater[i])
+            if (verticesAboveWater[i])
             {
                 ++aboveWaterCount;
                 aboveWaterIndex = i;
@@ -112,17 +113,21 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out
             vec3 p1 = v0 + alpha1 * (v1 - v0);
             vec3 p2 = v0 + alpha2 * (v2 - v0);
 
+            // The submerged area is formed by two triangles: p1-v1-v2 and p1-v2-p2
+            float areaTriangle1 = 0.5 * length(cross(v1 - p1, v2 - p1));
+            float areaTriangle2 = 0.5 * length(cross(v2 - p1, p2 - p1));
+
             // Create submerged sub-triangle p1-v0-p2
-            SubmergedArea = 0.5 * length(cross(p1 - v0, p2 - v0));
-            VolumeContribution = SubmergedArea * centerDepth * TriangleNormal.y;
+            SubmergedArea = areaTriangle1 + areaTriangle2;
+            VolumeContribution = SubmergedArea * centerDepth * TriangleNormalY;
             return;
         }
-        else
+        else //if(aboveWaterCount == 2)
         {
             int underwaterIndex = -1;
             for (int i = 0; i < 3; ++i)
             {
-                if (!trianglesAboveWater[i])
+                if (!verticesAboveWater[i])
                 {
                     underwaterIndex = i;
                 }
@@ -141,19 +146,10 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], vec3 TriangleNormal, out
             vec3 p1 = v0 + alpha1 * (v1 - v0);
             vec3 p2 = v0 + alpha2 * (v2 - v0);
 
-            // The submerged area is formed by two triangles: p1-v1-v2 and p1-v2-p2
-            float areaTriangle1 = 0.5 * length(cross(v1 - p1, v2 - p1));
-            float areaTriangle2 = 0.5 * length(cross(v2 - p1, p2 - p1));
+            // The submerged area is formed by sub-triangle v0-p1-p2
+            SubmergedArea= 0.5 * length(cross(v0 - p1, v0 - p2));
 
-            // Calculate centroids and depths for volume contribution
-            vec3 centroid1 = (p1 + v1 + v2) / 3.0;
-            vec3 centroid2 = (p1 + v2 + p2) / 3.0;
-
-            float depth1 = vertexDepths[(aboveWaterIndex + 1) % 3] - centroid1.y;
-            float depth2 = vertexDepths[(aboveWaterIndex + 2) % 3] - centroid2.y;
-
-            SubmergedArea = areaTriangle1 + areaTriangle2;
-            VolumeContribution = SubmergedArea * centerDepth * TriangleNormal.y;
+            VolumeContribution = SubmergedArea * centerDepth * TriangleNormalY;
         }
     }
 }
@@ -171,19 +167,28 @@ void main()
     uint index1 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3 + 1];
     uint index2 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3 + 2];
 
+    uint vertexTrueIndices[3];
+    vertexTrueIndices[0] = (MeshData.VerticesIndex + index0) * 3;
+    vertexTrueIndices[1] = (MeshData.VerticesIndex + index1) * 3;
+    vertexTrueIndices[2] = (MeshData.VerticesIndex + index2) * 3;
+
+    vec3 vertexObjectSpacePositions[3];
+    vertexObjectSpacePositions[0] = vec3(VertexPositions[vertexTrueIndices[0]], VertexPositions[vertexTrueIndices[0] + 1], VertexPositions[vertexTrueIndices[0] + 2]);
+    vertexObjectSpacePositions[1] = vec3(VertexPositions[vertexTrueIndices[1]], VertexPositions[vertexTrueIndices[1] + 1], VertexPositions[vertexTrueIndices[1] + 2]);
+    vertexObjectSpacePositions[2] = vec3(VertexPositions[vertexTrueIndices[2]], VertexPositions[vertexTrueIndices[2] + 1], VertexPositions[vertexTrueIndices[2] + 2]);
+
     vec3 vertexPositionsWorldSpace[3];
-    vertexPositionsWorldSpace[0] = (MeshData.ObjectToWorldMatrix * vec4(VertexPositions[MeshData.VerticesIndex + index0], 1.0)).xyz;
-    vertexPositionsWorldSpace[1] = (MeshData.ObjectToWorldMatrix * vec4(VertexPositions[MeshData.VerticesIndex + index1], 1.0)).xyz;
-    vertexPositionsWorldSpace[2] = (MeshData.ObjectToWorldMatrix * vec4(VertexPositions[MeshData.VerticesIndex + index2], 1.0)).xyz;
+    vertexPositionsWorldSpace[0] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[0], 1.0)).xyz;
+    vertexPositionsWorldSpace[1] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[1], 1.0)).xyz;
+    vertexPositionsWorldSpace[2] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[2], 1.0)).xyz;
 
-    vec3 triangleNormal = normalize(cross(vertexPositionsWorldSpace[1] - vertexPositionsWorldSpace[0], vertexPositionsWorldSpace[2] - vertexPositionsWorldSpace[0]));
-
+    float triangleNormal = normalize(cross(vertexPositionsWorldSpace[1] - vertexPositionsWorldSpace[0], vertexPositionsWorldSpace[2] - vertexPositionsWorldSpace[0])).y;
     float submergedArea;
     float volumeContribution;
     float triangleArea;
     ProcessTriangle(vertexPositionsWorldSpace, triangleNormal, submergedArea, volumeContribution, triangleArea);
 
-    TriangleProperties[triangleIndex].SubmergedArea = submergedArea;
-    TriangleProperties[triangleIndex].SubmergedVolume = max(volumeContribution, 0.0);
+    TriangleProperties[triangleIndex].SubmergedArea = triangleNormal;
+    TriangleProperties[triangleIndex].SubmergedVolume = volumeContribution;
     TriangleProperties[triangleIndex].Drag = vec3(0.0);
 }

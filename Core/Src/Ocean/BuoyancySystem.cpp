@@ -39,7 +39,7 @@ namespace Core
     }
 
     void BuoyancySystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, const uint32_t DisplacementTextures,
-                                       const uint32_t CascadeSettingsBuffer) const
+                                       const uint32_t CascadeSettingsBuffer)
     {
         entt::registry* entityRegistry = Scene.GetEntityRegistry();
         const auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent, RigidbodyComponent>();
@@ -56,7 +56,7 @@ namespace Core
     void BuoyancySystem::ProcessMesh(PhysicsSystem& PhysicsSystem, const Mesh& Mesh,
                                      const TransformComponent& Transform,
                                      const RigidbodyComponent& Rigidbody,
-                                     const uint32_t CascadeSettingsBuffer) const
+                                     const uint32_t CascadeSettingsBuffer)
     {
         const uint32_t triangleCount = Mesh.GetTriangleCount();
         if (triangleCount > _triangleBuffer.Capacity)
@@ -84,6 +84,20 @@ namespace Core
         Shader::DispatchCompute(static_cast<int32_t>(Math::IntegerDivCeilPositive(triangleCount, WorkGroupDim1D)),
                                 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        // // Debug: Check if triangle processor wrote any data
+        // GLsync fence1 = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        // glClientWaitSync(fence1, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+        // glDeleteSync(fence1);
+        // glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.MainBufferId);
+        // TriangleProperties* triangleData = static_cast<TriangleProperties*>(
+        //     glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleProperties),
+        //                      GL_MAP_READ_BIT));
+        //
+        // spdlog::info("{} BuoyancySystem: First triangle SubmergedVolume: {} SubmergedArea: {}", i,
+        //              triangleData[0].SubmergedVolume,
+        //              triangleData[0].SubmergedArea);
+        // glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
         _triangleAggregationComputeShader.Use();
         _triangleAggregationComputeShader.SetUniform("TriangleCount", static_cast<int32_t>(triangleCount));
@@ -117,19 +131,22 @@ namespace Core
         PhysicsSystem.AddForce(Rigidbody, buoyancy);
     }
 
-    void BuoyancySystem::ResizeTriangleBuffers(const uint32_t TriangleCount) const
+    void BuoyancySystem::ResizeTriangleBuffers(const uint32_t TriangleCount)
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.MainBufferId);
         glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<int64_t>(sizeof(TriangleProperties) * TriangleCount),
                      nullptr,
                      TriangleBufferUsage);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.PartialSumsBufferId);
+        const int32_t elementCount = static_cast<int32_t>(Math::IntegerDivCeilPositive(
+            TriangleCount, AggregatorElementsPerGroup));
         glBufferData(
             GL_SHADER_STORAGE_BUFFER,
-            static_cast<int64_t>(Math::IntegerDivCeilPositive(sizeof(TriangleProperties) * TriangleCount,
-                                                              AggregatorElementsPerGroup)),
+            static_cast<int64_t>(sizeof(TriangleProperties) * elementCount),
             nullptr,
             TriangleBufferUsage);
+
+        _triangleBuffer.Capacity = TriangleCount;
     }
 
     BuoyancySystem::TriangleBuffer BuoyancySystem::CreateTriangleBuffers()

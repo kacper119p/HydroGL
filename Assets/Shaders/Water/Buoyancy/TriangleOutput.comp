@@ -4,33 +4,35 @@
 
 const int LOCAL_SIZE = 64;
 
-layout(std430, binding = 1) buffer Partials {
-    triangleProperties partials[];
-} partialSSBO;
+layout(std430, binding = 1) buffer partialsBuffer
+{
+    triangleProperties Partials[];
+} PartialBuffer;
 
-layout(std430, binding = 2) buffer Output {
-    triangleProperties result;
-} outputSSBO;
+layout(std430, binding = 2) buffer outputBuffer
+{
+    triangleProperties Result;
+} OutputBuffer;
 
 uniform uint PartialsCount;
 
 shared triangleProperties sharedBuffer[LOCAL_SIZE];
 
 layout(local_size_x = LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
-void main() {
+void main()
+{
     uint localId = gl_LocalInvocationID.x;
     uint localSize = LOCAL_SIZE;
 
-    // Each thread loads zero or more partials into shared memory, summing them.
     triangleProperties sum;
     sum.Drag = vec3(0.0);
     sum.SubmergedArea = 0.0;
     sum.SubmergedVolume = 0.0;
-    // Threads may need to load multiple partials if numPartials > LOCAL_SIZE
-    for (uint idx = localId; idx < PartialsCount; idx += localSize) {
-        sum.Drag += partialSSBO.partials[idx].Drag;
-        sum.SubmergedArea += partialSSBO.partials[idx].SubmergedArea;
-        sum.SubmergedVolume += partialSSBO.partials[idx].SubmergedVolume;
+    for (uint idx = localId; idx < PartialsCount; idx += localSize)
+    {
+        sum.Drag += PartialBuffer.Partials[idx].Drag;
+        sum.SubmergedArea += PartialBuffer.Partials[idx].SubmergedArea;
+        sum.SubmergedVolume += PartialBuffer.Partials[idx].SubmergedVolume;
     }
 
     sharedBuffer[localId] = sum;
@@ -38,8 +40,10 @@ void main() {
     barrier();
 
     // reduce in shared memory (assumes LOCAL_SIZE is power of two)
-    for (uint offset = localSize >> 1; offset > 0; offset >>= 1) {
-        if (localId < offset) {
+    for (uint offset = localSize >> 1; offset > 0; offset >>= 1)
+    {
+        if (localId < offset)
+        {
             sharedBuffer[localId].Drag += sharedBuffer[localId + offset].Drag;
             sharedBuffer[localId].SubmergedArea += sharedBuffer[localId + offset].SubmergedArea;
             sharedBuffer[localId].SubmergedVolume += sharedBuffer[localId + offset].SubmergedVolume;
@@ -48,7 +52,13 @@ void main() {
         barrier();
     }
 
-    if (localId == 0) {
-        outputSSBO.result = sharedBuffer[0];
+    triangleProperties finalSum;
+    finalSum.Drag = sharedBuffer[0].Drag;
+    finalSum.SubmergedArea = sharedBuffer[0].SubmergedArea, 0.0;
+    finalSum.SubmergedVolume = sharedBuffer[0].SubmergedVolume, 0.0;
+
+    if (localId == 0)
+    {
+        OutputBuffer.Result = finalSum;
     }
 }
