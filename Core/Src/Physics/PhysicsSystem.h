@@ -38,6 +38,8 @@ namespace Core
 
         void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force);
 
+        void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force, const glm::vec3& Position);
+
     public:
         void Step(entt::registry& Registry, float DeltaTime) const;
 

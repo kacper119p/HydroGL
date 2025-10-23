@@ -27,10 +27,7 @@ void main() {
 
     uint base = groupId * GROUP_SIZE;
 
-    triangleProperties sum;
-    sum.Drag = vec3(0.0);
-    sum.SubmergedArea = 0.0;
-    sum.SubmergedVolume = 0.0;
+    triangleProperties sum = { vec3(0.0), 0.0, vec3(0.0), 0.0 };
 
     for (uint k = 0; k < ELEMENTS_PER_THREAD; ++k)
     {
@@ -39,6 +36,7 @@ void main() {
         {
             sum.Drag += InputData[idx].Drag;
             sum.SubmergedArea += InputData[idx].SubmergedArea;
+            sum.CenterOfImmersion += InputData[idx].CenterOfImmersion;
             sum.SubmergedVolume += InputData[idx].SubmergedVolume;
         }
     }
@@ -54,6 +52,7 @@ void main() {
         if (localId < offset) {
             sharedBuffer[localId].Drag += sharedBuffer[localId + offset].Drag;
             sharedBuffer[localId].SubmergedArea += sharedBuffer[localId + offset].SubmergedArea;
+            sharedBuffer[localId].CenterOfImmersion += sharedBuffer[localId + offset].CenterOfImmersion;
             sharedBuffer[localId].SubmergedVolume += sharedBuffer[localId + offset].SubmergedVolume;
         }
         memoryBarrierShared();

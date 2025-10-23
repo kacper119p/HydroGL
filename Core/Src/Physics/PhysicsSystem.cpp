@@ -54,12 +54,14 @@ namespace Core
     {
         const glm::vec3 worldPosition = Transform.GetWorldPosition();
         const glm::quat worldRotation = Transform.GetWorldRotation();
-        const JPH::BodyCreationSettings creationSettings(Shape,
-                                                         JPH::RVec3(worldPosition.x, worldPosition.y, worldPosition.z),
-                                                         JPH::Quat(worldRotation.x, worldRotation.y, worldRotation.z,
-                                                                   worldRotation.w),
-                                                         MotionType,
-                                                         CollisionLayer);
+        JPH::BodyCreationSettings creationSettings(Shape,
+                                                   JPH::RVec3(worldPosition.x, worldPosition.y, worldPosition.z),
+                                                   JPH::Quat(worldRotation.x, worldRotation.y, worldRotation.z,
+                                                             worldRotation.w),
+                                                   MotionType,
+                                                   CollisionLayer);
+        creationSettings.mLinearDamping = 1.0f;
+        creationSettings.mAngularDamping = 1.0f;
         return RigidbodyComponent(_jphPhysicsSystem->GetBodyInterface().CreateAndAddBody(creationSettings, Activation));
     }
 
@@ -68,6 +70,14 @@ namespace Core
         const JPH::BodyID bodyId = Rigidbody.GetBodyId();
         const JPH::Vec3 joltForce(Force.x, Force.y, Force.z);
         _jphPhysicsSystem->GetBodyInterface().AddForce(bodyId, joltForce);
+    }
+
+    void PhysicsSystem::AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force, const glm::vec3& Position)
+    {
+        const JPH::BodyID bodyId = Rigidbody.GetBodyId();
+        const JPH::Vec3 joltForce(Force.x, Force.y, Force.z);
+        const JPH::Vec3 joltPosition(Position.x, Position.y, Position.z);
+        _jphPhysicsSystem->GetBodyInterface().AddForce(bodyId, joltForce, joltPosition);
     }
 
     void PhysicsSystem::Step(entt::registry& Registry, const float DeltaTime) const

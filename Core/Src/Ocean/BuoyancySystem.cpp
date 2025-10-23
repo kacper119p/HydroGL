@@ -123,12 +123,10 @@ namespace Core
         constexpr int32_t bufferSize = sizeof(TriangleProperties);
         TriangleProperties properties{};
         memcpy(&properties, _triangleBuffer.MappedOutputBuffer, bufferSize);
-
         const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * 1000.0f, 0.0f);
-        // spdlog::info("{} BuoyancySystem: SubmergedVolume: {}, Buoyancy: {} SubmergedArea:{}", i++,
-        //              properties.SubmergedVolume,
-        //              buoyancy.y, properties.SubmergedArea);
-        PhysicsSystem.AddForce(Rigidbody, buoyancy);
+        const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
+            Transform.GetLocalToWorldMatrix() * glm::vec4(properties.CenterOfImmersion, 1.0f));
+        PhysicsSystem.AddForce(Rigidbody, buoyancy, centerOfImmersionWorldSpace);
     }
 
     void BuoyancySystem::ResizeTriangleBuffers(const uint32_t TriangleCount)

@@ -24,14 +24,12 @@ void main()
     uint localId = gl_LocalInvocationID.x;
     uint localSize = LOCAL_SIZE;
 
-    triangleProperties sum;
-    sum.Drag = vec3(0.0);
-    sum.SubmergedArea = 0.0;
-    sum.SubmergedVolume = 0.0;
+    triangleProperties sum = { vec3(0.0), 0.0, vec3(0.0), 0.0 };
     for (uint idx = localId; idx < PartialsCount; idx += localSize)
     {
         sum.Drag += PartialBuffer.Partials[idx].Drag;
         sum.SubmergedArea += PartialBuffer.Partials[idx].SubmergedArea;
+        sum.CenterOfImmersion += PartialBuffer.Partials[idx].CenterOfImmersion;
         sum.SubmergedVolume += PartialBuffer.Partials[idx].SubmergedVolume;
     }
 
@@ -46,6 +44,7 @@ void main()
         {
             sharedBuffer[localId].Drag += sharedBuffer[localId + offset].Drag;
             sharedBuffer[localId].SubmergedArea += sharedBuffer[localId + offset].SubmergedArea;
+            sharedBuffer[localId].CenterOfImmersion += sharedBuffer[localId + offset].CenterOfImmersion;
             sharedBuffer[localId].SubmergedVolume += sharedBuffer[localId + offset].SubmergedVolume;
         }
         memoryBarrierShared();
@@ -54,8 +53,9 @@ void main()
 
     triangleProperties finalSum;
     finalSum.Drag = sharedBuffer[0].Drag;
-    finalSum.SubmergedArea = sharedBuffer[0].SubmergedArea, 0.0;
-    finalSum.SubmergedVolume = sharedBuffer[0].SubmergedVolume, 0.0;
+    finalSum.SubmergedArea = sharedBuffer[0].SubmergedArea;
+    finalSum.CenterOfImmersion = sharedBuffer[0].CenterOfImmersion;
+    finalSum.SubmergedVolume = sharedBuffer[0].SubmergedVolume;
 
     if (localId == 0)
     {

@@ -17,10 +17,9 @@ namespace Core
         struct alignas(sizeof(float) * 4) TriangleProperties
         {
             glm::vec3 Drag;
-            float Padding0;
             float SubmergedArea;
+            glm::vec3 CenterOfImmersion;
             float SubmergedVolume;
-            float Padding1[2];
         };
 
         struct TriangleBuffer

@@ -1,8 +1,7 @@
 struct triangleProperties
 {
     vec3 Drag;
-    float _padding0;
     float SubmergedArea;
+    vec3 CenterOfImmersion;
     float SubmergedVolume;
-    float _padding1[2];
 };

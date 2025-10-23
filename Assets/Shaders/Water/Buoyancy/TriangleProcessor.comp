@@ -57,7 +57,7 @@ float RetrieveWaterHeight(vec2 position)
     return displacement.y;
 }
 
-void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], const float TriangleNormalY, out float SubmergedArea, out float VolumeContribution, out float TriangleArea)
+void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], const float TriangleNormalY, out float SubmergedArea, out float VolumeContribution)
 {
     float vertexDepths[3];
     for (int i = 0; i < 3; ++i)
@@ -65,8 +65,6 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], const float TriangleNorm
         vertexDepths[i] = VertexPositionsWorldSpace[i].y - RetrieveWaterHeight(VertexPositionsWorldSpace[i].xz);
     }
 
-    TriangleArea = 0.5 * length(cross(VertexPositionsWorldSpace[1] - VertexPositionsWorldSpace[0], VertexPositionsWorldSpace[2] - VertexPositionsWorldSpace[0]));
-    vec3 center = (1.0 / 3.0) * (VertexPositionsWorldSpace[0] + VertexPositionsWorldSpace[1] + VertexPositionsWorldSpace[2]);
     float centerDepth = (1.0 / 3.0) * (vertexDepths[0] + vertexDepths[1] + vertexDepths[2]);
 
     bvec3 verticesAboveWater = greaterThanEqual(vec3(vertexDepths[0], vertexDepths[1], vertexDepths[2]), vec3(EPSILON));
@@ -78,8 +76,9 @@ void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], const float TriangleNorm
     }
     else if (all(not(verticesAboveWater)))
     {
-        SubmergedArea = TriangleArea;
-        VolumeContribution = TriangleArea * centerDepth * TriangleNormalY;
+        float triangleArea = 0.5 * length(cross(VertexPositionsWorldSpace[1] - VertexPositionsWorldSpace[0], VertexPositionsWorldSpace[2] - VertexPositionsWorldSpace[0]));
+        SubmergedArea = triangleArea;
+        VolumeContribution = triangleArea * centerDepth * TriangleNormalY;
         return;
     }
     else
@@ -182,13 +181,16 @@ void main()
     vertexPositionsWorldSpace[1] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[1], 1.0)).xyz;
     vertexPositionsWorldSpace[2] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[2], 1.0)).xyz;
 
-    float triangleNormal = normalize(cross(vertexPositionsWorldSpace[1] - vertexPositionsWorldSpace[0], vertexPositionsWorldSpace[2] - vertexPositionsWorldSpace[0])).y;
+    vec3 triangleNormal = normalize(cross(vertexPositionsWorldSpace[1] - vertexPositionsWorldSpace[0], vertexPositionsWorldSpace[2] - vertexPositionsWorldSpace[0]));
     float submergedArea;
     float volumeContribution;
-    float triangleArea;
-    ProcessTriangle(vertexPositionsWorldSpace, triangleNormal, submergedArea, volumeContribution, triangleArea);
+    ProcessTriangle(vertexPositionsWorldSpace, triangleNormal.y, submergedArea, volumeContribution);
 
-    TriangleProperties[triangleIndex].SubmergedArea = triangleNormal;
-    TriangleProperties[triangleIndex].SubmergedVolume = volumeContribution;
+    const vec3 triangleCenter = (1.0 / 3.0) * (vertexObjectSpacePositions[0] + vertexObjectSpacePositions[1] + vertexObjectSpacePositions[2]);
+
     TriangleProperties[triangleIndex].Drag = vec3(0.0);
+    TriangleProperties[triangleIndex].SubmergedArea = submergedArea;
+    TriangleProperties[triangleIndex].CenterOfImmersion = triangleCenter * triangleCenter * triangleNormal * submergedArea * 0.5;
+    TriangleProperties[triangleIndex].SubmergedVolume = volumeContribution;
+
 }
