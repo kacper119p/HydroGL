@@ -123,6 +123,10 @@ namespace Core
         constexpr int32_t bufferSize = sizeof(TriangleProperties);
         TriangleProperties properties{};
         memcpy(&properties, _triangleBuffer.MappedOutputBuffer, bufferSize);
+        if (properties.SubmergedVolume <= 0.0f)
+        {
+            return;
+        }
         const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * 1000.0f, 0.0f);
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
             Transform.GetLocalToWorldMatrix() * glm::vec4(properties.CenterOfImmersion, 1.0f));

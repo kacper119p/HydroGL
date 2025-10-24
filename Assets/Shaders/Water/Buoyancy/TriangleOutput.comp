@@ -54,7 +54,7 @@ void main()
     triangleProperties finalSum;
     finalSum.Drag = sharedBuffer[0].Drag;
     finalSum.SubmergedArea = sharedBuffer[0].SubmergedArea;
-    finalSum.CenterOfImmersion = sharedBuffer[0].CenterOfImmersion;
+    finalSum.CenterOfImmersion = sharedBuffer[0].CenterOfImmersion / sharedBuffer[0].SubmergedVolume;
     finalSum.SubmergedVolume = sharedBuffer[0].SubmergedVolume;
 
     if (localId == 0)
