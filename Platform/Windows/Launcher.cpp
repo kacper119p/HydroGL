@@ -6,6 +6,7 @@
 #include <Windows.h>
 
 #include "Debug.h"
+#include "SystemInfo.h"
 #include "TimeManager.h"
 
 namespace Platform
@@ -13,12 +14,16 @@ namespace Platform
     int Launcher::Start(HINSTANCE HInstance)
     {
         TimeManager::Initialize();
+        SystemInfo::Initialize();
+
         Window* window = Window::Create(HInstance);
         if (window == nullptr)
         {
             return -1;
         }
         return ApplicationMain(window);
+
+        SystemInfo::Release();
     }
 }
 
