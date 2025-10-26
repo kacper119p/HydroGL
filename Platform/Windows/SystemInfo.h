@@ -1,14 +1,20 @@
 #pragma once
+
 #include <cstdint>
 #include <string>
 
-namespace Platform
-{
-    class SystemInfo
-    {
-    public:
-        static [[nodiscard]] std::string GetCpuInfo();
 
-        static [[nodiscard]] uint64_t GetTotalRamKB();
-    };
+#include "MemoryInfo.h"
+
+namespace Platform::SystemInfo
+{
+    void Initialize();
+
+    void Release();
+
+    [[nodiscard]] std::string GetCpuInfo();
+
+    [[nodiscard]] MemoryInfo GetRamInfo();
+
+    [[nodiscard]] MemoryInfo GetVRamInfo();
 }
