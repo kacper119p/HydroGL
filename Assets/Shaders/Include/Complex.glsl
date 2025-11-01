@@ -14,3 +14,8 @@ vec2 MultiplyByMinusI(const vec2 x){
 vec2 Euler(const float x){
     return vec2(cos(x), sin(x));
 }
+
+vec2 Conjugate(const vec2 x)
+{
+    return vec2(x.x, -x.y);
+}

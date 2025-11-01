@@ -3,11 +3,9 @@
 #include "WaterCommon.glsl"
 #include "Complex.glsl"
 
-layout (binding = 0, rgba32f) uniform image2DArray HDx;
-layout (binding = 1, rgba32f) uniform image2DArray DzDfhx;
-layout (binding = 2, rgba32f) uniform image2DArray DfhzDfdxx;
-layout (binding = 3, rgba32f) uniform image2DArray DfdzxDfdzz;
-layout (binding = 4, rgba32f) uniform image2DArray InitialSpectrum;
+layout (binding = 0, rgba32f) writeonly uniform image2DArray HDzDxDfhx;
+layout (binding = 1, rgba32f) writeonly uniform image2DArray DfhzDfdxxDfdzxDfdzz;
+layout (binding = 2, rgba32f) readonly uniform image2DArray InitialSpectrum;
 
 layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
@@ -18,6 +16,11 @@ layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 };
 
 uniform float Time;
+
+vec2 PackIffts(vec2 a, vec2 b)
+{
+    return vec2(a.x - b.y, a.y + b.x);
+}
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
@@ -51,8 +54,11 @@ void main()
     const vec2 dfhx = k * dx;
     const vec2 dfhz = k * dz;
 
-    imageStore(HDx, sampleCoords, vec4(h, dx));
-    imageStore(DzDfhx, sampleCoords, vec4(dz, dfhx));
-    imageStore(DfhzDfdxx, sampleCoords, vec4(dfhz, dfdxx));
-    imageStore(DfdzxDfdzz, sampleCoords, vec4(dfdzx, dfdzz));
+    vec2 hxDz =  PackIffts(h, dz);
+    vec2 dxDfhx = PackIffts(dx, dfhx);
+    vec2 dfhzDfdxx = PackIffts(dfhz, dfdxx);
+    vec2 dfdzxDfdzz = PackIffts(dfdzx, dfdzz);
+
+    imageStore(HDzDxDfhx, sampleCoords, vec4(hxDz, dxDfhx));
+    imageStore(DfhzDfdxxDfdzxDfdzz, sampleCoords, vec4(dfhzDfdxx, dfdzxDfdzz));
 }

@@ -47,15 +47,9 @@ namespace Core
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum.comp", ShaderStage::ComputeShader).Build()),
           _initialSpectrumTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_NEAREST, GL_REPEAT)),
-          _hDxTextures(
+          _hDzDxDfhxTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
-          _dzDfhxTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
-          _dfhzDfdxxTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_NEAREST,GL_REPEAT)),
-          _dfdzxDfdzzTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_NEAREST,GL_REPEAT)),
-          _spectrumTextures(
+          _dfhzDfdxxDfdzxDfdzz(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
           _slopeTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_LINEAR,GL_REPEAT)),
@@ -160,10 +154,8 @@ namespace Core
     {
         UpdateSpectrumTexture();
 
-        RunFft(_hDxTextures);
-        RunFft(_dzDfhxTextures);
-        RunFft(_dfhzDfdxxTextures);
-        RunFft(_dfdzxDfdzzTextures);
+        RunFft(_hDzDxDfhxTextures);
+        RunFft(_dfhzDfdxxDfdzxDfdzz);
 
         AssembleTextures();
 
@@ -202,11 +194,9 @@ namespace Core
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
         _spectrumComputeShader.SetUniform("Time", Platform::TimeManager::GetTime());
 
-        glBindImageTexture(0, _hDxTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _dzDfhxTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(2, _dfhzDfdxxTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(3, _dfdzxDfdzzTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(4, _initialSpectrumTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(0, _hDzDxDfhxTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(1, _dfhzDfdxxDfdzxDfdzz, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, _initialSpectrumTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
         glFinish();
@@ -217,12 +207,10 @@ namespace Core
         _assembleComputeShader.Use();
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
 
-        glBindImageTexture(0, _hDxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, _dzDfhxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(2, _dfhzDfdxxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(3, _dfdzxDfdzzTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(4, _slopeTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(5, _displacementTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(0, _hDzDxDfhxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(1, _dfhzDfdxxDfdzxDfdzz, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, _slopeTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(3, _displacementTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
         glFinish();

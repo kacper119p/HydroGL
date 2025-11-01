@@ -164,11 +164,8 @@ namespace Core
         Shader _spectrumComputeShader;
 
         uint32_t _initialSpectrumTextures;
-        uint32_t _hDxTextures;
-        uint32_t _dzDfhxTextures;
-        uint32_t _dfhzDfdxxTextures;
-        uint32_t _dfdzxDfdzzTextures;
-        uint32_t _spectrumTextures;
+        uint32_t _hDzDxDfhxTextures;
+        uint32_t _dfhzDfdxxDfdzxDfdzz;
         uint32_t _slopeTextures;
         uint32_t _displacementTextures;
         uint32_t _tmpTextures;

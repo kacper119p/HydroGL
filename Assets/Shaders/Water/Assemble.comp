@@ -2,12 +2,10 @@
 
 #include "WaterCommon.glsl"
 
-layout (binding = 0, rgba32f) uniform image2DArray HDx;
-layout (binding = 1, rgba32f) uniform image2DArray DzDfhx;
-layout (binding = 2, rgba32f) uniform image2DArray DfhzDfdxx;
-layout (binding = 3, rgba32f) uniform image2DArray DfdzxDfdzz;
-layout (binding = 4, rgba32f) writeonly uniform image2DArray SlopeTextures;
-layout (binding = 5, rgba32f) writeonly uniform image2DArray DisplacementTexture;
+layout (binding = 0, rgba32f) readonly uniform image2DArray HDzDxDfhx;
+layout (binding = 1, rgba32f) readonly uniform image2DArray DfhzDfdxxDfdzxDfdzz;
+layout (binding = 2, rgba32f) writeonly uniform image2DArray SlopeTextures;
+layout (binding = 3, rgba32f) writeonly uniform image2DArray DisplacementTexture;
 
 layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
@@ -26,15 +24,21 @@ void main()
 
     const ivec3 sampleCoords = ivec3(pixelCoords, cascadeIndex);
 
-    const vec2 dxdy = imageLoad(HDx, sampleCoords).br * phaseCorrection;
-    const vec2 dzdfhxx = imageLoad(DzDfhx, sampleCoords).rb * phaseCorrection;
-    const vec2 dfhzDfdxx = imageLoad(DfhzDfdxx, sampleCoords).rb * phaseCorrection;
-    const vec2 dfdzxDfdzz = imageLoad(DfdzxDfdzz, sampleCoords).rb * phaseCorrection;
+    vec4 hDzDxDfhx = imageLoad(HDzDxDfhx, sampleCoords) * phaseCorrection;
+    vec4 dfhzDfdxxDfdzxDfdzz = imageLoad(DfhzDfdxxDfdzxDfdzz, sampleCoords)  * phaseCorrection;
 
-    const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x);
-    const vec2 slope = vec2(-dzdfhxx.y, -dfhzDfdxx.x);
+    const float dx = hDzDxDfhx.z;
+    const float dy = hDzDxDfhx.x;
+    const float dz = hDzDxDfhx.y;
+    const float dfhx = hDzDxDfhx.w;
+    const float dfhz = dfhzDfdxxDfdzxDfdzz.x;
+    const float dfdxx = dfhzDfdxxDfdzxDfdzz.y;
+    const float dfdzx = dfhzDfdxxDfdzxDfdzz.z;
+    const float dfdzz = dfhzDfdxxDfdzxDfdzz.w;
 
-    const vec3 JacobianDerivatives = vec3(dfhzDfdxx.y, dfdzxDfdzz.y, dfdzxDfdzz.x);
+    const vec3 displacement = vec3(dx, dy, dz);
+    const vec2 slope = vec2(-dfhx, -dfhz);
+    const vec3 JacobianDerivatives = vec3(dfdxx, dfdzz, dfdzx);
 
     imageStore(SlopeTextures, sampleCoords, vec4(slope, JacobianDerivatives.xy));
     imageStore(DisplacementTexture, sampleCoords, vec4(displacement, JacobianDerivatives.z));
