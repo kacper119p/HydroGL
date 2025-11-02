@@ -17,6 +17,7 @@ namespace Core
         constexpr GLenum TriangleBufferUsage = GL_DYNAMIC_COPY;
         constexpr int32_t AggregatorElementsPerThread = 4;
         constexpr int32_t AggregatorElementsPerGroup = WorkGroupDim1D * AggregatorElementsPerThread;
+        constexpr float WaterDensity = 1024.8103f;
         int32_t i = 0;
     }
 
@@ -36,6 +37,14 @@ namespace Core
                   ShaderStage::ComputeShader).Build()),
           _meshDataUbo(CreateMeshDataUbo())
     {
+    }
+
+    BuoyancySystem::~BuoyancySystem()
+    {
+        glDeleteBuffers(1, &_triangleBuffer.MainBufferId);
+        glDeleteBuffers(1, &_triangleBuffer.PartialSumsBufferId);
+        glDeleteBuffers(1, &_triangleBuffer.OutputBufferId);
+        glDeleteBuffers(1, &_meshDataUbo);
     }
 
     void BuoyancySystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, const uint32_t DisplacementTextures,
@@ -64,10 +73,12 @@ namespace Core
             ResizeTriangleBuffers(triangleCount);
         }
 
+        glm::vec3 meshVelocity = PhysicsSystem.GetLinearVelocity(Rigidbody);
+
         const ShaderMeshData meshData{
-            Transform.GetLocalToWorldMatrix(),
-            Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), triangleCount,
-            0.0f
+            Transform.GetLocalToWorldMatrix(), meshVelocity,
+            _waterDrag, _airDrag,
+            Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), triangleCount
         };
 
         _triangleProcessorComputeShader.Use();
@@ -127,7 +138,7 @@ namespace Core
         {
             return;
         }
-        const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * 1000.0f, 0.0f);
+        const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
             Transform.GetLocalToWorldMatrix() * glm::vec4(properties.CenterOfImmersion, 1.0f));
         PhysicsSystem.AddForce(Rigidbody, buoyancy, centerOfImmersionWorldSpace);

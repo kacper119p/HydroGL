@@ -31,13 +31,15 @@ namespace Core
             TriangleProperties* MappedOutputBuffer;
         };
 
-        struct ShaderMeshData
+        struct alignas(sizeof(float) * 4) ShaderMeshData
         {
             glm::mat4 ObjectToWorldMatrix;
+            glm::vec3 ObjectVelocity;
+            float WaterDrag;
+            float AirDrag;
             uint32_t VerticesIndex;
             uint32_t IndicesIndex;
             uint32_t TrianglesCount;
-            float Padding;
         };
 
     private:
@@ -46,11 +48,35 @@ namespace Core
         Shader _triangleAggregationComputeShader;
         Shader _outputComputeShader;
         uint32_t _meshDataUbo;
+        float _waterDrag;
+        float _airDrag;
 
     public:
         BuoyancySystem();
 
     public:
+        ~BuoyancySystem();
+
+        [[nodiscard]] float GetWaterDrag() const
+        {
+            return _waterDrag;
+        }
+
+        void SetWaterDrag(const float WaterDrag)
+        {
+            _waterDrag = WaterDrag;
+        }
+
+        [[nodiscard]] float GetAirDrag() const
+        {
+            return _airDrag;
+        }
+
+        void SetAirDrag(const float AirDrag)
+        {
+            _airDrag = AirDrag;
+        }
+
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
                            uint32_t CascadeSettingsBuffer);
 

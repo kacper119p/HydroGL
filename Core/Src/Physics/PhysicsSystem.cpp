@@ -35,8 +35,8 @@ namespace Core
         _jphPhysicsSystem = std::make_unique<JPH::PhysicsSystem>();
 
 
-        _jphPhysicsSystem->Init(MaxBodies, 0, MaxObjectPairs, MaxContactConstraints, broadPhaseLayerInterface,
-                                objectVsBroadPhaseLayerFilter, objectVsObjectLayerFilter);
+        _jphPhysicsSystem->Init(MaxBodies, 0, MaxObjectPairs, MaxContactConstraints, _broadPhaseLayerInterface,
+                                _objectVsBroadPhaseLayerFilter, _objectVsObjectLayerFilter);
         _jphPhysicsSystem->SetGravity(JPH::Vec3(0.0f, -Gravity, 0.0f));
     }
 
@@ -80,6 +80,20 @@ namespace Core
         _jphPhysicsSystem->GetBodyInterface().AddForce(bodyId, joltForce, joltPosition);
     }
 
+    glm::vec3 PhysicsSystem::GetLinearVelocity(const RigidbodyComponent& Rigidbody) const
+    {
+        const JPH::BodyID bodyId = Rigidbody.GetBodyId();
+        const JPH::Vec3 result = _jphPhysicsSystem->GetBodyInterface().GetLinearVelocity(bodyId);
+        return glm::vec3(result.GetX(), result.GetY(), result.GetZ());
+    }
+
+    glm::vec3 PhysicsSystem::GetAngularVelocity(const RigidbodyComponent& Rigidbody) const
+    {
+        const JPH::BodyID bodyId = Rigidbody.GetBodyId();
+        const JPH::Vec3 result = _jphPhysicsSystem->GetBodyInterface().GetAngularVelocity(bodyId);
+        return glm::vec3(result.GetX(), result.GetY(), result.GetZ());
+    }
+
     void PhysicsSystem::Step(entt::registry& Registry, const float DeltaTime) const
     {
         _jphPhysicsSystem->Update(DeltaTime, 1, _jphTempAllocator.get(), _jphJobSystem.get());
@@ -93,11 +107,8 @@ namespace Core
 
         for (auto [entity, transformComponent, rigidbodyComponent] : view.each())
         {
-            const JPH::BodyLockRead lock(_jphPhysicsSystem->GetBodyLockInterfaceNoLock(),
-                                         rigidbodyComponent.GetBodyId());
-            const JPH::Body& body = lock.GetBody();
-
-            const JPH::RMat44& mat = body.GetWorldTransform();
+            const JPH::BodyID bodyId = rigidbodyComponent.GetBodyId();
+            const JPH::RMat44& mat = _jphPhysicsSystem->GetBodyInterface().GetWorldTransform(bodyId);
             const JPH::Vec3 pos = mat.GetTranslation();
             const JPH::Quat rot = mat.GetRotation().GetQuaternion();
 

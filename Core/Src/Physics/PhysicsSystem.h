@@ -19,9 +19,9 @@ namespace Core
         std::unique_ptr<JPH::PhysicsSystem> _jphPhysicsSystem;
         std::unique_ptr<JPH::TempAllocatorImpl> _jphTempAllocator;
         std::unique_ptr<JPH::JobSystemThreadPool> _jphJobSystem;
-        const Physics::BroadPhaseLayerInterface broadPhaseLayerInterface;
-        const Physics::ObjectVsBroadPhaseLayerFilter objectVsBroadPhaseLayerFilter;
-        const Physics::ObjectLayerPairFilter objectVsObjectLayerFilter;
+        const Physics::BroadPhaseLayerInterface _broadPhaseLayerInterface;
+        const Physics::ObjectVsBroadPhaseLayerFilter _objectVsBroadPhaseLayerFilter;
+        const Physics::ObjectLayerPairFilter _objectVsObjectLayerFilter;
 
     public:
         PhysicsSystem();
@@ -40,7 +40,10 @@ namespace Core
 
         void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force, const glm::vec3& Position);
 
-    public:
+        [[nodiscard]] glm::vec3 GetLinearVelocity(const RigidbodyComponent& Rigidbody) const;
+
+        [[nodiscard]] glm::vec3 GetAngularVelocity(const RigidbodyComponent& Rigidbody) const;
+
         void Step(entt::registry& Registry, float DeltaTime) const;
 
         void SyncTransforms(entt::registry& Registry) const;

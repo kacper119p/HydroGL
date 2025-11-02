@@ -9,7 +9,7 @@ out vec3 tcPosition[];
 uniform vec3 CameraPosition;
 uniform float MaxDistance = 50.0;
 uniform float MinDistance = 10.0;
-uniform float MaxTessLevel = 64.0;
+uniform float MaxTessLevel = 32.0;
 uniform float MinTessLevel = 1.0;
 
 float CalculateTesselationLevel(vec3 p0, vec3 p1)

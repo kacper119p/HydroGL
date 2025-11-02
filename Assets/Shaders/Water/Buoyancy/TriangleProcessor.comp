@@ -4,20 +4,25 @@
 #include "Water/WaterCommon.glsl"
 #include "Constants.glsl"
 
-layout(std140, binding = 0) uniform meshData
+layout(std140, binding = 0) uniform meshDataBuffer
 {
     mat4 ObjectToWorldMatrix;
+    vec3 ObjectVelocity;
+    float WaterDrag;
+    float AirDrag;
     uint VerticesIndex;
     uint IndicesIndex;
     uint TrianglesCount;
-    float Padding;
 } MeshData;
 
 layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
-    float padding[2];
+    int VelocityLayers;
+    float VelocityMinHeight;
+    float VelocityMaxHeight;
+    float Padding[3];
     cascadeSettings CascadeSettings[];
 };
 
