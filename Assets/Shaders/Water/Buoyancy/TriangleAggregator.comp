@@ -2,7 +2,7 @@
 
 #include "TriangleProperties.glsl"
 
-layout(std430, binding = 0) readonly buffer InputBuffer
+layout(std430, binding = 0) readonly restrict buffer InputBuffer
 {
     triangleProperties InputData[];
 };
@@ -11,7 +11,7 @@ const int LOCAL_SIZE = 64;
 const int ELEMENTS_PER_THREAD = 4;
 const int GROUP_SIZE = LOCAL_SIZE * ELEMENTS_PER_THREAD;
 
-layout(std430, binding = 1) writeonly buffer Partials
+layout(std430, binding = 1) writeonly restrict buffer Partials
 {
     triangleProperties partials[];
 } partialSSBO;

@@ -15,7 +15,7 @@ layout(std140, binding = 0) uniform meshDataBuffer
     uint TrianglesCount;
 } MeshData;
 
-layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
@@ -26,17 +26,17 @@ layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
     cascadeSettings CascadeSettings[];
 };
 
-layout(std430, binding = 1) writeonly buffer TrianglePropertiesBuffer
+layout(std430, binding = 1) writeonly restrict buffer TrianglePropertiesBuffer
 {
     triangleProperties TriangleProperties[];
 };
 
-layout(std430, binding = 2) readonly buffer VertexBuffer
+layout(std430, binding = 2) readonly restrict buffer VertexBuffer
 {
     float VertexPositions[];
 };
 
-layout(std430, binding = 3) readonly buffer IndexBuffer
+layout(std430, binding = 3) readonly restrict buffer IndexBuffer
 {
     uint VertexIndices[];
 };

@@ -9,7 +9,7 @@ layout (binding = 3, rgba32f) writeonly uniform image2DArray SlopeTextures;
 layout (binding = 4, rgba32f) writeonly uniform image2DArray DisplacementTexture;
 layout (binding = 5, rgba32f) writeonly uniform image2DArray Velocity;
 
-layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
@@ -59,12 +59,24 @@ void main()
         const vec4 packedVelocity1 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex + 1)) * phaseCorrection;
         const vec4 packedVelocity2 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex + 2)) * phaseCorrection;
 
-        const vec3 velocity0 = packedVelocity0.xyz;
-        const vec3 velocity1 = vec3(packedVelocity0.w, packedVelocity1.xy);
-        const vec3 velocity2 = vec3(packedVelocity1.zw, packedVelocity2.x);
-        const vec3 velocity3 = packedVelocity2.yzw;
+        // NOTE: ordering here matches how Spectrum.comp writes the packed texels:
+        // packedVelocity0 = vec4( PackIffts(vx0, vy0), PackIffts(vz0, vx1) );
+        // packedVelocity1 = vec4( PackIffts(vy1, vz1), PackIffts(vx2, vy2) );
+        // packedVelocity2 = vec4( PackIffts(vz2, vx3), PackIffts(vy3, vz3) );
+        //
+        // After IFFT + phase correction the components correspond to real-space floats:
+        // packedVelocity0 = [vx0.x, vy0.x, vz0.x, vx1.x]
+        // packedVelocity1 = [vy1.x, vz1.x, vx2.x, vy2.x]
+        // packedVelocity2 = [vz2.x, vx3.x, vy3.x, vz3.x]
+        //
+        // Reconstruct velocities (vx, vy, vz) per layer in correct order:
 
-        const int baseWriteIndex = velocityBaseIndex + i / 3 * 4;
+        const vec3 velocity0 = packedVelocity0.xyz;// (vx0, vy0, vz0)
+        const vec3 velocity1 = vec3(packedVelocity0.w, packedVelocity1.xy);// (vx1, vy1, vz1)
+        const vec3 velocity2 = vec3(packedVelocity1.zw, packedVelocity2.x);// (vx2, vy2, vz2)
+        const vec3 velocity3 = packedVelocity2.yzw;// (vx3, vy3, vz3)
+
+        const int baseWriteIndex = velocityBaseIndex + i * 4 / 3;
         imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex), vec4(velocity0, 0.0));
         imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 1), vec4(velocity1, 0.0));
         imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 2), vec4(velocity2, 0.0));

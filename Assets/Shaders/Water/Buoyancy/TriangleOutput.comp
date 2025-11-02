@@ -4,12 +4,12 @@
 
 const int LOCAL_SIZE = 64;
 
-layout(std430, binding = 1) buffer partialsBuffer
+layout(std430, binding = 1) readonly restrict buffer partialsBuffer
 {
     triangleProperties Partials[];
 } PartialBuffer;
 
-layout(std430, binding = 2) buffer outputBuffer
+layout(std430, binding = 2) writeonly restrict buffer outputBuffer
 {
     triangleProperties Result;
 } OutputBuffer;

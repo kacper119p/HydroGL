@@ -2,8 +2,8 @@
 
 #include "WaterCommon.glsl"
 
-layout (binding = 0, rgba32f) writeonly uniform image2DArray Output;
-layout (binding = 1, rg32f) readonly uniform image2D GaussianNoise;
+layout (binding = 0, rgba32f) writeonly restrict uniform image2DArray Output;
+layout (binding = 1, rg32f) readonly restrict uniform image2D GaussianNoise;
 
 layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
