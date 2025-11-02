@@ -34,9 +34,8 @@ float VelocityAttenuation(const float k, const float height)
 void GetVelocityVector(out vec2 vx, out vec2 vy, out vec2 vz, const vec2 hv, const float k, const float dispersion, const vec2 waveVector, const float height)
 {
     const vec2 Eh = hv * VelocityAttenuation(k, height);
-    const float vyPart = dispersion * k;
     vx = Eh * (-waveVector.x * G / dispersion);
-    vy = vec2(-Eh.y * vyPart, Eh.x * vyPart);
+    vy = vec2(-Eh.y * dispersion, Eh.x * dispersion);
     vz = Eh * (-waveVector.y * G / dispersion);
 }
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
@@ -59,7 +58,9 @@ void main()
     const vec2 h0 = initialSpectrum.rg;
     const vec2 h0Star = initialSpectrum.ba;
 
-    const vec2 h = ComplexProduct(h0, Euler(phase)) + ComplexProduct(h0Star, Euler(-phase));
+    const vec2 ha = ComplexProduct(h0, Euler(phase));
+    const vec2 hb = ComplexProduct(h0Star, Euler(-phase));
+    const vec2 h =  ha + hb;
 
     k = max(k, EPSILON);
     const vec2 dx = MultiplyByI(h) / k * waveVector.x;
@@ -83,7 +84,7 @@ void main()
     const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
     const int velocityBaseIndex = cascadeIndex * velocityPackedTextureCount;
 
-    const vec2 hv = ComplexProduct(h0, Euler(phase)) - ComplexProduct(h0Star, Euler(-phase));
+    const vec2 hv = ha - hb;
 
     dispersion = max(dispersion, EPSILON);
     for (int i = 0; i < VelocityLayers; i += 4)

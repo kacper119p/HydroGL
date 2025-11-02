@@ -125,7 +125,7 @@ namespace Core
             textureData[i] = dist(rng);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, TextureResolution, TextureResolution, 0, GL_RG, GL_FLOAT,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, Resolution, Resolution, 0, GL_RG, GL_FLOAT,
                      textureData);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

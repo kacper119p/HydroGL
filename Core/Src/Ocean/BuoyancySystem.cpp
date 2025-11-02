@@ -48,13 +48,16 @@ namespace Core
     }
 
     void BuoyancySystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, const uint32_t DisplacementTextures,
-                                       const uint32_t CascadeSettingsBuffer)
+                                       const uint32_t VelocityTextures, const uint32_t CascadeSettingsBuffer)
     {
         entt::registry* entityRegistry = Scene.GetEntityRegistry();
         const auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent, RigidbodyComponent>();
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D_ARRAY, DisplacementTextures);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, VelocityTextures);
+
         i = 0;
         for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
@@ -75,11 +78,10 @@ namespace Core
 
         glm::vec3 meshVelocity = PhysicsSystem.GetLinearVelocity(Rigidbody);
 
-        const ShaderMeshData meshData{
+        const ShaderMeshData meshData(
             Transform.GetLocalToWorldMatrix(), meshVelocity,
             _waterDrag, _airDrag,
-            Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), triangleCount
-        };
+            Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), triangleCount);
 
         _triangleProcessorComputeShader.Use();
 
@@ -141,7 +143,9 @@ namespace Core
         const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
             Transform.GetLocalToWorldMatrix() * glm::vec4(properties.CenterOfImmersion, 1.0f));
-        PhysicsSystem.AddForce(Rigidbody, buoyancy, centerOfImmersionWorldSpace);
+        PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.Drag, centerOfImmersionWorldSpace);
+        // spdlog::info("{}: Drag: {}, {}, {} Buoyancy: {}", i++, properties.Drag.x, properties.Drag.y, properties.Drag.z,
+        //              buoyancy.y);
     }
 
     void BuoyancySystem::ResizeTriangleBuffers(const uint32_t TriangleCount)

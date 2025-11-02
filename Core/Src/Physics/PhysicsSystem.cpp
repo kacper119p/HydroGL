@@ -60,7 +60,6 @@ namespace Core
                                                              worldRotation.w),
                                                    MotionType,
                                                    CollisionLayer);
-        creationSettings.mLinearDamping = 1.0f;
         creationSettings.mAngularDamping = 1.0f;
         return RigidbodyComponent(_jphPhysicsSystem->GetBodyInterface().CreateAndAddBody(creationSettings, Activation));
     }

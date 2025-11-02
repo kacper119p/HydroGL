@@ -40,6 +40,19 @@ namespace Core
             uint32_t VerticesIndex;
             uint32_t IndicesIndex;
             uint32_t TrianglesCount;
+
+            ShaderMeshData(const glm::mat4& ObjectToWorldMatrix, const glm::vec3& ObjectVelocity, const float WaterDrag,
+                           const float AirDrag, const uint32_t VerticesIndex, const uint32_t IndicesIndex,
+                           const uint32_t TrianglesCount)
+                : ObjectToWorldMatrix(ObjectToWorldMatrix),
+                  ObjectVelocity(ObjectVelocity),
+                  WaterDrag(WaterDrag),
+                  AirDrag(AirDrag),
+                  VerticesIndex(VerticesIndex),
+                  IndicesIndex(IndicesIndex),
+                  TrianglesCount(TrianglesCount)
+            {
+            }
         };
 
     private:
@@ -48,8 +61,8 @@ namespace Core
         Shader _triangleAggregationComputeShader;
         Shader _outputComputeShader;
         uint32_t _meshDataUbo;
-        float _waterDrag;
-        float _airDrag;
+        float _waterDrag = 1.0f;
+        float _airDrag = 0.05f;
 
     public:
         BuoyancySystem();
@@ -78,6 +91,7 @@ namespace Core
         }
 
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
+                           uint32_t VelocityTextures,
                            uint32_t CascadeSettingsBuffer);
 
     private:

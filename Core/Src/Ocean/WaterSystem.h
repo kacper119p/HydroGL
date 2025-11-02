@@ -154,7 +154,7 @@ namespace Core
         static constexpr int32_t TextureResolution = 512; // Must be power of 2
         static constexpr int32_t VelocityLayers = 8; // Must be multiple of 4
         static constexpr int32_t VelocityPackedTexturesCount = VelocityLayers * 3 / 4;
-        static constexpr float VelocityMinHeight = -100.0f;
+        static constexpr float VelocityMinHeight = -40.0f;
         static constexpr float VelocityMaxHeight = 0.0f;
 
     private:
@@ -277,6 +277,11 @@ namespace Core
         [[nodiscard]] uint32_t GetDisplacementTextures() const
         {
             return _displacementTextures;
+        }
+
+        [[nodiscard]] uint32_t GetVelocityTextures() const
+        {
+            return _velocityTextures;
         }
 
         [[nodiscard]] uint32_t GetCascadeSettingsSsbo() const
