@@ -18,7 +18,6 @@ namespace Core
         constexpr int32_t AggregatorElementsPerThread = 4;
         constexpr int32_t AggregatorElementsPerGroup = WorkGroupDim1D * AggregatorElementsPerThread;
         constexpr float WaterDensity = 1024.8103f;
-        int32_t i = 0;
     }
 
     BuoyancySystem::BuoyancySystem()
@@ -35,7 +34,10 @@ namespace Core
               ShaderBuilder().SetStage(
                   "Assets/Shaders/Water/Buoyancy/TriangleOutput.comp",
                   ShaderStage::ComputeShader).Build()),
-          _meshDataUbo(CreateMeshDataUbo())
+          _meshDataUbo(CreateMeshDataUbo()),
+          _windVelocityLocation(_triangleProcessorComputeShader.GetUniformLocation("WindVelocity")),
+          _triangleCountLocation(_triangleAggregationComputeShader.GetUniformLocation("TriangleCount")),
+          _partialsCountLocation(_outputComputeShader.GetUniformLocation("PartialsCount"))
     {
     }
 
@@ -48,7 +50,8 @@ namespace Core
     }
 
     void BuoyancySystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, const uint32_t DisplacementTextures,
-                                       const uint32_t VelocityTextures, const uint32_t CascadeSettingsBuffer)
+                                       const glm::vec2 WindVelocity, const uint32_t VelocityTextures,
+                                       const uint32_t CascadeSettingsBuffer)
     {
         entt::registry* entityRegistry = Scene.GetEntityRegistry();
         const auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent, RigidbodyComponent>();
@@ -58,7 +61,9 @@ namespace Core
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D_ARRAY, VelocityTextures);
 
-        i = 0;
+        _triangleProcessorComputeShader.Use();
+        _triangleProcessorComputeShader.SetUniform(_windVelocityLocation, WindVelocity);
+
         for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
             ProcessMesh(PhysicsSystem, waterEffector.GetMesh(), transform, rigidbody, CascadeSettingsBuffer);
@@ -80,7 +85,7 @@ namespace Core
 
         const ShaderMeshData meshData(
             Transform.GetLocalToWorldMatrix(), meshVelocity,
-            _waterDrag, _airDrag,
+            _dragCoefficient,
             Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), triangleCount);
 
         _triangleProcessorComputeShader.Use();
@@ -98,22 +103,8 @@ namespace Core
                                 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-        // // Debug: Check if triangle processor wrote any data
-        // GLsync fence1 = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-        // glClientWaitSync(fence1, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-        // glDeleteSync(fence1);
-        // glBindBuffer(GL_SHADER_STORAGE_BUFFER, _triangleBuffer.MainBufferId);
-        // TriangleProperties* triangleData = static_cast<TriangleProperties*>(
-        //     glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleProperties),
-        //                      GL_MAP_READ_BIT));
-        //
-        // spdlog::info("{} BuoyancySystem: First triangle SubmergedVolume: {} SubmergedArea: {}", i,
-        //              triangleData[0].SubmergedVolume,
-        //              triangleData[0].SubmergedArea);
-        // glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
         _triangleAggregationComputeShader.Use();
-        _triangleAggregationComputeShader.SetUniform("TriangleCount", static_cast<int32_t>(triangleCount));
+        _triangleAggregationComputeShader.SetUniform(_triangleCountLocation, static_cast<int32_t>(triangleCount));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.MainBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
         const int32_t aggregationGroups = static_cast<int32_t>(Math::IntegerDivCeilPositive(
@@ -123,7 +114,7 @@ namespace Core
 
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         _outputComputeShader.Use();
-        _outputComputeShader.SetUniform("PartialsCount", static_cast<uint32_t>(aggregationGroups));
+        _outputComputeShader.SetUniform(_partialsCountLocation, static_cast<uint32_t>(aggregationGroups));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
         Shader::DispatchCompute(1, 1, 1);
@@ -144,8 +135,6 @@ namespace Core
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
             Transform.GetLocalToWorldMatrix() * glm::vec4(properties.CenterOfImmersion, 1.0f));
         PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.Drag, centerOfImmersionWorldSpace);
-        // spdlog::info("{}: Drag: {}, {}, {} Buoyancy: {}", i++, properties.Drag.x, properties.Drag.y, properties.Drag.z,
-        //              buoyancy.y);
     }
 
     void BuoyancySystem::ResizeTriangleBuffers(const uint32_t TriangleCount)

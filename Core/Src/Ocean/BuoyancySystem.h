@@ -35,19 +35,18 @@ namespace Core
         {
             glm::mat4 ObjectToWorldMatrix;
             glm::vec3 ObjectVelocity;
-            float WaterDrag;
-            float AirDrag;
+            float DragCoefficient;
             uint32_t VerticesIndex;
             uint32_t IndicesIndex;
             uint32_t TrianglesCount;
 
-            ShaderMeshData(const glm::mat4& ObjectToWorldMatrix, const glm::vec3& ObjectVelocity, const float WaterDrag,
-                           const float AirDrag, const uint32_t VerticesIndex, const uint32_t IndicesIndex,
+            ShaderMeshData(const glm::mat4& ObjectToWorldMatrix, const glm::vec3& ObjectVelocity,
+                           const float DragCoefficient,
+                           const uint32_t VerticesIndex, const uint32_t IndicesIndex,
                            const uint32_t TrianglesCount)
                 : ObjectToWorldMatrix(ObjectToWorldMatrix),
                   ObjectVelocity(ObjectVelocity),
-                  WaterDrag(WaterDrag),
-                  AirDrag(AirDrag),
+                  DragCoefficient(DragCoefficient),
                   VerticesIndex(VerticesIndex),
                   IndicesIndex(IndicesIndex),
                   TrianglesCount(TrianglesCount)
@@ -61,8 +60,11 @@ namespace Core
         Shader _triangleAggregationComputeShader;
         Shader _outputComputeShader;
         uint32_t _meshDataUbo;
-        float _waterDrag = 1.0f;
-        float _airDrag = 0.05f;
+        float _dragCoefficient = 2.02f;
+
+        int32_t _windVelocityLocation;
+        int32_t _triangleCountLocation;
+        int32_t _partialsCountLocation;
 
     public:
         BuoyancySystem();
@@ -70,29 +72,8 @@ namespace Core
     public:
         ~BuoyancySystem();
 
-        [[nodiscard]] float GetWaterDrag() const
-        {
-            return _waterDrag;
-        }
-
-        void SetWaterDrag(const float WaterDrag)
-        {
-            _waterDrag = WaterDrag;
-        }
-
-        [[nodiscard]] float GetAirDrag() const
-        {
-            return _airDrag;
-        }
-
-        void SetAirDrag(const float AirDrag)
-        {
-            _airDrag = AirDrag;
-        }
-
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
-                           uint32_t VelocityTextures,
-                           uint32_t CascadeSettingsBuffer);
+                           glm::vec2 WindVelocity, uint32_t VelocityTextures, uint32_t CascadeSettingsBuffer);
 
     private:
         void ProcessMesh(PhysicsSystem& PhysicsSystem, const Mesh& Mesh, const TransformComponent& Transform,

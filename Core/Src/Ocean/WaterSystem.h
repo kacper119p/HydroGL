@@ -220,7 +220,7 @@ namespace Core
     public:
         void SetWindVelocity(const glm::vec2 WindVelocity)
         {
-            _initialSpectrumSettingsBufferData.WindVelocity = -WindVelocity;
+            _initialSpectrumSettingsBufferData.WindVelocity = WindVelocity;
             _initialSpectrumSettingsBufferData.PeakWaveFrequency = CalculateInitialSpectrumPeakWaveFrequency(
                 _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
             _initialSpectrumSettingsBufferData.Alpha = CalculateInitialSpectrumAlpha(
@@ -231,7 +231,7 @@ namespace Core
 
         [[nodiscard]] glm::vec2 GetWindVelocity() const
         {
-            return -_initialSpectrumSettingsBufferData.WindVelocity;
+            return _initialSpectrumSettingsBufferData.WindVelocity;
         }
 
         void SetFetch(const float Fetch)
