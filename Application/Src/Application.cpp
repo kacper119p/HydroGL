@@ -112,6 +112,8 @@ int32_t Application::Application::Run(Platform::Window* Window)
         {
             engine->GetBuoyancySystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
                                                        engine->GetWaterSystem()->GetDisplacementTextures(),
+                                                       engine->GetWaterSystem()->GetWindVelocity(),
+                                                       engine->GetWaterSystem()->GetVelocityTextures(),
                                                        engine->GetWaterSystem()->GetCascadeSettingsSsbo());
             engine->GetPhysicsSystem()->Step(*entityRegistry, PhysicsTimeStep);
             physicsAccumulatedTime -= PhysicsTimeStep;
