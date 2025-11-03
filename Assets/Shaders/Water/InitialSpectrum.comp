@@ -2,18 +2,21 @@
 
 #include "WaterCommon.glsl"
 
-layout (binding = 0, rgba32f) writeonly uniform image2DArray Output;
-layout (binding = 1, rg32f) readonly uniform image2D GaussianNoise;
+layout (binding = 0, rgba32f) writeonly restrict uniform image2DArray Output;
+layout (binding = 1, rg32f) readonly restrict uniform image2D GaussianNoise;
 
-layout(std430, binding = 0) buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
-    float padding[2];
+    int VelocityLayers;
+    float VelocityMinHeight;
+    float VelocityMaxHeight;
+    float Padding[3];
     cascadeSettings CascadeSettings[];
 };
 
-layout(std430, binding = 1) buffer SpectrumParams
+layout(std140, binding = 0) uniform spectrumParams
 {
     vec2 WindVelocity;
     float Fetch;
@@ -22,7 +25,7 @@ layout(std430, binding = 1) buffer SpectrumParams
     float Alpha;
     float PeakWaveFrequency;
     float _padding;
-};
+} SpectrumParams;
 
 float calculateR(const float Omega, const float OmegaP)
 {
@@ -58,21 +61,21 @@ float DonelanBannerDirectionalSpread(const float Beta, const float WindBias)
 
 float CalculateSwellDirectionalSpread(const float WindBias, const float ROmega)
 {
-    return pow(abs(cos(WindBias / 2.0)), 32.0 * tanh(1.0 / ROmega) * Swell * Swell);
+    return pow(abs(cos(WindBias / 2.0)), 32.0 * tanh(1.0 / ROmega) * SpectrumParams.Swell * SpectrumParams.Swell);
 }
 
 float Jonswap(const float omega)
 {
-    const float r = calculateR(omega, PeakWaveFrequency);
+    const float r = calculateR(omega, SpectrumParams.PeakWaveFrequency);
 
     const float omega2 = omega * omega;
     const float omega5 = omega2 * omega2 * omega;
 
-    const float omegaPByOmega = PeakWaveFrequency / omega;
+    const float omegaPByOmega = SpectrumParams.PeakWaveFrequency / omega;
     const float omegaPByOmega2 = omegaPByOmega * omegaPByOmega;
     const float omegaPByOmega4 = omegaPByOmega2 * omegaPByOmega2;
 
-    return Alpha * G2 / (omega5 * 16.0 * PI * PI * PI * PI) * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
+    return SpectrumParams.Alpha * G2 / (omega5 * 16.0 * PI * PI * PI * PI) * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
 }
 
 float CalculateNormalizationFactor(const float ROmega, const float Beta)
@@ -94,8 +97,8 @@ float CalculateNormalizationFactor(const float ROmega, const float Beta)
 
 float DirectionalSpectrum(const vec2 WaveVector, const float Omega)
 {
-    const float rOmega = Omega / PeakWaveFrequency;
-    const float windBias = atan(WaveVector.y, WaveVector.x) - atan(WindVelocity.y, WindVelocity.x);
+    const float rOmega = Omega / SpectrumParams.PeakWaveFrequency;
+    const float windBias = atan(WaveVector.y, WaveVector.x) - atan(SpectrumParams.WindVelocity.y, SpectrumParams.WindVelocity.x);
     const float beta = CalculateBeta(rOmega);
 
     const float normalizationFactor = CalculateNormalizationFactor(rOmega, beta);
@@ -104,7 +107,7 @@ float DirectionalSpectrum(const vec2 WaveVector, const float Omega)
 
     const float finalSpectrum = donelanBannerSpread * swellSpread * normalizationFactor;
 
-    return mix(1.0 / (2.0 * PI), finalSpectrum, Delta);
+    return mix(1.0 / (2.0 * PI), finalSpectrum, SpectrumParams.Delta);
 }
 
 float CalculateInitialSpectrum(const vec2 WaveVector, const float K, const float CascadeLength)

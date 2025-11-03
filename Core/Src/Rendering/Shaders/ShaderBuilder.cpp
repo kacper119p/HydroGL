@@ -63,7 +63,7 @@ namespace Core
         {
             char errorInfo[ErrorLogSize];
             glGetShaderInfoLog(shaderId, ErrorLogSize, nullptr, errorInfo);
-            spdlog::error("Failed to compile shader: {}: {}", FilePath, errorInfo);
+            spdlog::error("Failed to compile shader: {}\n: {}", FilePath, errorInfo);
             glDeleteShader(shaderId);
             return 0;
         }
@@ -134,8 +134,10 @@ namespace Core
 
     Shader ShaderBuilder::CreateComputeShader() const
     {
+        const std::string& filePath =
+                _shaderStages[static_cast<uint8_t>(ShaderStage::ComputeShader)].Path;
         const uint32_t computeShaderId =
-                GetShaderStage(_shaderStages[static_cast<uint8_t>(ShaderStage::ComputeShader)].Path, GL_COMPUTE_SHADER);
+                GetShaderStage(filePath, GL_COMPUTE_SHADER);
         if (computeShaderId == 0)
         {
             return Shader(0);
@@ -154,7 +156,7 @@ namespace Core
             char errorInfo[ErrorLogSize];
             glGetProgramInfoLog(programId, ErrorLogSize, nullptr, errorInfo);
             glDeleteProgram(programId);
-            spdlog::error("Failed to link shader: ", errorInfo);
+            spdlog::error("Failed to link shader: {}:\n {}", filePath, errorInfo);
         }
 
         return Shader(programId);

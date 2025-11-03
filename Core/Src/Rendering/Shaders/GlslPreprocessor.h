@@ -13,6 +13,7 @@ namespace Core
     {
     private:
         static std::filesystem::path _includeDirectory;
+        static std::filesystem::path _shadersDirectory;
 
     private:
         GlslPreprocessor() = default;

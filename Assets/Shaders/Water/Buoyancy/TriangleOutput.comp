@@ -1,0 +1,64 @@
+#version 460
+
+#include "TriangleProperties.glsl"
+
+const int LOCAL_SIZE = 64;
+
+layout(std430, binding = 1) readonly restrict buffer partialsBuffer
+{
+    triangleProperties Partials[];
+} PartialBuffer;
+
+layout(std430, binding = 2) writeonly restrict buffer outputBuffer
+{
+    triangleProperties Result;
+} OutputBuffer;
+
+uniform uint PartialsCount;
+
+shared triangleProperties sharedBuffer[LOCAL_SIZE];
+
+layout(local_size_x = LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+    uint localId = gl_LocalInvocationID.x;
+    uint localSize = LOCAL_SIZE;
+
+    triangleProperties sum = { vec3(0.0), 0.0, vec3(0.0), 0.0 };
+    for (uint idx = localId; idx < PartialsCount; idx += localSize)
+    {
+        sum.Drag += PartialBuffer.Partials[idx].Drag;
+        sum.SubmergedArea += PartialBuffer.Partials[idx].SubmergedArea;
+        sum.CenterOfImmersion += PartialBuffer.Partials[idx].CenterOfImmersion;
+        sum.SubmergedVolume += PartialBuffer.Partials[idx].SubmergedVolume;
+    }
+
+    sharedBuffer[localId] = sum;
+    memoryBarrierShared();
+    barrier();
+
+    // reduce in shared memory (assumes LOCAL_SIZE is power of two)
+    for (uint offset = localSize >> 1; offset > 0; offset >>= 1)
+    {
+        if (localId < offset)
+        {
+            sharedBuffer[localId].Drag += sharedBuffer[localId + offset].Drag;
+            sharedBuffer[localId].SubmergedArea += sharedBuffer[localId + offset].SubmergedArea;
+            sharedBuffer[localId].CenterOfImmersion += sharedBuffer[localId + offset].CenterOfImmersion;
+            sharedBuffer[localId].SubmergedVolume += sharedBuffer[localId + offset].SubmergedVolume;
+        }
+        memoryBarrierShared();
+        barrier();
+    }
+
+    triangleProperties finalSum;
+    finalSum.Drag = sharedBuffer[0].Drag;
+    finalSum.SubmergedArea = sharedBuffer[0].SubmergedArea;
+    finalSum.CenterOfImmersion = sharedBuffer[0].CenterOfImmersion / sharedBuffer[0].SubmergedVolume;
+    finalSum.SubmergedVolume = sharedBuffer[0].SubmergedVolume;
+
+    if (localId == 0)
+    {
+        OutputBuffer.Result = finalSum;
+    }
+}

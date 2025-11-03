@@ -11,11 +11,14 @@ out vec3 DisplacedPosition;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
-layout(std430, binding = 0) buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly  restrict buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
-    float padding[2];
+    int VelocityLayers;
+    float VelocityMinHeight;
+    float VelocityMaxHeight;
+    float Padding[3];
     cascadeSettings CascadeSettings[];
 };
 

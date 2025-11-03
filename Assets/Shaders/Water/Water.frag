@@ -15,11 +15,14 @@ uniform float Fetch = 10000.0;
 uniform float Delta = 1.0;
 uniform float Swell = 0.5;
 
-layout(std430, binding = 0) buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
-    float padding[2];
+    int VelocityLayers;
+    float VelocityMinHeight;
+    float VelocityMaxHeight;
+    float Padding[3];
     cascadeSettings CascadeSettings[];
 };
 

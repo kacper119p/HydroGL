@@ -2,18 +2,21 @@
 
 #include "WaterCommon.glsl"
 
-layout (binding = 0, rgba32f) uniform image2DArray HDx;
-layout (binding = 1, rgba32f) uniform image2DArray DzDfhx;
-layout (binding = 2, rgba32f) uniform image2DArray DfhzDfdxx;
-layout (binding = 3, rgba32f) uniform image2DArray DfdzxDfdzz;
-layout (binding = 4, rgba32f) writeonly uniform image2DArray SlopeTextures;
-layout (binding = 5, rgba32f) writeonly uniform image2DArray DisplacementTexture;
+layout (binding = 0, rgba32f) readonly uniform image2DArray HDzDxDfhx;
+layout (binding = 1, rgba32f) readonly uniform image2DArray DfhzDfdxxDfdzxDfdzz;
+layout (binding = 2, rgba32f) readonly uniform image2DArray VelocityPacked;
+layout (binding = 3, rgba32f) writeonly uniform image2DArray SlopeTextures;
+layout (binding = 4, rgba32f) writeonly uniform image2DArray DisplacementTexture;
+layout (binding = 5, rgba32f) writeonly uniform image2DArray Velocity;
 
-layout(std430, binding = 0) buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
-    float padding[2];
+    int VelocityLayers;
+    float VelocityMinHeight;
+    float VelocityMaxHeight;
+    float Padding[3];
     cascadeSettings CascadeSettings[];
 };
 
@@ -26,16 +29,45 @@ void main()
 
     const ivec3 sampleCoords = ivec3(pixelCoords, cascadeIndex);
 
-    const vec2 dxdy = imageLoad(HDx, sampleCoords).br * phaseCorrection;
-    const vec2 dzdfhxx = imageLoad(DzDfhx, sampleCoords).rb * phaseCorrection;
-    const vec2 dfhzDfdxx = imageLoad(DfhzDfdxx, sampleCoords).rb * phaseCorrection;
-    const vec2 dfdzxDfdzz = imageLoad(DfdzxDfdzz, sampleCoords).rb * phaseCorrection;
+    vec4 hDzDxDfhx = imageLoad(HDzDxDfhx, sampleCoords) * phaseCorrection;
+    vec4 dfhzDfdxxDfdzxDfdzz = imageLoad(DfhzDfdxxDfdzxDfdzz, sampleCoords)  * phaseCorrection;
 
-    const vec3 displacement = vec3(dxdy.x, dxdy.y, dzdfhxx.x);
-    const vec2 slope = vec2(-dzdfhxx.y, -dfhzDfdxx.x);
+    const float dx = hDzDxDfhx.z;
+    const float dy = hDzDxDfhx.x;
+    const float dz = hDzDxDfhx.y;
+    const float dfhx = hDzDxDfhx.w;
+    const float dfhz = dfhzDfdxxDfdzxDfdzz.x;
+    const float dfdxx = dfhzDfdxxDfdzxDfdzz.y;
+    const float dfdzx = dfhzDfdxxDfdzxDfdzz.z;
+    const float dfdzz = dfhzDfdxxDfdzxDfdzz.w;
 
-    const vec3 JacobianDerivatives = vec3(dfhzDfdxx.y, dfdzxDfdzz.y, dfdzxDfdzz.x);
+    const vec3 displacement = vec3(dx, dy, dz);
+    const vec2 slope = vec2(-dfhx, -dfhz);
+    const vec3 JacobianDerivatives = vec3(dfdxx, dfdzz, dfdzx);
 
     imageStore(SlopeTextures, sampleCoords, vec4(slope, JacobianDerivatives.xy));
     imageStore(DisplacementTexture, sampleCoords, vec4(displacement, JacobianDerivatives.z));
+
+    const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
+    const int velocityPackedBaseIndex = cascadeIndex * velocityPackedTextureCount;
+    const int velocityBaseIndex = cascadeIndex * VelocityLayers;
+
+    for (int i = 0; i < velocityPackedTextureCount; i += 3)
+    {
+        const int readBaseIndex = velocityPackedBaseIndex + i;
+        const vec4 packedVelocity0 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex)) * phaseCorrection;
+        const vec4 packedVelocity1 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex + 1)) * phaseCorrection;
+        const vec4 packedVelocity2 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex + 2)) * phaseCorrection;
+
+        const vec3 velocity0 = packedVelocity0.xyz;// (vx0, vy0, vz0)
+        const vec3 velocity1 = vec3(packedVelocity0.w, packedVelocity1.xy);// (vx1, vy1, vz1)
+        const vec3 velocity2 = vec3(packedVelocity1.zw, packedVelocity2.x);// (vx2, vy2, vz2)
+        const vec3 velocity3 = packedVelocity2.yzw;// (vx3, vy3, vz3)
+
+        const int baseWriteIndex = velocityBaseIndex + i * 4 / 3;
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex), vec4(velocity0, 0.0));
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 1), vec4(velocity1, 0.0));
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 2), vec4(velocity2, 0.0));
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 3), vec4(velocity3, 0.0));
+    }
 }

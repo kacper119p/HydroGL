@@ -3,22 +3,41 @@
 #include "WaterCommon.glsl"
 #include "Complex.glsl"
 
-layout (binding = 0, rgba32f) uniform image2DArray HDx;
-layout (binding = 1, rgba32f) uniform image2DArray DzDfhx;
-layout (binding = 2, rgba32f) uniform image2DArray DfhzDfdxx;
-layout (binding = 3, rgba32f) uniform image2DArray DfdzxDfdzz;
-layout (binding = 4, rgba32f) uniform image2DArray InitialSpectrum;
+layout (binding = 0, rgba32f) writeonly restrict uniform image2DArray HDzDxDfhx;
+layout (binding = 1, rgba32f) writeonly restrict uniform image2DArray DfhzDfdxxDfdzxDfdzz;
+layout (binding = 2, rgba32f) writeonly restrict uniform image2DArray VelocityPacked;
+layout (binding = 3, rgba32f) readonly restrict uniform image2DArray InitialSpectrum;
 
-layout(std430, binding = 0) buffer CascadeSettingsBuffer
+layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
 {
     int TextureResolution;
     int CascadeCount;
-    float padding[2];
+    int VelocityLayers;
+    float VelocityMinHeight;
+    float VelocityMaxHeight;
+    float Padding[3];
     cascadeSettings CascadeSettings[];
 };
 
 uniform float Time;
 
+vec2 PackIffts(vec2 a, vec2 b)
+{
+    return vec2(a.x - b.y, a.y + b.x);
+}
+
+float VelocityAttenuation(const float k, const float height)
+{
+    return height > 0.0 ? 1.0 + k * height : exp(k * height);
+}
+
+void GetVelocityVector(out vec2 vx, out vec2 vy, out vec2 vz, const vec2 hv, const float k, const float dispersion, const vec2 waveVector, const float height)
+{
+    const vec2 Eh = hv * VelocityAttenuation(k, height);
+    vx = Eh * (-waveVector.x * G / dispersion);
+    vy = vec2(-Eh.y * dispersion, Eh.x * dispersion);
+    vz = Eh * (-waveVector.y * G / dispersion);
+}
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
@@ -32,13 +51,16 @@ void main()
 
     float k = length(waveVector);
 
-    const float phase = CalculateDispersion(k) * Time;
+    float dispersion = CalculateDispersion(k);
+    const float phase = dispersion * Time;
 
     const vec4 initialSpectrum = imageLoad(InitialSpectrum, sampleCoords);
     const vec2 h0 = initialSpectrum.rg;
     const vec2 h0Star = initialSpectrum.ba;
 
-    const vec2 h = ComplexProduct(h0, Euler(phase)) + ComplexProduct(h0Star, Euler(-phase));
+    const vec2 ha = ComplexProduct(h0, Euler(phase));
+    const vec2 hb = ComplexProduct(h0Star, Euler(-phase));
+    const vec2 h =  ha + hb;
 
     k = max(k, EPSILON);
     const vec2 dx = MultiplyByI(h) / k * waveVector.x;
@@ -51,8 +73,35 @@ void main()
     const vec2 dfhx = k * dx;
     const vec2 dfhz = k * dz;
 
-    imageStore(HDx, sampleCoords, vec4(h, dx));
-    imageStore(DzDfhx, sampleCoords, vec4(dz, dfhx));
-    imageStore(DfhzDfdxx, sampleCoords, vec4(dfhz, dfdxx));
-    imageStore(DfdzxDfdzz, sampleCoords, vec4(dfdzx, dfdzz));
+    vec2 hDz =  PackIffts(h, dz);
+    vec2 dxDfhx = PackIffts(dx, dfhx);
+    vec2 dfhzDfdxx = PackIffts(dfhz, dfdxx);
+    vec2 dfdzxDfdzz = PackIffts(dfdzx, dfdzz);
+
+    imageStore(HDzDxDfhx, sampleCoords, vec4(hDz, dxDfhx));
+    imageStore(DfhzDfdxxDfdzxDfdzz, sampleCoords, vec4(dfhzDfdxx, dfdzxDfdzz));
+
+    const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
+    const int velocityBaseIndex = cascadeIndex * velocityPackedTextureCount;
+
+    const vec2 hv = ha - hb;
+
+    dispersion = max(dispersion, EPSILON);
+    for (int i = 0; i < VelocityLayers; i += 4)
+    {
+        vec2 vx[4];
+        vec2 vy[4];
+        vec2 vz[4];
+
+        for (int j = 0; j < 4; ++j)
+        {
+            const float height = mix(VelocityMinHeight, VelocityMaxHeight, float(i + j) / float(VelocityLayers - 1));
+            GetVelocityVector(vx[j], vy[j], vz[j], hv, k, dispersion, waveVector, height);
+        }
+
+        const int writeBaseIndex = velocityBaseIndex + i * 3 / 4;
+        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex), vec4(PackIffts(vx[0], vy[0]), PackIffts(vz[0], vx[1])));
+        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex + 1), vec4(PackIffts(vy[1], vz[1]), PackIffts(vx[2], vy[2])));
+        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex + 2), vec4(PackIffts(vz[2], vx[3]), PackIffts(vy[3], vz[3])));
+    }
 }

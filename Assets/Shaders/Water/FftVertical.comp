@@ -3,8 +3,8 @@
 #include "Complex.glsl"
 #include "Constants.glsl"
 
-layout (binding = 0, rgba32f) uniform readonly image2DArray Input;
-layout (binding = 1, rgba32f) uniform writeonly image2DArray Output;
+layout (binding = 0, rgba32f) uniform readonly restrict image2DArray Input;
+layout (binding = 1, rgba32f) uniform writeonly restrict image2DArray Output;
 
 uniform int TotalCount;
 uniform int Subcount;

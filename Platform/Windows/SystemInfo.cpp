@@ -19,7 +19,7 @@ namespace Platform::Detail
     namespace
     {
         IDXGIFactory6* DxgiFactory = nullptr;
-        IDXGIAdapter4* GpuAdapter = nullptr;
+        IDXGIAdapter4* DxgiAdapter = nullptr;
     }
 }
 
@@ -29,12 +29,12 @@ namespace Platform
     {
         CHECK(SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&Detail::DxgiFactory))));
         CHECK(SUCCEEDED(Detail::DxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-            __uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&Detail::GpuAdapter))));
+            __uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&Detail::DxgiAdapter))));
     }
 
     void SystemInfo::Release()
     {
-        Detail::GpuAdapter->Release();
+        Detail::DxgiAdapter->Release();
         Detail::DxgiFactory->Release();
     }
 
@@ -77,10 +77,10 @@ namespace Platform
 
     MemoryInfo SystemInfo::GetVRamInfo()
     {
-        DXGI_QUERY_VIDEO_MEMORY_INFO memInfo = {};
-        DXGI_ADAPTER_DESC3 desc = {};
-        if (SUCCEEDED(Detail::GpuAdapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo))
-            && SUCCEEDED(Detail::GpuAdapter->GetDesc3(&desc)))
+        DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
+        DXGI_ADAPTER_DESC3 desc;
+        if (SUCCEEDED(Detail::DxgiAdapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo))
+            && SUCCEEDED(Detail::DxgiAdapter->GetDesc3(&desc)))
         {
             return MemoryInfo(desc.DedicatedVideoMemory, memInfo.CurrentUsage);
         }

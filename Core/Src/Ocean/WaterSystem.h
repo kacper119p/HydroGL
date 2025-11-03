@@ -61,7 +61,10 @@ namespace Core
             {
                 int32_t TextureResolution{};
                 int32_t CascadeCount{};
-                float Padding[2]{};
+                int32_t VelocityLayers{};
+                float VelocityMinHeight{};
+                float VelocityMaxHeight{};
+                float Padding[3]{};
                 CascadeSettings CascadeSettings[1]{};
 
                 static constexpr int64_t CalculateSize(const uint32_t Count)
@@ -83,13 +86,17 @@ namespace Core
                 _buffer->CascadeCount = 0;
             }
 
-            CascadeSettingsBuffer(const int32_t TextureResolution,
+            CascadeSettingsBuffer(const int32_t TextureResolution, const int32_t VelocityLayers,
+                                  const float VelocityMinHeight, const float VelocityMaxHeight,
                                   const std::initializer_list<CascadeSettings>&
                                   InitialValues) : _capacity(InitialValues.size())
             {
                 _buffer = static_cast<InternalBuffer*>(malloc(InternalBuffer::CalculateSize(_capacity)));
                 _buffer->TextureResolution = TextureResolution;
                 _buffer->CascadeCount = static_cast<int32_t>(InitialValues.size());
+                _buffer->VelocityLayers = VelocityLayers;
+                _buffer->VelocityMinHeight = VelocityMinHeight;
+                _buffer->VelocityMaxHeight = VelocityMaxHeight;
                 memcpy(_buffer->CascadeSettings, InitialValues.begin(), InitialValues.size() * sizeof(CascadeSettings));
             }
 
@@ -144,7 +151,11 @@ namespace Core
     private:
         static constexpr float Gravity = 9.80665f;
         static constexpr int32_t CascadeCount = 3;
-        static constexpr int32_t TextureResolution = 256;
+        static constexpr int32_t TextureResolution = 512; // Must be power of 2
+        static constexpr int32_t VelocityLayers = 8; // Must be multiple of 4
+        static constexpr int32_t VelocityPackedTexturesCount = VelocityLayers * 3 / 4;
+        static constexpr float VelocityMinHeight = -40.0f;
+        static constexpr float VelocityMaxHeight = 0.0f;
 
     private:
         OceanGrid _oceanGrid;
@@ -164,20 +175,19 @@ namespace Core
         Shader _spectrumComputeShader;
 
         uint32_t _initialSpectrumTextures;
-        uint32_t _hDxTextures;
-        uint32_t _dzDfhxTextures;
-        uint32_t _dfhzDfdxxTextures;
-        uint32_t _dfdzxDfdzzTextures;
-        uint32_t _spectrumTextures;
+        uint32_t _hDzDxDfhxTextures;
+        uint32_t _dfhzDfdxxDfdzxDfdzz;
+        uint32_t _velocityPackedTextures;
         uint32_t _slopeTextures;
         uint32_t _displacementTextures;
+        uint32_t _velocityTextures;
         uint32_t _tmpTextures;
         uint32_t _gaussianNoiseTexture;
 
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
         CascadeSettingsBuffer _cascadeSettings;
 
-        uint32_t _initialSpectrumSettingsSsbo = 0;
+        uint32_t _initialSpectrumSettingsUbo = 0;
         uint32_t _cascadeSettingsSsbo = 0;
 
     public:
@@ -189,7 +199,7 @@ namespace Core
 
         static uint32_t CreateGaussianNoise(int32_t Resolution);
 
-        static uint32_t CreateInitialSpectrumSettingsSsbo(const InitialSpectrumSettingsBuffer& InitialData);
+        static uint32_t CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData);
 
         static uint32_t CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData);
 
@@ -210,9 +220,7 @@ namespace Core
     public:
         void SetWindVelocity(const glm::vec2 WindVelocity)
         {
-            glm::vec2 value = WindVelocity;
-            value.x *= -1.0f;
-            _initialSpectrumSettingsBufferData.WindVelocity = value;
+            _initialSpectrumSettingsBufferData.WindVelocity = WindVelocity;
             _initialSpectrumSettingsBufferData.PeakWaveFrequency = CalculateInitialSpectrumPeakWaveFrequency(
                 _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
             _initialSpectrumSettingsBufferData.Alpha = CalculateInitialSpectrumAlpha(
@@ -223,9 +231,7 @@ namespace Core
 
         [[nodiscard]] glm::vec2 GetWindVelocity() const
         {
-            glm::vec2 value = _initialSpectrumSettingsBufferData.WindVelocity;
-            value.x *= -1.0f;
-            return value;
+            return _initialSpectrumSettingsBufferData.WindVelocity;
         }
 
         void SetFetch(const float Fetch)
@@ -268,8 +274,22 @@ namespace Core
             return _initialSpectrumSettingsBufferData.Swell;
         }
 
-    public:
-        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera);
+        [[nodiscard]] uint32_t GetDisplacementTextures() const
+        {
+            return _displacementTextures;
+        }
+
+        [[nodiscard]] uint32_t GetVelocityTextures() const
+        {
+            return _velocityTextures;
+        }
+
+        [[nodiscard]] uint32_t GetCascadeSettingsSsbo() const
+        {
+            return _cascadeSettingsSsbo;
+        }
+
+        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera) const;
 
     private:
         void UpdateInitialSpectrum() const;
@@ -278,7 +298,7 @@ namespace Core
 
         void AssembleTextures() const;
 
-        void RunFft(uint32_t& Texture);
+        void RunFft(uint32_t Texture, int32_t Layers) const;
 
         void SendInitialSpectrumSettingsToGpu() const;
 

@@ -29,7 +29,7 @@ namespace Application
 
             ImGui::Text("GPU: %s", reinterpret_cast<const char*>(renderer));
             ImGui::Text("CPU: %s", cpuInfo.c_str());
-            ImGui::Text("RAM: %.1lf/%lluGB", static_cast<double>(ramInfo.UsedMemory) / bytesToGbs,
+            ImGui::Text("RAM: %.3lf/%lluGB", static_cast<double>(ramInfo.UsedMemory) / bytesToGbs,
                         ramInfo.TotalMemory / bytesToGbs);
             ImGui::Text("VRAM: %llu/%lluMB", vRamInfo.UsedMemory / bytesToMbs, vRamInfo.TotalMemory / bytesToMbs);
             ImGui::Text("OpenGL version: %s", reinterpret_cast<const char*>(version));

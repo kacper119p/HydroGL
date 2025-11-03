@@ -51,12 +51,39 @@ namespace Core
 
         [[nodiscard]] const glm::quat& GetLocalRotation() const
         {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
             return _rotation;
+        }
+
+        [[nodiscard]] glm::quat GetWorldRotation() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::quat_cast(_localToWorldMatrix);
         }
 
         void SetLocalRotation(const glm::quat& Rotation)
         {
             _rotation = Rotation;
+            _sceneHierarchyNode->MarkDirty();
+        }
+
+        void SetWorldRotation(const glm::quat& Rotation)
+        {
+            if (_sceneHierarchyNode->GetParent())
+            {
+                const SceneNode* parentNode = _sceneHierarchyNode->GetParent();
+                const glm::quat parentWorldRotation = parentNode->GetTransformComponent().GetWorldRotation();
+                _rotation = glm::inverse(parentWorldRotation) * Rotation;
+            } else
+            {
+                _rotation = Rotation;
+            }
             _sceneHierarchyNode->MarkDirty();
         }
 
@@ -66,8 +93,17 @@ namespace Core
             _sceneHierarchyNode->MarkDirty();
         }
 
+        void SetWorldEulerAngles(const glm::vec3& EulerAngles)
+        {
+            SetWorldRotation(glm::quat(glm::radians(EulerAngles)));
+        }
+
         [[nodiscard]] glm::vec3 GetWorldPosition() const
         {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
             return glm::vec3(GetLocalToWorldMatrix()[3]);
         }
 
@@ -90,6 +126,15 @@ namespace Core
         [[nodiscard]] glm::vec3 GetLocalEulerAngles() const
         {
             return glm::degrees(glm::eulerAngles(_rotation));
+        }
+
+        [[nodiscard]] glm::vec3 GetWorldEulerAngles() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::degrees(glm::eulerAngles(GetWorldRotation()));
         }
 
         [[nodiscard]] glm::vec3 GetWorldRight() const

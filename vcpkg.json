@@ -8,13 +8,13 @@
         "docking-experimental"
       ]
     },
-    "imguizmo",
     "glm",
     "gtest",
     "spdlog",
     "tracy",
     "entt",
-    "assimp"
+    "assimp",
+    "joltphysics"
   ],
   "overrides": [
     {
