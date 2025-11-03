@@ -115,10 +115,6 @@ namespace Core
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
 
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, Engine.GetWaterSystem()->GetDisplacementTextures());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, Engine.GetWaterSystem()->GetCascadeSettingsSsbo());
-
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
         glBufferData(
             GL_DRAW_INDIRECT_BUFFER,
