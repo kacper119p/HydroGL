@@ -103,7 +103,6 @@ namespace Core
         std::for_each(std::execution::par, meshesView.begin(), meshesView.end(), [&](auto& Entity)
         {
             const auto& renderedMesh = meshesView.get<RenderedMeshComponent>(Entity);
-            const auto& transform = meshesView.get<TransformComponent>(Entity);
 
             const size_t index = trueCount.fetch_add(1, std::memory_order_relaxed);
             _indirectDrawCommands[index] = {
@@ -113,9 +112,14 @@ namespace Core
                 renderedMesh.Mesh.GetVerticesIndex(),
                 renderedMesh.Material
             };
-
-            _transformMatrices[index] = transform.GetLocalToWorldMatrix();
         });
+
+        int64_t transformIndex = 0;
+        for (const entt::entity entity : meshesView)
+        {
+            const auto& transform = meshesView.get<TransformComponent>(entity);
+            _transformMatrices[transformIndex++] = transform.GetLocalToWorldMatrix();
+        }
 
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
