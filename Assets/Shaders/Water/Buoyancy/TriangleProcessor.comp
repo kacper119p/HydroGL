@@ -77,9 +77,19 @@ vec3 RetrieveWaterVelocity(vec3 position)
     for (int cascade = 0; cascade < CascadeCount; ++cascade)
     {
         const int velocityBaseIndex = cascade * VelocityLayers;
-        const float textureIndex = velocityBaseIndex + Remap(position.y, VelocityMinHeight, VelocityMaxHeight, 0.0, float(VelocityLayers - 1));
+        float textureIndex = velocityBaseIndex + Remap(position.y, VelocityMinHeight, VelocityMaxHeight, 0.0, float(VelocityLayers - 1));
+        textureIndex = clamp(textureIndex, velocityBaseIndex, velocityBaseIndex + VelocityLayers - 1);
+
+        const float lowerIndex = floor(textureIndex);
+        const float upperIndex = ceil(textureIndex);
+        const float t = textureIndex - lowerIndex;
+
         const vec2 texCoord = vec2(position.x, position.z) / CascadeSettings[cascade].Length;
-        velocity += texture(Velocity, vec3(texCoord, textureIndex)).xyz;
+
+        const vec3 lowerValue = texture(Velocity, vec3(texCoord, lowerIndex)).xyz;
+        const vec3 upperValue = texture(Velocity, vec3(texCoord, upperIndex)).xyz;
+
+        velocity += mix(lowerValue, upperValue, t);
     }
     return velocity;
 }
