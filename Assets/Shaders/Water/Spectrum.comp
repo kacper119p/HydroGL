@@ -81,27 +81,20 @@ void main()
     imageStore(HDzDxDfhx, sampleCoords, vec4(hDz, dxDfhx));
     imageStore(DfhzDfdxxDfdzxDfdzz, sampleCoords, vec4(dfhzDfdxx, dfdzxDfdzz));
 
-    const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
-    const int velocityBaseIndex = cascadeIndex * velocityPackedTextureCount;
+    const int velocityBaseIndex = cascadeIndex * VelocityLayers;
 
     const vec2 hv = ha - hb;
 
     dispersion = max(dispersion, EPSILON);
-    for (int i = 0; i < VelocityLayers; i += 4)
+    for (int i = 0; i < VelocityLayers; ++i)
     {
-        vec2 vx[4];
-        vec2 vy[4];
-        vec2 vz[4];
-
-        for (int j = 0; j < 4; ++j)
-        {
-            const float height = mix(VelocityMinHeight, VelocityMaxHeight, float(i + j) / float(VelocityLayers - 1));
-            GetVelocityVector(vx[j], vy[j], vz[j], hv, k, dispersion, waveVector, height);
-        }
+        vec2 vx;
+        vec2 vy;
+        vec2 vz;
+        const float height = mix(VelocityMinHeight, VelocityMaxHeight, float(i) / float(VelocityLayers - 1));
+        GetVelocityVector(vx, vy, vz, hv, k, dispersion, waveVector, height);
 
         const int writeBaseIndex = velocityBaseIndex + i * 3 / 4;
-        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex), vec4(PackIffts(vx[0], vy[0]), PackIffts(vz[0], vx[1])));
-        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex + 1), vec4(PackIffts(vy[1], vz[1]), PackIffts(vx[2], vy[2])));
-        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex + 2), vec4(PackIffts(vz[2], vx[3]), PackIffts(vy[3], vz[3])));
+        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex), vec4(PackIffts(vx, vy), vz));
     }
 }
