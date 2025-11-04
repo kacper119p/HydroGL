@@ -104,9 +104,6 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
         Window->PoolEvents();
 
-        // engine->GetBuoyancySystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
-        //                                            engine->GetWaterSystem()->GetDisplacementTextures(),
-        //                                            engine->GetWaterSystem()->GetCascadeSettingsSsbo());
         physicsAccumulatedTime += deltaTime;
         while (physicsAccumulatedTime >= PhysicsTimeStep)
         {
