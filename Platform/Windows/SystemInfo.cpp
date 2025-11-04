@@ -27,9 +27,16 @@ namespace Platform
 {
     void SystemInfo::Initialize()
     {
+#if NDEBUG
+        (void) CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&Detail::DxgiFactory));
+        (void) Detail::DxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                                                               __uuidof(IDXGIAdapter4),
+                                                               reinterpret_cast<void**>(&Detail::DxgiAdapter));
+#else
         CHECK(SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&Detail::DxgiFactory))));
         CHECK(SUCCEEDED(Detail::DxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
             __uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&Detail::DxgiAdapter))));
+#endif
     }
 
     void SystemInfo::Release()
@@ -79,6 +86,7 @@ namespace Platform
     {
         DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
         DXGI_ADAPTER_DESC3 desc;
+        std::cout << "Getting VRAM info\n";
         if (SUCCEEDED(Detail::DxgiAdapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo))
             && SUCCEEDED(Detail::DxgiAdapter->GetDesc3(&desc)))
         {
