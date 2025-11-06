@@ -7,10 +7,8 @@
 #include <array>
 #include <dxgi1_6.h>
 #include <intrin.h>
-#include <iostream>
 #include <psapi.h>
 #include <sysinfoapi.h>
-
 
 #include "Debug.h"
 
@@ -86,7 +84,6 @@ namespace Platform
     {
         DXGI_QUERY_VIDEO_MEMORY_INFO memInfo;
         DXGI_ADAPTER_DESC3 desc;
-        std::cout << "Getting VRAM info\n";
         if (SUCCEEDED(Detail::DxgiAdapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memInfo))
             && SUCCEEDED(Detail::DxgiAdapter->GetDesc3(&desc)))
         {
