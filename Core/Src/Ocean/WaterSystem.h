@@ -152,7 +152,7 @@ namespace Core
         static constexpr float Gravity = 9.80665f;
         static constexpr int32_t CascadeCount = 3;
         static constexpr int32_t TextureResolution = 512; // Must be power of 2
-        static constexpr int32_t VelocityLayers = 8; // Must be multiple of 4
+        static constexpr int32_t VelocityLayers = 8;
         static constexpr int32_t VelocityPackedTexturesCount = VelocityLayers * 3 / 4;
         static constexpr float VelocityMinHeight = -40.0f;
         static constexpr float VelocityMaxHeight = 0.0f;
