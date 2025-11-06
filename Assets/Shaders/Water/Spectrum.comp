@@ -94,7 +94,6 @@ void main()
         const float height = mix(VelocityMinHeight, VelocityMaxHeight, float(i) / float(VelocityLayers - 1));
         GetVelocityVector(vx, vy, vz, hv, k, dispersion, waveVector, height);
 
-        const int writeBaseIndex = velocityBaseIndex + i * 3 / 4;
-        imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex), vec4(PackIffts(vx, vy), vz));
+        imageStore(VelocityPacked, ivec3(pixelCoords, velocityBaseIndex + i), vec4(PackIffts(vx, vy), vz));
     }
 }
