@@ -62,7 +62,7 @@ namespace Core
         glBindTexture(GL_TEXTURE_2D_ARRAY, VelocityTextures);
 
         _triangleProcessorComputeShader.Use();
-        _triangleProcessorComputeShader.SetUniform(_windVelocityLocation, WindVelocity);
+        Shader::SetUniform(_windVelocityLocation, WindVelocity);
 
         for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
@@ -104,7 +104,7 @@ namespace Core
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
         _triangleAggregationComputeShader.Use();
-        _triangleAggregationComputeShader.SetUniform(_triangleCountLocation, static_cast<int32_t>(triangleCount));
+        Shader::SetUniform(_triangleCountLocation, static_cast<int32_t>(triangleCount));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.MainBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
         const int32_t aggregationGroups = static_cast<int32_t>(Math::IntegerDivCeilPositive(
@@ -114,7 +114,7 @@ namespace Core
 
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         _outputComputeShader.Use();
-        _outputComputeShader.SetUniform(_partialsCountLocation, static_cast<uint32_t>(aggregationGroups));
+        Shader::SetUniform(_partialsCountLocation, static_cast<uint32_t>(aggregationGroups));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
         Shader::DispatchCompute(1, 1, 1);

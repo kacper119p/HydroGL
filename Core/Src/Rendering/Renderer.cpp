@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include <execution>
+
 #include "Debug.h"
 #include "Engine.h"
 #include "Camera/CameraComponent.h"
@@ -44,7 +46,8 @@ namespace Core
         glGenBuffers(1, &IndirectDrawCommandsSsbo);
         glGenBuffers(1, &TransformsSsbo);
         glGenBuffers(1, &_lightsSsbo);
-        _indirectDrawCommands.reserve(1024);
+        _indirectDrawCommands.resize(1024);
+        _transformMatrices.resize(1024);
     }
 
     Renderer::~Renderer()
@@ -86,25 +89,41 @@ namespace Core
 
         materialManager.BindMaterialBuffer();
         const auto meshesView = entityRegistry->view<RenderedMeshComponent, TransformComponent>();
+        const auto meshesViewComponents = meshesView.each();
 
-        _indirectDrawCommands.clear();
-        _transformMatrices.clear();
+        const size_t countHint = meshesView.size_hint();
 
-        for (const entt::entity entity : meshesView)
+        if (countHint > _indirectDrawCommands.capacity())
         {
-            const RenderedMeshComponent& renderedMesh = meshesView.get<RenderedMeshComponent>(entity);
+            _indirectDrawCommands.resize(countHint);
+            _transformMatrices.resize(countHint);
+        }
 
-            _indirectDrawCommands.emplace_back(renderedMesh.Mesh.GetIndicesCount(),
-                                               1,
-                                               renderedMesh.Mesh.GetIndicesIndex(),
-                                               renderedMesh.Mesh.GetVerticesIndex(),
-                                               renderedMesh.Material);
-        }
-        for (const entt::entity entity : meshesView)
+        std::atomic<size_t> trueCount = 0;
+
+        for (const auto& [entity, renderedMesh, transform] : meshesViewComponents)
         {
-            const TransformComponent& transform = meshesView.get<TransformComponent>(entity);
-            _transformMatrices.emplace_back(transform.GetLocalToWorldMatrix());
+            transform.UpdateMatrices();
         }
+
+        std::for_each(std::execution::par,
+                      meshesViewComponents.begin(),
+                      meshesViewComponents.end(),
+                      [&](const auto& Entity)
+                      {
+                          auto [id ,renderedMesh, transform] = Entity;
+
+                          const size_t index = trueCount.fetch_add(1, std::memory_order_relaxed);
+                          _indirectDrawCommands[index] = {
+                              renderedMesh.Mesh.GetIndicesCount(),
+                              1,
+                              renderedMesh.Mesh.GetIndicesIndex(),
+                              renderedMesh.Mesh.GetVerticesIndex(),
+                              renderedMesh.Material
+                          };
+
+                          _transformMatrices[index] = transform.GetLocalToWorldMatrix();
+                      });
 
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
@@ -118,18 +137,18 @@ namespace Core
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
         glBufferData(
             GL_DRAW_INDIRECT_BUFFER,
-            static_cast<int64_t>(_indirectDrawCommands.size() * sizeof(DrawElementsIndirectCommand)),
+            static_cast<int64_t>(trueCount * sizeof(DrawElementsIndirectCommand)),
             _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, TransformsSsbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<int64_t>(_transformMatrices.size() * sizeof(glm::mat4)),
+        glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<int64_t>(trueCount * sizeof(glm::mat4)),
                      _transformMatrices.data(), GL_DYNAMIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, TransformsSsbo);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, IndirectDrawCommandsSsbo);
 
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr,
-                                    static_cast<int32_t>(_indirectDrawCommands.size()), 0);
+                                    static_cast<int32_t>(trueCount), 0);
 
         // ------------------------ SKYBOX ------------------------
 

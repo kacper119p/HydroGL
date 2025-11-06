@@ -7,10 +7,8 @@
 #include <array>
 #include <dxgi1_6.h>
 #include <intrin.h>
-#include <iostream>
 #include <psapi.h>
 #include <sysinfoapi.h>
-
 
 #include "Debug.h"
 
@@ -27,9 +25,16 @@ namespace Platform
 {
     void SystemInfo::Initialize()
     {
+#if NDEBUG
+        (void) CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&Detail::DxgiFactory));
+        (void) Detail::DxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                                                               __uuidof(IDXGIAdapter4),
+                                                               reinterpret_cast<void**>(&Detail::DxgiAdapter));
+#else
         CHECK(SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&Detail::DxgiFactory))));
         CHECK(SUCCEEDED(Detail::DxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
             __uuidof(IDXGIAdapter4), reinterpret_cast<void**>(&Detail::DxgiAdapter))));
+#endif
     }
 
     void SystemInfo::Release()

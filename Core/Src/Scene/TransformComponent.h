@@ -186,5 +186,13 @@ namespace Core
         {
             return *_sceneHierarchyNode;
         }
+
+        void UpdateMatrices() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+        }
     };
 }
