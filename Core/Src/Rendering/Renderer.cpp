@@ -89,6 +89,7 @@ namespace Core
 
         materialManager.BindMaterialBuffer();
         const auto meshesView = entityRegistry->view<RenderedMeshComponent, TransformComponent>();
+        const auto meshesViewComponents = meshesView.each();
 
         const size_t countHint = meshesView.size_hint();
 
@@ -100,26 +101,29 @@ namespace Core
 
         std::atomic<size_t> trueCount = 0;
 
-        for (const auto& [entity, renderedMesh, transform] : meshesView.each())
+        for (const auto& [entity, renderedMesh, transform] : meshesViewComponents)
         {
             transform.UpdateMatrices();
         }
 
-        std::for_each(std::execution::par, meshesView.begin(), meshesView.end(), [&](const entt::entity Entity)
-        {
-            auto [renderedMesh, transform] = meshesView.get<RenderedMeshComponent, TransformComponent>(Entity);
+        std::for_each(std::execution::par,
+                      meshesViewComponents.begin(),
+                      meshesViewComponents.end(),
+                      [&](const auto& Entity)
+                      {
+                          auto [id ,renderedMesh, transform] = Entity;
 
-            const size_t index = trueCount.fetch_add(1, std::memory_order_relaxed);
-            _indirectDrawCommands[index] = {
-                renderedMesh.Mesh.GetIndicesCount(),
-                1,
-                renderedMesh.Mesh.GetIndicesIndex(),
-                renderedMesh.Mesh.GetVerticesIndex(),
-                renderedMesh.Material
-            };
+                          const size_t index = trueCount.fetch_add(1, std::memory_order_relaxed);
+                          _indirectDrawCommands[index] = {
+                              renderedMesh.Mesh.GetIndicesCount(),
+                              1,
+                              renderedMesh.Mesh.GetIndicesIndex(),
+                              renderedMesh.Mesh.GetVerticesIndex(),
+                              renderedMesh.Material
+                          };
 
-            _transformMatrices[index] = transform.GetLocalToWorldMatrix();
-        });
+                          _transformMatrices[index] = transform.GetLocalToWorldMatrix();
+                      });
 
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
