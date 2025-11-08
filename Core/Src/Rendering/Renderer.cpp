@@ -1,7 +1,5 @@
 #include "Renderer.h"
 
-#include <execution>
-
 #include "Debug.h"
 #include "Engine.h"
 #include "Camera/CameraComponent.h"
@@ -99,31 +97,24 @@ namespace Core
             _transformMatrices.resize(countHint);
         }
 
-        std::atomic<size_t> trueCount = 0;
+        size_t trueCount = 0;
 
         for (const auto& [entity, renderedMesh, transform] : meshesViewComponents)
         {
-            transform.UpdateMatrices();
+            _transformMatrices[trueCount++] = transform.GetLocalToWorldMatrix();
         }
 
-        std::for_each(std::execution::par,
-                      meshesViewComponents.begin(),
-                      meshesViewComponents.end(),
-                      [&](const auto& Entity)
-                      {
-                          auto [id ,renderedMesh, transform] = Entity;
-
-                          const size_t index = trueCount.fetch_add(1, std::memory_order_relaxed);
-                          _indirectDrawCommands[index] = {
-                              renderedMesh.Mesh.GetIndicesCount(),
-                              1,
-                              renderedMesh.Mesh.GetIndicesIndex(),
-                              renderedMesh.Mesh.GetVerticesIndex(),
-                              renderedMesh.Material
-                          };
-
-                          _transformMatrices[index] = transform.GetLocalToWorldMatrix();
-                      });
+        size_t index = 0;
+        for (const auto& [entity, renderedMesh, transform] : meshesViewComponents)
+        {
+            _indirectDrawCommands[index++] = {
+                renderedMesh.Mesh.GetIndicesCount(),
+                1,
+                renderedMesh.Mesh.GetIndicesIndex(),
+                renderedMesh.Mesh.GetVerticesIndex(),
+                renderedMesh.Material
+            };
+        }
 
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
