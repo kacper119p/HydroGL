@@ -302,9 +302,9 @@ namespace Core
                 if (TextureDescriptor.Format != GL_NONE) // Uncompressed
                 {
                     const uint32_t size = w * h * TextureDescriptor.BlockSize;
-                    glTextureSubImage3D(textureId, mip,
-                                        0, 0, face,
-                                        w, h, 1,
+                    glTextureSubImage3D(textureId, static_cast<int32_t>(mip),
+                                        0, 0, static_cast<int32_t>(face),
+                                        static_cast<int32_t>(w), static_cast<int32_t>(h), 1,
                                         TextureDescriptor.Format,
                                         TextureDescriptor.DataType,
                                         reinterpret_cast<const uint8_t*>(Buffer) + offset);
@@ -312,11 +312,11 @@ namespace Core
                 } else
                 {
                     const uint32_t size = ((w + 3) / 4) * ((h + 3) / 4) * TextureDescriptor.BlockSize;
-                    glCompressedTextureSubImage3D(textureId, mip,
-                                                  0, 0, face,
-                                                  w, h, 1,
+                    glCompressedTextureSubImage3D(textureId, static_cast<int32_t>(mip),
+                                                  0, 0, static_cast<int32_t>(face),
+                                                  static_cast<int32_t>(w), static_cast<int32_t>(h), 1,
                                                   TextureDescriptor.InternalFormat,
-                                                  size,
+                                                  static_cast<int32_t>(size),
                                                   reinterpret_cast<const uint8_t*>(Buffer) + offset);
                     offset += size;
                 }
