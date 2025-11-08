@@ -180,71 +180,78 @@ namespace Core
                                         const void* const Buffer)
     {
         uint32_t textureId = 0;
-        glGenTextures(1, &textureId);
+        glCreateTextures(GL_TEXTURE_2D, 1, &textureId);
         if (textureId == 0)
         {
             return 0;
         }
 
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(DdsHeader.dwMipMapCount - 1));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16.0f);
+        uint32_t mipMapCount = DdsHeader.dwMipMapCount;
+        const int32_t height = static_cast<int32_t>(DdsHeader.dwHeight);
+        const int32_t width = static_cast<int32_t>(DdsHeader.dwWidth);
+
+        glTextureStorage2D(textureId, static_cast<int32_t>(mipMapCount), TextureDescriptor.InternalFormat, width,
+                           height);
+        glTextureParameteri(textureId, GL_TEXTURE_BASE_LEVEL, 0);
+        glTextureParameteri(textureId, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(DdsHeader.dwMipMapCount - 1));
+        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameterf(textureId, GL_TEXTURE_MAX_ANISOTROPY, 16.0f);
 
         uint32_t offset = 0;
         int32_t size = 0;
 
-        uint32_t mipMapCount = DdsHeader.dwMipMapCount;
+        int32_t h = height;
+        int32_t w = width;
 
-        int32_t h = static_cast<int32_t>(DdsHeader.dwHeight);
-        int32_t w = static_cast<int32_t>(DdsHeader.dwWidth);
-
-        // loop through sending block at a time with the magic formula
-        // upload to opengl properly, note the offset transverses the pointer
-        // assumes each mipmap is 1/2 the size of the previous mipmap
-        if (TextureDescriptor.Format != GL_NONE)
+        // discard any odd mipmaps 0x1 0x2 resolutions
+        for (uint32_t i = 0; i < mipMapCount; i++)
         {
-            for (uint32_t i = 0; i < mipMapCount; i++)
+            if (w == 0 || h == 0)
             {
-                if (w == 0 || h == 0)
-                {
-                    // discard any odd mipmaps 0x1 0x2 resolutions
-                    mipMapCount--;
-                    continue;
-                }
-                size = w * h * TextureDescriptor.BlockSize;
-                glTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(i), TextureDescriptor.InternalFormat, w, h, 0,
-                             TextureDescriptor.Format, TextureDescriptor.DataType,
-                             reinterpret_cast<const uint8_t*>(Buffer) + offset);
-                offset += size;
-                w /= 2;
-                h /= 2;
-            }
-        } else
-        {
-            for (unsigned int i = 0; i < mipMapCount; i++)
-            {
-                if (w == 0 || h == 0)
-                {
-                    // discard any odd mipmaps 0x1 0x2 resolutions
-                    mipMapCount--;
-                    continue;
-                }
-                size = ((w + 3) / 4) * ((h + 3) / 4) * TextureDescriptor.BlockSize;
-                glCompressedTexImage2D(GL_TEXTURE_2D, static_cast<int32_t>(i), TextureDescriptor.InternalFormat, w, h,
-                                       0, size, reinterpret_cast<const uint8_t*>(Buffer) + offset);
-                offset += size;
-                w /= 2;
-                h /= 2;
+                mipMapCount--;
             }
         }
 
-        // discard any odd mipmaps, ensure a complete texture
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, static_cast<int32_t>(mipMapCount - 1));
+        h = height;
+        w = width;
+
+        if (TextureDescriptor.Format != GL_NONE)
+        {
+            //Handle uncompressed textures
+            for (uint32_t i = 0; i < mipMapCount; ++i)
+            {
+                size = w * h * TextureDescriptor.BlockSize;
+                glTextureSubImage2D(textureId, i, 0, 0,
+                                    w, h,
+                                    TextureDescriptor.Format,
+                                    TextureDescriptor.DataType,
+                                    reinterpret_cast<const uint8_t*>(Buffer) + offset);
+                offset += size;
+                w >>= 1;
+                h >>= 1;
+            }
+        } else
+        {
+            // loop through sending block at a time with the magic formula
+            // upload to opengl properly, note the offset transverses the pointer
+            // assumes each mipmap is 1/2 the size of the previous mipmap
+            for (uint32_t i = 0; i < mipMapCount; ++i)
+            {
+                size = ((w + 3) / 4) * ((h + 3) / 4) * TextureDescriptor.BlockSize;
+                glCompressedTextureSubImage2D(textureId, static_cast<int32_t>(i),
+                                              0, 0,
+                                              w, h,
+                                              TextureDescriptor.InternalFormat,
+                                              size,
+                                              reinterpret_cast<const uint8_t*>(Buffer) + offset);
+                offset += size;
+                w >>= 1;
+                h >>= 1;
+            }
+        }
 
         return textureId;
     }
@@ -253,65 +260,68 @@ namespace Core
                                           const void* const Buffer)
     {
         uint32_t textureId = 0;
-        glGenTextures(1, &textureId);
+        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &textureId);
         if (textureId == 0)
         {
             return 0;
         }
 
-        glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, static_cast<int32_t>(DdsHeader.dwMipMapCount - 1));
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY, 16.0f);
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-
+        const uint32_t height = DdsHeader.dwHeight;
+        const uint32_t width = DdsHeader.dwWidth;
         const uint32_t mipMapCount = DdsHeader.dwMipMapCount;
+        glTextureStorage2D(textureId, mipMapCount, TextureDescriptor.InternalFormat, width, height);
+
+        glTextureParameteri(textureId, GL_TEXTURE_BASE_LEVEL, 0);
+        glTextureParameteri(textureId, GL_TEXTURE_MAX_LEVEL, static_cast<int32_t>(DdsHeader.dwMipMapCount - 1));
+        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTextureParameterf(textureId, GL_TEXTURE_MAX_ANISOTROPY, 16.0f);
+
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
         constexpr uint8_t faceCount = 6;
         constexpr uint32_t faces[faceCount]{
-                DDS_CUBEMAP_POSITIVEX, DDS_CUBEMAP_NEGATIVEX, DDS_CUBEMAP_POSITIVEY,
-                DDS_CUBEMAP_NEGATIVEY, DDS_CUBEMAP_POSITIVEZ, DDS_CUBEMAP_NEGATIVEZ
+            DDS_CUBEMAP_POSITIVEX, DDS_CUBEMAP_NEGATIVEX, DDS_CUBEMAP_POSITIVEY,
+            DDS_CUBEMAP_NEGATIVEY, DDS_CUBEMAP_POSITIVEZ, DDS_CUBEMAP_NEGATIVEZ
         };
 
         uint32_t offset = 0;
         for (uint32_t face = 0; face < faceCount; face++)
         {
+            uint32_t h = height;
+            uint32_t w = width;
             if ((DdsHeader.dwCaps2 & faces[face]) == 0)
             {
                 continue;
             }
-
-            uint32_t h = DdsHeader.dwHeight;
-            uint32_t w = DdsHeader.dwWidth;
 
             for (uint32_t mip = 0; mip < mipMapCount; mip++)
             {
                 if (TextureDescriptor.Format != GL_NONE) // Uncompressed
                 {
                     const uint32_t size = w * h * TextureDescriptor.BlockSize;
-                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<int32_t>(mip),
-                                 TextureDescriptor.InternalFormat, static_cast<int32_t>(w), static_cast<int32_t>(h), 0,
-                                 TextureDescriptor.Format, TextureDescriptor.DataType,
-                                 reinterpret_cast<const uint8_t*>(Buffer) + offset);
+                    glTextureSubImage3D(textureId, mip,
+                                        0, 0, face,
+                                        w, h, 1,
+                                        TextureDescriptor.Format,
+                                        TextureDescriptor.DataType,
+                                        reinterpret_cast<const uint8_t*>(Buffer) + offset);
                     offset += size;
                 } else
                 {
                     const uint32_t size = ((w + 3) / 4) * ((h + 3) / 4) * TextureDescriptor.BlockSize;
-                    glCompressedTexImage2D(
-                            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, static_cast<int32_t>(mip),
-                            TextureDescriptor.InternalFormat,
-                            static_cast<int32_t>(w), static_cast<int32_t>(h), 0, static_cast<int32_t>(size),
-                            reinterpret_cast<const uint8_t*>(Buffer) + offset);
+                    glCompressedTextureSubImage3D(textureId, mip,
+                                                  0, 0, face,
+                                                  w, h, 1,
+                                                  TextureDescriptor.InternalFormat,
+                                                  size,
+                                                  reinterpret_cast<const uint8_t*>(Buffer) + offset);
                     offset += size;
                 }
-                w = std::max(1u, w / 2u);
-                h = std::max(1u, h / 2u);
+                w = std::max(1u, w >> 1u);
+                h = std::max(1u, h >> 1u);
             }
         }
 
