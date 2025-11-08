@@ -29,7 +29,7 @@ namespace Core
         constexpr uint32_t resolution = 32;
 
         uint32_t irradianceMap;
-        InitializeCubeMap(irradianceMap, resolution);
+        InitializeCubeMap(irradianceMap, resolution, 1);
 
         uint32_t fbo;
         InitializeFbo(fbo);
@@ -41,7 +41,6 @@ namespace Core
                 .SetStage("Assets/Shaders/Utility/Convolution/Convolution.vert", ShaderStage::VertexShader)
                 .SetStage("Assets/Shaders/Utility/Convolution/Convolution.frag", ShaderStage::FragmentShader)
                 .Build();
-
 
         shader.Use();
         glActiveTexture(GL_TEXTURE0);
@@ -65,9 +64,7 @@ namespace Core
         }
 
         glEnable(GL_DEPTH_TEST);
-
         glDeleteFramebuffers(1, &fbo);
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         return irradianceMap;
@@ -79,11 +76,10 @@ namespace Core
         constexpr uint32_t maxMipLevels = 10;
 
         uint32_t cubeMap;
-        InitializeCubeMap(cubeMap, resolution);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
-                        GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        InitializeCubeMap(cubeMap, resolution, maxMipLevels);
+        glTextureParameteri(cubeMap, GL_TEXTURE_MIN_FILTER,
+                            GL_LINEAR_MIPMAP_LINEAR);
+        glTextureParameteri(cubeMap, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glm::mat4 captureProjection;
         GetCaptureProjection(captureProjection);
@@ -103,9 +99,6 @@ namespace Core
         shader.SetUniform("Resolution", static_cast<float>(SkyboxResolution));
 
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-        InitializeViewPort(resolution);
-
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDisable(GL_DEPTH_TEST);
 
@@ -127,7 +120,6 @@ namespace Core
         }
 
         glEnable(GL_DEPTH_TEST);
-
         glDeleteFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -138,14 +130,14 @@ namespace Core
     {
         constexpr uint32_t resolution = 1024;
 
-        unsigned int resultTexture;
-        glGenTextures(1, &resultTexture);
-        glBindTexture(GL_TEXTURE_2D, resultTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 1024, 1024, 0, GL_RG, GL_FLOAT, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        uint32_t resultTexture;
+        glCreateTextures(GL_TEXTURE_2D, 1, &resultTexture);
+        glTextureStorage2D(resultTexture, 1, GL_RG16F, resolution, resolution);
+
+        glTextureParameteri(resultTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(resultTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(resultTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(resultTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         uint32_t fbo;
         InitializeFbo(fbo);
@@ -164,7 +156,6 @@ namespace Core
         ScreenQuad::Draw();
 
         glDeleteFramebuffers(1, &fbo);
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         return resultTexture;
     }
@@ -175,23 +166,16 @@ namespace Core
         glBindFramebuffer(GL_FRAMEBUFFER, Fbo);
     }
 
-    void CubeMapGenerator::InitializeCubeMap(uint32_t& CubeMap, const uint32_t Resolution)
+    void CubeMapGenerator::InitializeCubeMap(uint32_t& CubeMap, const uint32_t Resolution, const int32_t MipCount)
     {
-        {
-            glGenTextures(1, &CubeMap);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap);
-            for (unsigned int i = 0; i < 6; ++i)
-            {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
-                             Resolution, Resolution, 0, GL_RGB, GL_FLOAT, nullptr);
-            }
+        glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &CubeMap);
+        glTextureStorage2D(CubeMap, MipCount, GL_RGB16F, Resolution, Resolution);
 
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        }
+        glTextureParameteri(CubeMap, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(CubeMap, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(CubeMap, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(CubeMap, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(CubeMap, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
     void CubeMapGenerator::InitializeViewPort(const uint32_t Resolution)
@@ -200,7 +184,6 @@ namespace Core
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
         glDepthFunc(GL_LESS);
     }
 
