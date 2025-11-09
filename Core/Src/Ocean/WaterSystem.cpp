@@ -76,7 +76,6 @@ namespace Core
           _cascadeSettingsSsbo(CreateCascadeSettingsSsbo(_cascadeSettings))
     {
         UpdateInitialSpectrum();
-        std::cout << _initialSpectrumSettingsUbo << std::endl;
     }
 
     uint32_t WaterSystem::CreateTextureArray(const int32_t Resolution, const int32_t Layers,
