@@ -129,7 +129,7 @@ namespace Core
         constexpr int32_t bufferSize = sizeof(TriangleProperties);
         TriangleProperties properties{};
         memcpy(&properties, _triangleBuffer.MappedOutputBuffer, bufferSize);
-        if (properties.SubmergedVolume <= 1e-01f)
+        if (properties.SubmergedVolume <= 1e-3f)
         {
             PhysicsSystem.AddForce(Rigidbody, properties.Drag, Transform.GetWorldPosition());
             return;
