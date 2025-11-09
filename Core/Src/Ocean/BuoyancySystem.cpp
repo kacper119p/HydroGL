@@ -66,7 +66,7 @@ namespace Core
 
         for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
-            ProcessMesh(PhysicsSystem, waterEffector.GetMesh(), transform, rigidbody, CascadeSettingsBuffer);
+            ProcessMesh(PhysicsSystem, waterEffector.Mesh, transform, rigidbody, CascadeSettingsBuffer);
         }
     }
 
@@ -83,8 +83,10 @@ namespace Core
 
         glm::vec3 meshVelocity = PhysicsSystem.GetLinearVelocity(Rigidbody);
 
+        const glm::mat4& localToWorld = Transform.GetLocalToWorldMatrix();
+
         const ShaderMeshData meshData(
-            Transform.GetLocalToWorldMatrix(), meshVelocity,
+            localToWorld, meshVelocity,
             _dragCoefficient,
             Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), triangleCount);
 
@@ -127,13 +129,14 @@ namespace Core
         constexpr int32_t bufferSize = sizeof(TriangleProperties);
         TriangleProperties properties{};
         memcpy(&properties, _triangleBuffer.MappedOutputBuffer, bufferSize);
-        if (properties.SubmergedVolume <= 0.0f)
+        if (properties.SubmergedVolume <= 1e-01f)
         {
+            PhysicsSystem.AddForce(Rigidbody, properties.Drag, Transform.GetWorldPosition());
             return;
         }
         const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
-            Transform.GetLocalToWorldMatrix() * glm::vec4(properties.CenterOfImmersion, 1.0f));
+            localToWorld * glm::vec4(properties.CenterOfImmersion, 1.0f));
         PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.Drag, centerOfImmersionWorldSpace);
     }
 
