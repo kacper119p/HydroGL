@@ -193,8 +193,8 @@ namespace Core
         WaterSystem();
 
     private:
-        static uint32_t CreateTextureArray(int32_t Resolution, int32_t Layers, int32_t InternalFormat, int32_t Format,
-                                           int32_t Type, int32_t Filter, int32_t Wrap);
+        static uint32_t CreateTextureArray(int32_t Resolution, int32_t Layers, int32_t InternalFormat, int32_t Filter,
+                                           int32_t Wrap);
 
         static uint32_t CreateGaussianNoise(int32_t Resolution);
 

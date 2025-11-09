@@ -1,6 +1,7 @@
 #include "WaterSystem.h"
 
 #include <chrono>
+#include <iostream>
 #include <numbers>
 #include <random>
 
@@ -46,21 +47,20 @@ namespace Core
           _spectrumComputeShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum.comp", ShaderStage::ComputeShader).Build()),
           _initialSpectrumTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_NEAREST, GL_REPEAT)),
+              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F,GL_NEAREST, GL_REPEAT)),
           _hDzDxDfhxTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
+              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_NEAREST,GL_REPEAT)),
           _dfhzDfdxxDfdzxDfdzz(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
-          _velocityTextures(CreateTextureArray(TextureResolution, VelocityLayers * CascadeCount, GL_RGBA32F, GL_RGBA,
-                                               GL_FLOAT, GL_LINEAR, GL_REPEAT)),
+              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_NEAREST,GL_REPEAT)),
+          _velocityTextures(CreateTextureArray(TextureResolution, VelocityLayers * CascadeCount, GL_RGBA32F, GL_LINEAR,
+                                               GL_REPEAT)),
           _slopeTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_LINEAR,GL_REPEAT)),
+              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_LINEAR,GL_REPEAT)),
           _displacementTextures(
-              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_RGBA, GL_FLOAT,GL_LINEAR, GL_REPEAT)),
+              CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_LINEAR, GL_REPEAT)),
 
-          _tmpTextures(
-              CreateTextureArray(TextureResolution, VelocityPackedTexturesCount * CascadeCount, GL_RGBA32F,
-                                 GL_RGBA, GL_FLOAT, GL_NEAREST,GL_REPEAT)),
+          _tmpTextures(CreateTextureArray(TextureResolution, VelocityPackedTexturesCount * CascadeCount, GL_RGBA32F,
+                                          GL_NEAREST,GL_REPEAT)),
           _gaussianNoiseTexture(CreateGaussianNoise(TextureResolution)),
           _initialSpectrumSettingsBufferData(DefaultWindVelocity, DefaultFetch, DefaultDelta, DefaultSwell,
                                              CalculateInitialSpectrumAlpha(
@@ -76,22 +76,22 @@ namespace Core
           _cascadeSettingsSsbo(CreateCascadeSettingsSsbo(_cascadeSettings))
     {
         UpdateInitialSpectrum();
+        std::cout << _initialSpectrumSettingsUbo << std::endl;
     }
 
     uint32_t WaterSystem::CreateTextureArray(const int32_t Resolution, const int32_t Layers,
                                              const int32_t InternalFormat,
-                                             const int32_t Format, const int32_t Type, const int32_t Filter,
+                                             const int32_t Filter,
                                              const int32_t Wrap)
     {
         uint32_t textureId;
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, textureId);
-        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, InternalFormat, Resolution, Resolution, Layers, 0, Format, Type, nullptr);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, Filter);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, Filter);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, Wrap);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, Wrap);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &textureId);
+        glTextureStorage3D(textureId, 1, InternalFormat, Resolution, Resolution, Layers);
+        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, Filter);
+        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, Filter);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, Wrap);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, Wrap);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         return textureId;
     }
 
@@ -111,9 +111,6 @@ namespace Core
 
     uint32_t WaterSystem::CreateGaussianNoise(const int32_t Resolution)
     {
-        uint32_t textureId;
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D, textureId);
         const size_t count = 2 * Resolution * Resolution;
         float* textureData = new float[count];
         std::random_device rndDevice;
@@ -124,12 +121,14 @@ namespace Core
             textureData[i] = dist(rng);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, Resolution, Resolution, 0, GL_RG, GL_FLOAT,
-                     textureData);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        uint32_t textureId;
+        glCreateTextures(GL_TEXTURE_2D, 1, &textureId);
+        glTextureStorage2D(textureId, 1, GL_RG32F, Resolution, Resolution);
+        glTextureSubImage2D(textureId, 0, 0, 0, Resolution, Resolution, GL_RG, GL_FLOAT, textureData);
+        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
         delete[] textureData;
         return textureId;
@@ -270,15 +269,13 @@ namespace Core
 
     void WaterSystem::SendInitialSpectrumSettingsToGpu() const
     {
-        glBindBuffer(GL_UNIFORM_BUFFER, _initialSpectrumSettingsUbo);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(InitialSpectrumSettingsBuffer),
-                        &_initialSpectrumSettingsBufferData);
+        glNamedBufferSubData(_initialSpectrumSettingsUbo, 0, sizeof(_initialSpectrumSettingsBufferData),
+                             &_initialSpectrumSettingsBufferData);
     }
 
     void WaterSystem::SendCascadeSettingsToGpu() const
     {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _cascadeSettingsSsbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, _cascadeSettings.GetDataSize(), _cascadeSettings.GetData(),
-                     GL_STATIC_COPY);
+        glNamedBufferData(_cascadeSettingsSsbo, _cascadeSettings.GetDataSize(),
+                          _cascadeSettings.GetData(), GL_STATIC_COPY);
     }
 }
