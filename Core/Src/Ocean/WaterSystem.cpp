@@ -52,13 +52,14 @@ namespace Core
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_NEAREST,GL_REPEAT)),
           _dfhzDfdxxDfdzxDfdzz(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_NEAREST,GL_REPEAT)),
-          _velocityTextures(CreateTextureArray(TextureResolution, VelocityLayers * CascadeCount, GL_RGBA32F, GL_LINEAR,
-                                               GL_REPEAT)),
+          _velocityPackedTextures(CreateTextureArray(TextureResolution, VelocityPackedTexturesCount * CascadeCount,
+                                                     GL_RGBA32F, GL_LINEAR,GL_REPEAT)),
           _slopeTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_LINEAR,GL_REPEAT)),
           _displacementTextures(
               CreateTextureArray(TextureResolution, CascadeCount, GL_RGBA32F, GL_LINEAR, GL_REPEAT)),
-
+          _velocityTextures(CreateTextureArray(TextureResolution, VelocityLayers * CascadeCount, GL_RGBA32F, GL_LINEAR,
+                                               GL_REPEAT)),
           _tmpTextures(CreateTextureArray(TextureResolution, VelocityPackedTexturesCount * CascadeCount, GL_RGBA32F,
                                           GL_NEAREST,GL_REPEAT)),
           _gaussianNoiseTexture(CreateGaussianNoise(TextureResolution)),
@@ -158,7 +159,7 @@ namespace Core
 
         RunFft(_hDzDxDfhxTextures, CascadeCount);
         RunFft(_dfhzDfdxxDfdzxDfdzz, CascadeCount);
-        RunFft(_velocityTextures, VelocityPackedTexturesCount * CascadeCount);
+        RunFft(_velocityPackedTextures, VelocityPackedTexturesCount * CascadeCount);
 
         AssembleTextures();
 
@@ -199,7 +200,7 @@ namespace Core
 
         glBindImageTexture(0, _hDzDxDfhxTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(1, _dfhzDfdxxDfdzxDfdzz, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-        glBindImageTexture(2, _velocityTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, _velocityPackedTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(3, _initialSpectrumTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
@@ -213,8 +214,10 @@ namespace Core
 
         glBindImageTexture(0, _hDzDxDfhxTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(1, _dfhzDfdxxDfdzxDfdzz, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, _velocityPackedTextures, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(3, _slopeTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(4, _displacementTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(5, _velocityTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
