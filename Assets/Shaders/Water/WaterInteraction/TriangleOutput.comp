@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "TriangleProperties.glsl"
+#include "WaterInteractionStructs.glsl"
 
 const int LOCAL_SIZE = 64;
 

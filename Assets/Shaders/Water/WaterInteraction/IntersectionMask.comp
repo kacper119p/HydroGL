@@ -1,0 +1,61 @@
+#version 460 core
+#include "Constants.glsl"
+#include "WaterInteractionStructs.glsl"
+
+layout(std140, binding = 0) uniform shaderUniforms
+{
+    vec2 ObjectWorldPosition;
+    float IntersectionMaskPhysicalSize;
+} ShaderUniforms;
+
+layout (binding = 0, r32f) uniform writeonly restrict image2D Output;
+
+layout(std430, binding = 0) readonly restrict buffer intersectionBuffer
+{
+    int Count;
+    intersectionSegment IntersectionSegments[];
+} IntersectionBuffer;
+
+bool CheckRaySegmentIntersection(vec2 RayOrigin, vec2 P0, vec2 P1)
+{
+    float dy = P1.y - P0.y;
+    if (abs(dy) < EPSILON)
+    {
+        return false;
+    }
+    float t = (RayOrigin.y - P0.y) / dy;
+    if (t < 0.0 || t > 1.0)
+    {
+        return false;
+    }
+    float xint = P0.x + t * (P1.x - P0.x);
+    return xint >= RayOrigin.x;
+}
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+void main()
+{
+    const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    const ivec2 textureResolution = imageSize(Output);
+    const ivec2 textureCenter = ivec2(textureResolution >> 1);
+    const ivec2 centeredPixelCoords = pixelCoords - textureCenter;
+
+    const vec2 worldSpacePosition = (vec2(centeredPixelCoords) / vec2(textureResolution))
+    * ShaderUniforms.IntersectionMaskPhysicalSize + ShaderUniforms.ObjectWorldPosition;
+
+    bool isInside = false;
+
+    for (int i = 0; i < IntersectionBuffer.Count; ++i)
+    {
+        if (CheckRaySegmentIntersection(worldSpacePosition, IntersectionBuffer.IntersectionSegments[i].P0, IntersectionBuffer.IntersectionSegments[i].P1))
+        {
+            isInside = !isInside;
+        }
+    }
+    if (!isInside)
+    {
+        imageStore(Output, pixelCoords, vec4(0.0));
+        return;
+    }
+    imageStore(Output, pixelCoords, vec4(1.0));
+}

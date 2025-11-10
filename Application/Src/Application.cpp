@@ -71,7 +71,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh);
+                boxEntity, cubeMesh, 0.98f, 0.999f, 5.0f, 512, 100.0f, 10.0f);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;
@@ -107,15 +107,14 @@ int32_t Application::Application::Run(Platform::Window* Window)
         physicsAccumulatedTime += deltaTime;
         while (physicsAccumulatedTime >= PhysicsTimeStep)
         {
-            engine->GetBuoyancySystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
-                                                       engine->GetWaterSystem()->GetDisplacementTextures(),
-                                                       engine->GetWaterSystem()->GetWindVelocity(),
-                                                       engine->GetWaterSystem()->GetVelocityTextures(),
-                                                       engine->GetWaterSystem()->GetCascadeSettingsSsbo());
+            engine->GetWaterInteractionSystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
+                                                               engine->GetWaterSystem()->GetDisplacementTextures(),
+                                                               engine->GetWaterSystem()->GetWindVelocity(),
+                                                               engine->GetWaterSystem()->GetVelocityTextures(),
+                                                               engine->GetWaterSystem()->GetCascadeSettingsSsbo());
             engine->GetPhysicsSystem()->Step(*entityRegistry, PhysicsTimeStep);
             physicsAccumulatedTime -= PhysicsTimeStep;
         }
-
         _cameraManager->Update(*scene, deltaTime);
 
         engine->GetRenderer()->RenderFrame(*engine, deltaTime);

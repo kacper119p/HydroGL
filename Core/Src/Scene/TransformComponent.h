@@ -173,6 +173,15 @@ namespace Core
             return _localToWorldMatrix;
         }
 
+        [[nodiscard]] glm::mat4 GetWorldToLocalMatrix() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::inverse(_localToWorldMatrix);
+        }
+
         [[nodiscard]] const glm::mat4& GetLocalToParentMatrix() const
         {
             if (_isDirty)
@@ -180,6 +189,15 @@ namespace Core
                 _sceneHierarchyNode->UpdateMatrices();
             }
             return _localToParentMatrix;
+        }
+
+        [[nodiscard]] glm::mat4 GetParentToLocalMatrix() const
+        {
+            if (_isDirty)
+            {
+                _sceneHierarchyNode->UpdateMatrices();
+            }
+            return glm::inverse(_localToParentMatrix);
         }
 
         [[nodiscard]] SceneNode& GetSceneHierarchyNode() const

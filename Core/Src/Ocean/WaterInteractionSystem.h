@@ -2,6 +2,7 @@
 #include <glm/vec3.hpp>
 
 #include "Meshes/Mesh.h"
+#include "Ocean/Components/WaterEffectorComponent.h"
 #include "Physics/PhysicsSystem.h"
 #include "Physics/Components/RigidbodyComponent.h"
 #include "Rendering/Shaders/Shader.h"
@@ -11,7 +12,7 @@ namespace Core
 {
     struct TransformComponent;
 
-    class BuoyancySystem
+    class WaterInteractionSystem
     {
     private:
         struct alignas(sizeof(float) * 4) TriangleProperties
@@ -27,8 +28,15 @@ namespace Core
             uint32_t MainBufferId;
             uint32_t PartialSumsBufferId;
             uint32_t OutputBufferId;
+            uint32_t IntersectionPolygonsId;
             uint32_t Capacity;
             TriangleProperties* MappedOutputBuffer;
+        };
+
+        struct alignas(8) IntersectionSegment
+        {
+            glm::vec2 V0;
+            glm::vec2 V1;
         };
 
         struct alignas(sizeof(float) * 4) ShaderMeshData
@@ -40,7 +48,8 @@ namespace Core
             uint32_t IndicesIndex;
             uint32_t TrianglesCount;
 
-            ShaderMeshData(const glm::mat4& ObjectToWorldMatrix, const glm::vec3& ObjectVelocity,
+            ShaderMeshData(const glm::mat4& ObjectToWorldMatrix,
+                           const glm::vec3& ObjectVelocity,
                            const float DragCoefficient,
                            const uint32_t VerticesIndex, const uint32_t IndicesIndex,
                            const uint32_t TrianglesCount)
@@ -54,12 +63,31 @@ namespace Core
             }
         };
 
+        struct InteractiveWavesShaderUbo
+        {
+            glm::mat4 ObjectToWorldMatrix;
+            glm::vec2 InteractiveWavesFieldSize;
+            float WaveDampingMin;
+            float WaveDampingMax;
+            float DampingMaxVelocity;
+            float DeltaTime;
+        };
+
+        struct IntersectionMaskUbo
+        {
+            glm::vec2 ObjectWorldPosition;
+            float InteractiveWavesFieldSize;
+        };
+
     private:
         TriangleBuffer _triangleBuffer;
         Shader _triangleProcessorComputeShader;
         Shader _triangleAggregationComputeShader;
         Shader _outputComputeShader;
+        Shader _intersectionMaskComputeShader;
+        Shader _interactiveWavesComputeShader;
         uint32_t _meshDataUbo;
+        uint32_t _intersectionMaskUbo;
         float _dragCoefficient = 2.02f;
 
         int32_t _windVelocityLocation;
@@ -67,23 +95,41 @@ namespace Core
         int32_t _partialsCountLocation;
 
     public:
-        BuoyancySystem();
+        WaterInteractionSystem();
 
     public:
-        ~BuoyancySystem();
+        ~WaterInteractionSystem();
 
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
                            glm::vec2 WindVelocity, uint32_t VelocityTextures, uint32_t CascadeSettingsBuffer);
 
     private:
-        void ProcessMesh(PhysicsSystem& PhysicsSystem, const Mesh& Mesh, const TransformComponent& Transform,
-                         const RigidbodyComponent& Rigidbody,
+        void ProcessMesh(PhysicsSystem& PhysicsSystem, const WaterEffectorComponent& WaterEffectorComponent,
+                         const TransformComponent& Transform, const RigidbodyComponent& Rigidbody,
                          uint32_t CascadeSettingsBuffer);
 
+        void DispatchTriangleProcessing(const Mesh& Mesh, uint32_t TriangleCount, const glm::vec3& MeshVelocity,
+                                        const glm::mat4& LocalToWorldMatrix, uint32_t CascadeSettingsBuffer) const;
+
+        void DispatchTriangleAggregation(uint32_t TriangleCount,
+                                         int32_t AggregationGroupsCount) const;
+
+        void DispatchOutputProcessing(uint32_t AggregationGroupsCount) const;
+
+        void DispatchIntersectionMaskCompute(const WaterEffectorComponent& WaterEffectorComponent,
+                                             const glm::vec3& WorldPosition) const;
+
+        void ApplyForces(PhysicsSystem& PhysicsSystem, const RigidbodyComponent& Rigidbody,
+                         const glm::mat4& LocalToWorldMatrix, const glm::vec3& WorldPosition) const;
+
         void ResizeTriangleBuffers(uint32_t TriangleCount);
+
+        void ResetIntersectionPolygonsBuffer() const;
 
         static TriangleBuffer CreateTriangleBuffers();
 
         static uint32_t CreateMeshDataUbo();
+
+        static uint32_t CreateIntersectionMaskUbo();
     };
 }

@@ -5,3 +5,9 @@ struct triangleProperties
     vec3 CenterOfImmersion;
     float SubmergedVolume;
 };
+
+struct intersectionSegment
+{
+    vec2 P0;
+    vec2 P1;
+};
