@@ -261,8 +261,8 @@ void main()
 
     if (isOnWaterIntersetion)
     {
-        intersectionSegment entry = intersectionSegment(vec2(P0.x, P0.z), vec2(P0.x, P1.z));
+        intersectionSegment segment = intersectionSegment(vec2(P0.x, P0.z), vec2(P1.x, P1.z));
         int intersectionBufferIndex = atomicAdd(IntersectionBuffer.Count, 1);
-        IntersectionBuffer.IntersectingTriangles[intersectionBufferIndex] = entry;
+        IntersectionBuffer.IntersectingTriangles[intersectionBufferIndex] = segment;
     }
 }
