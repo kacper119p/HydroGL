@@ -27,12 +27,29 @@ namespace Core::Math
      * @return The result of the division rounded up to the nearest integer.
      */
     template<std::integral T, std::integral U>
-    [[nodiscard]] static constexpr std::common_type_t<T, U> IntegerDivCeil(
+    [[nodiscard]] constexpr std::common_type_t<T, U> IntegerDivCeil(
         const T Numerator, const U Denominator)
     {
         using V = std::common_type_t<T, U>;
         V quotient = Numerator / Denominator;
         V remainder = Numerator % Denominator;
         return quotient + (remainder != 0 && (Numerator ^ Denominator) >= 0);
+    }
+
+    /**
+     * @brief Performs linear interpolation between two floating-point values.
+     *
+     * @tparam T Floating-point type of the first value.
+     * @tparam U Floating-point type of the second value.
+     * @param A The starting value.
+     * @param B The ending value.
+     * @param Alpha The interpolation factor, typically in the range [0, 1].
+     * @return A + Alpha * (B - A).
+     */
+    template<std::floating_point T, std::floating_point U>
+    [[nodiscard]] constexpr std::common_type_t<T, U> Lerp(
+        const T A, const U B, const std::common_type_t<T, U> Alpha)
+    {
+        return A + Alpha * (B - A);
     }
 }

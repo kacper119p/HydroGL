@@ -47,3 +47,20 @@ TEST_F(MathTests, IntegerDivCeil)
     EXPECT_EQ(Core::Math::IntegerDivCeil(-7, -2), 4);
     EXPECT_EQ(Core::Math::IntegerDivCeil(0, -2), 0);
 }
+
+TEST_F(MathTests, Lerp)
+{
+    EXPECT_FLOAT_EQ(Core::Math::Lerp(0.0f, 10.0f, 0.0f), 0.0f);
+    EXPECT_FLOAT_EQ(Core::Math::Lerp(0.0f, 10.0f, 1.0f), 10.0f);
+    EXPECT_FLOAT_EQ(Core::Math::Lerp(0.0f, 10.0f, 0.5f), 5.0f);
+
+    EXPECT_FLOAT_EQ(Core::Math::Lerp(0.0f, 10.0f, 2.0f), 20.0f);
+    EXPECT_FLOAT_EQ(Core::Math::Lerp(0.0f, 10.0f, -2.0f), -20.0f);
+
+    EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, 0.0), 0.0);
+    EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, 1.0), 10.0);
+    EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, 0.5), 5.0);
+
+    EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, 2.0), 20.0f);
+    EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, -2.0), -20.0f);
+}
