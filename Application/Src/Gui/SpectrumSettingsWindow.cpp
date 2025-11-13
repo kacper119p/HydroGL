@@ -2,11 +2,6 @@
 
 #include <imgui.h>
 
-namespace Core
-{
-    class WaterSystem;
-}
-
 namespace Application
 {
     void SpectrumSettingsWindow::Render(bool& ShowSpectrumSettings, Core::WaterSystem& WaterSystem)
