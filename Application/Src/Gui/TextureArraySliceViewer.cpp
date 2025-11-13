@@ -66,8 +66,8 @@ void Application::TextureArraySliceViewer::ShowLayer(const uint32_t ArrayTexture
     const ImVec2 positionMax = ImVec2(position.x + Size.x, position.y + Size.y);
 
     drawList->AddImage(_displayTex, positionMin, positionMax,
-                       ImVec2(0, 1), // UV min
-                       ImVec2(1, 0) // UV max (flip vertically)
+                       ImVec2(1, 0),
+                       ImVec2(0, 1)
     );
 }
 
