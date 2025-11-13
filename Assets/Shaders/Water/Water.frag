@@ -1,4 +1,5 @@
 #version 460 core
+#extension GL_ARB_bindless_texture : enable
 
 #include "WaterCommon.glsl"
 #include "Normal.glsl"
@@ -25,6 +26,20 @@ layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
     float Padding[3];
     cascadeSettings CascadeSettings[];
 };
+
+struct dynamicWaveSampleParameters
+{
+    vec3 ObjectPosition;
+    float WaveFieldSize;
+    layout(bindless_sampler) sampler2D WaveFieldTexture;
+};
+
+layout(std430, binding = 1) readonly restrict buffer DynamicWavesBuffer
+{
+    int DynamicWavesCount;
+    float Padding[3];
+    dynamicWaveSampleParameters Waves[];
+} dynamicWavesBuffer;
 
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 layout (binding = 4) uniform sampler2DArray SlopeMaps;
@@ -60,7 +75,16 @@ void main()
     float metallic = mix(0.05, 0.0, foamMask);
     float roughness = mix(0.5, 1.0, foamMask);
 
-    const vec3 normal = NormalFromSlope(slope);
+    vec2 dynamicSlope = vec2(0.0);
+    for (int i = 0; i < dynamicWavesBuffer.DynamicWavesCount; ++i)
+    {
+        const vec2 waveLocalPosition =  dynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
+        const vec2 waveTexCoord = waveLocalPosition / dynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
+        const float height = texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        dynamicSlope += vec2(dFdxFine(height) / dFdxFine(waveLocalPosition.x), dFdyFine(height) / dFdyFine(waveLocalPosition.y));
+    }
+
+    const vec3 normal = NormalFromSlope(slope + dynamicSlope);
 
     vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
     //vec3 color = CalculateLight(vec3(1.0, 1.0, 1.0), 0.0, 1.0, geometryNormal, DisplacedPosition, ViewDirection, 1.0);

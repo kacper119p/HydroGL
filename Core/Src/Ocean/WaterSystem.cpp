@@ -22,7 +22,6 @@ namespace Core
         constexpr float DefaultSwell = 0.0f;
     }
 
-
     WaterSystem::WaterSystem()
         : _oceanGrid(1000.0f, 100, 10),
           _waterShader(
@@ -153,7 +152,8 @@ namespace Core
         return id;
     }
 
-    void WaterSystem::Render(const TransformComponent& CameraTransform, const CameraComponent& Camera) const
+    void WaterSystem::Render(const TransformComponent& CameraTransform, const CameraComponent& Camera,
+                             const uint32_t DynamicWavesSampleSsboId) const
     {
         UpdateSpectrumTexture();
 
@@ -180,6 +180,7 @@ namespace Core
         Shader::SetUniform(_gridOriginLocation, gridOrigin);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, DynamicWavesSampleSsboId);
 
         glBindTextureUnit(3, _displacementTextures);
         glBindTextureUnit(4, _slopeTextures);

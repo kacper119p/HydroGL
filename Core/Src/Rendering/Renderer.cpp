@@ -158,7 +158,9 @@ namespace Core
 
         CubeRenderer::Draw();
 
-        Engine.GetWaterSystem()->Render(cameraTransform, camera);
+        Engine.GetWaterSystem()->Render(cameraTransform,
+                                        camera,
+                                        Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
 
         _frameBuffer.ResolveMultisampling();
         _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());

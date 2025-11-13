@@ -9,7 +9,6 @@
 #include "Physics/PhysicsSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Components/RenderedMeshComponent.h"
-#include "Rendering/Shaders/ShaderBuilder.h"
 #include "Rendering/Textures/Texture.h"
 #include "Scene/TransformComponent.h"
 
@@ -74,7 +73,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 512, 100.0f, 10.0f);
+                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 0.25f, 512, 100.0f, 10.0f);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;

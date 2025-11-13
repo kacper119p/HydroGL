@@ -1,18 +1,19 @@
 #include "WaterEffectorComponent.h"
 
 #include <glad/glad.h>
-#include <spdlog/spdlog.h>
 
 Core::WaterEffectorComponent::WaterEffectorComponent(const Core::Mesh& Mesh,
                                                      const glm::vec3& Position,
                                                      const float WaveDampingMin,
                                                      const float WaveDampingMax,
                                                      const float DampingMaxVelocity,
+                                                     const float DisplacementStrength,
                                                      const int32_t TexturesResolution,
                                                      const float InteractiveWavesFieldSize,
                                                      const float IntersectionMaskPhysicalSize) : Mesh(Mesh),
     WaveDampingMin(WaveDampingMin), WaveDampingMax(WaveDampingMax),
     DampingMaxVelocity(DampingMaxVelocity),
+    DisplacementStrength(DisplacementStrength),
     InteractiveWavesFieldSize(InteractiveWavesFieldSize),
     IntersectionMaskFieldSize(IntersectionMaskPhysicalSize),
     TexturesResolution(TexturesResolution)

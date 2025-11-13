@@ -19,10 +19,13 @@ namespace Core
         constexpr int32_t AggregatorElementsPerGroup = WorkGroupDim1D * AggregatorElementsPerThread;
         constexpr float WaterDensity = 1024.8103f;
         constexpr int64_t IntersectionPolygonsHeaderSize = 8; // max(sizeof(int32_t), 8) for std430 alignment
+        constexpr int64_t DynamicWavesHeaderSize = 16; // max(sizeof(int32_t), 16) for std430 alignment
+        constexpr size_t DefaultDynamicWavesCapacity = 32;
     }
 
     WaterInteractionSystem::WaterInteractionSystem()
         : _triangleBuffer(CreateTriangleBuffers()),
+          _dynamicWavesSampleBuffer(CreateDynamicWavesSampleBuffer()),
           _triangleProcessorComputeShader(
               ShaderBuilder().SetStage(
                   "Assets/Shaders/Water/WaterInteraction/TriangleProcessor.comp",
@@ -41,8 +44,8 @@ namespace Core
           _interactiveWavesComputeShader(ShaderBuilder().SetStage(
               "Assets/Shaders/Water/WaterInteraction/InteractiveWave.comp",
               ShaderStage::ComputeShader).Build()),
-          _intersectionMaskUbo(CreateIntersectionMaskUbo()),
           _meshDataUbo(CreateMeshDataUbo()),
+          _intersectionMaskUbo(CreateIntersectionMaskUbo()),
           _interactiveWavesUbo(CreateInteractiveWavesUbo()),
           _windVelocityLocation(_triangleProcessorComputeShader.GetUniformLocation("WindVelocity")),
           _triangleCountLocation(_triangleAggregationComputeShader.GetUniformLocation("TriangleCount")),
@@ -56,8 +59,11 @@ namespace Core
         glDeleteBuffers(1, &_triangleBuffer.PartialSumsBufferId);
         glDeleteBuffers(1, &_triangleBuffer.OutputBufferId);
         glDeleteBuffers(1, &_triangleBuffer.IntersectionPolygonsId);
+        glDeleteBuffers(1, &_dynamicWavesSampleBuffer.GpuBufferId);
+        free(_dynamicWavesSampleBuffer.DynamicWavesBuffer);
         glDeleteBuffers(1, &_meshDataUbo);
         glDeleteBuffers(1, &_intersectionMaskUbo);
+        glDeleteBuffers(1, &_interactiveWavesUbo);
     }
 
     void WaterInteractionSystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem,
@@ -68,7 +74,8 @@ namespace Core
                                                const float DeltaTime)
     {
         entt::registry* entityRegistry = Scene.GetEntityRegistry();
-        const auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent, RigidbodyComponent>();
+        const ComponentsViewType view = entityRegistry->view<WaterEffectorComponent, TransformComponent,
+            RigidbodyComponent>();
 
         glBindTextureUnit(0, DisplacementTextures);
         glBindTextureUnit(1, VelocityTextures);
@@ -80,6 +87,8 @@ namespace Core
         {
             ProcessMesh(PhysicsSystem, waterEffector, transform, rigidbody, CascadeSettingsBuffer, DeltaTime);
         }
+
+        UpdateDynamicWavesSampleSsbo(view);
     }
 
     void WaterInteractionSystem::ProcessMesh(PhysicsSystem& PhysicsSystem,
@@ -203,6 +212,10 @@ namespace Core
         WaterEffectorComponent.InteractiveWavesTextures[1] = WaterEffectorComponent.InteractiveWavesTextures[2];
         WaterEffectorComponent.InteractiveWavesTextures[2] = tmp;
 
+        const float displacementStrength = glm::clamp(
+            glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity * WaterEffectorComponent.
+            DisplacementStrength, 0.0f, 1.0f);
+
         const glm::vec2 worldPos2d(WorldPosition.x, WorldPosition.z);
         const InteractiveWavesShaderUbo uboData
         {
@@ -213,7 +226,7 @@ namespace Core
             WaterEffectorComponent.IntersectionMaskFieldSize,
             damping,
             aFactor,
-            glm::length(ObjectVelocity) * 0.5f
+            displacementStrength
         };
 
         _interactiveWavesComputeShader.Use();
@@ -282,6 +295,42 @@ namespace Core
         glNamedBufferSubData(_triangleBuffer.IntersectionPolygonsId, 0, sizeof(int32_t), &data);
     }
 
+    void WaterInteractionSystem::ResizeDynamicWavesSampleSsbo(const uint32_t Count)
+    {
+        const int64_t bufferSize = DynamicWavesHeaderSize +
+                                   static_cast<int64_t>(Count * sizeof(DynamicWavesSampleSsbo));
+        _dynamicWavesSampleBuffer.DynamicWavesBuffer
+                = static_cast<DynamicWavesSampleSsbo*>(
+                    realloc(_dynamicWavesSampleBuffer.DynamicWavesBuffer, bufferSize));
+        glNamedBufferData(_dynamicWavesSampleBuffer.GpuBufferId, bufferSize, nullptr, GL_DYNAMIC_COPY);
+        _dynamicWavesSampleBuffer.Capacity = static_cast<int32_t>(Count);
+    }
+
+    void WaterInteractionSystem::UpdateDynamicWavesSampleSsbo(const ComponentsViewType& View)
+    {
+        const uint32_t sizeHint = View.size_hint();
+        if (sizeHint > _dynamicWavesSampleBuffer.Capacity)
+        {
+            ResizeDynamicWavesSampleSsbo(sizeHint);
+        }
+        int32_t& count = _dynamicWavesSampleBuffer.DynamicWavesBuffer->DynamicWavesCount;
+        count = 0;
+        for (const auto [entity,waterEffector, transform, rigidbody] : View.each())
+        {
+            _dynamicWavesSampleBuffer.DynamicWavesBuffer->DynamicWaves[count]
+                    = DynamicWaveSampleParameters{
+                        transform.GetWorldPosition(),
+                        waterEffector.InteractiveWavesFieldSize,
+                        waterEffector.InteractiveWavesTextureHandles[2]
+                    };
+            ++count;
+        }
+        glNamedBufferSubData(_dynamicWavesSampleBuffer.GpuBufferId,
+                             0,
+                             DynamicWavesHeaderSize + count * static_cast<int64_t>(sizeof(DynamicWaveSampleParameters)),
+                             _dynamicWavesSampleBuffer.DynamicWavesBuffer);
+    }
+
     WaterInteractionSystem::TriangleBuffer WaterInteractionSystem::CreateTriangleBuffers()
     {
         uint32_t ids[4]{};
@@ -324,5 +373,16 @@ namespace Core
         glCreateBuffers(1, &id);
         glNamedBufferStorage(id, sizeof(InteractiveWavesShaderUbo), nullptr, GL_DYNAMIC_STORAGE_BIT);
         return id;
+    }
+
+    WaterInteractionSystem::DynamicWavesSampleBuffer WaterInteractionSystem::CreateDynamicWavesSampleBuffer()
+    {
+        uint32_t id = 0;
+        constexpr int64_t bufferSize = DynamicWavesHeaderSize
+                                       + DefaultDynamicWavesCapacity * sizeof(DynamicWavesSampleSsbo);
+        DynamicWavesSampleSsbo* data = static_cast<DynamicWavesSampleSsbo*>(malloc(bufferSize));
+        glCreateBuffers(1, &id);
+        glNamedBufferData(id, bufferSize, nullptr, GL_DYNAMIC_COPY);
+        return DynamicWavesSampleBuffer{id, DefaultDynamicWavesCapacity, data};
     }
 }

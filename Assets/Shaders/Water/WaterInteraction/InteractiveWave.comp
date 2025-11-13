@@ -45,8 +45,13 @@ void main()
     const float ASum = ShaderUniforms.AWaveFactor * (rightSample + leftSample + upSample + downSample - 4.0 * centerSample);
     const float waveHeight = ShaderUniforms.WaveDampingFactor * (ASum + 2.0 * centerSample - oldWaveSample);
 
-    const float previousFrameMaskSample = texture(PreviousFrameMask, previousOffset1 / ShaderUniforms.MaskFieldSize).r;
-    const float currentMaskSample = texture(CurrentFrameMask, vec2(centeredPixelCoords) * waveFieldTexelPhysicalSize / ShaderUniforms.MaskFieldSize).r;
+    const vec2 currentLocalPosition = vec2(centeredPixelCoords) * waveFieldTexelPhysicalSize;
+    const vec2 previousLocalPosition = currentLocalPosition - previousOffset1;
+    const vec2 currentMaskTexCoord  = currentLocalPosition / ShaderUniforms.MaskFieldSize + 0.5;
+    const vec2 previousMaskTexCoord = previousLocalPosition / ShaderUniforms.MaskFieldSize + 0.5;
+
+    const float previousFrameMaskSample = texture(PreviousFrameMask, previousMaskTexCoord).r;
+    const float currentMaskSample = texture(CurrentFrameMask, currentMaskTexCoord).r;
 
     const float bodyDisplacement = (currentMaskSample - previousFrameMaskSample) * ShaderUniforms.DisplacementStrength;
 

@@ -101,6 +101,11 @@ namespace Core
             }
 
         public:
+            ~CascadeSettingsBuffer()
+            {
+                free(_buffer);
+            }
+
             [[nodiscard]] int32_t GetTextureResolution() const
             {
                 return _buffer->TextureResolution;
@@ -289,7 +294,8 @@ namespace Core
             return _cascadeSettingsSsbo;
         }
 
-        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera) const;
+        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera,
+                    uint32_t DynamicWavesSampleSsboId) const;
 
     private:
         void UpdateInitialSpectrum() const;

@@ -14,6 +14,7 @@ namespace Core
         float WaveDampingMin;
         float WaveDampingMax;
         float DampingMaxVelocity;
+        float DisplacementStrength;
         uint32_t MaskTextures[2];
         uint32_t InteractiveWavesTextures[3];
         uint64_t InteractiveWavesTextureHandles[3];
@@ -28,6 +29,7 @@ namespace Core
                                float WaveDampingMin,
                                float WaveDampingMax,
                                float DampingMaxVelocity,
+                               float DisplacementStrength,
                                int32_t TexturesResolution,
                                float InteractiveWavesFieldSize,
                                float IntersectionMaskPhysicalSize);

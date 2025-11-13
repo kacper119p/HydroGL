@@ -10,11 +10,14 @@
 
 namespace Core
 {
-    struct TransformComponent;
-
     class WaterInteractionSystem
     {
     private:
+        using ComponentsViewType = entt::basic_view<entt::get_t<entt::basic_sigh_mixin<entt::basic_storage<
+            WaterEffectorComponent>, entt::basic_registry<>>, entt::basic_sigh_mixin<entt::basic_storage<
+            TransformComponent>, entt::basic_registry<>>, entt::basic_sigh_mixin<entt::basic_storage<RigidbodyComponent>
+            , entt::basic_registry<>>>, entt::exclude_t<>>;
+
         struct alignas(sizeof(float) * 4) TriangleProperties
         {
             glm::vec3 Drag;
@@ -81,8 +84,30 @@ namespace Core
             float InteractiveWavesFieldSize;
         };
 
+        struct alignas(16) DynamicWaveSampleParameters
+        {
+            glm::vec3 ObjectPosition;
+            float WaveFieldSize;
+            uint64_t WaveFieldTexture;
+        };
+
+        struct alignas(16) DynamicWavesSampleSsbo
+        {
+            int32_t DynamicWavesCount;
+            float Padding[3];
+            DynamicWaveSampleParameters DynamicWaves[1];
+        };
+
+        struct DynamicWavesSampleBuffer
+        {
+            uint32_t GpuBufferId;
+            int32_t Capacity;
+            DynamicWavesSampleSsbo* DynamicWavesBuffer;
+        };
+
     private:
         TriangleBuffer _triangleBuffer;
+        DynamicWavesSampleBuffer _dynamicWavesSampleBuffer;
         Shader _triangleProcessorComputeShader;
         Shader _triangleAggregationComputeShader;
         Shader _outputComputeShader;
@@ -103,6 +128,18 @@ namespace Core
     public:
         ~WaterInteractionSystem();
 
+    public:
+        [[nodiscard]] uint32_t GetDynamicWavesSampleBufferId() const
+        {
+            return _dynamicWavesSampleBuffer.GpuBufferId;
+        }
+
+        [[nodiscard]] int32_t GetDynamicWavesSampleCount() const
+        {
+            return _dynamicWavesSampleBuffer.DynamicWavesBuffer->DynamicWavesCount;
+        }
+
+    public:
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
                            glm::vec2 WindVelocity, uint32_t VelocityTextures, uint32_t CascadeSettingsBuffer,
                            float DeltaTime);
@@ -134,6 +171,10 @@ namespace Core
 
         void ResetIntersectionPolygonsBuffer() const;
 
+        void ResizeDynamicWavesSampleSsbo(uint32_t Count);
+
+        void UpdateDynamicWavesSampleSsbo(const ComponentsViewType& View);
+
         static TriangleBuffer CreateTriangleBuffers();
 
         static uint32_t CreateMeshDataUbo();
@@ -141,5 +182,7 @@ namespace Core
         static uint32_t CreateIntersectionMaskUbo();
 
         static uint32_t CreateInteractiveWavesUbo();
+
+        static DynamicWavesSampleBuffer CreateDynamicWavesSampleBuffer();
     };
 }
