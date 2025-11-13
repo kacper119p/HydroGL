@@ -41,11 +41,17 @@ namespace Core
                                                        _frameBuffer(Resolution),
                                                        _bloomPostprocessingEffect(Resolution)
     {
+        constexpr int32_t defaultBufferSize = 1024;
         glCreateBuffers(1, &IndirectDrawCommandsSsbo);
         glCreateBuffers(1, &TransformsSsbo);
         glCreateBuffers(1, &_lightsSsbo);
-        _indirectDrawCommands.resize(1024);
-        _transformMatrices.resize(1024);
+        _indirectDrawCommands.resize(defaultBufferSize);
+        _transformMatrices.resize(defaultBufferSize);
+        glNamedBufferData(IndirectDrawCommandsSsbo,
+                          static_cast<GLsizeiptr>(defaultBufferSize * sizeof(DrawElementsIndirectCommand)),
+                          _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+        glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(defaultBufferSize * sizeof(glm::mat4)),
+                          _transformMatrices.data(), GL_DYNAMIC_DRAW);
     }
 
     Renderer::~Renderer()
@@ -95,6 +101,11 @@ namespace Core
         {
             _indirectDrawCommands.resize(countHint);
             _transformMatrices.resize(countHint);
+            glNamedBufferData(IndirectDrawCommandsSsbo,
+                              static_cast<GLsizeiptr>(countHint * sizeof(DrawElementsIndirectCommand)),
+                              _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+            glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(countHint * sizeof(glm::mat4)),
+                              _transformMatrices.data(), GL_DYNAMIC_DRAW);
         }
 
         size_t trueCount = 0;
@@ -125,11 +136,11 @@ namespace Core
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
 
-        glNamedBufferData(IndirectDrawCommandsSsbo,
-                          static_cast<GLsizeiptr>(trueCount * sizeof(DrawElementsIndirectCommand)),
-                          _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
-        glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
-                          _transformMatrices.data(), GL_DYNAMIC_DRAW);
+        glNamedBufferSubData(IndirectDrawCommandsSsbo, 0,
+                             static_cast<GLsizeiptr>(trueCount * sizeof(DrawElementsIndirectCommand)),
+                             _indirectDrawCommands.data());
+        glNamedBufferSubData(TransformsSsbo, 0, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
+                             _transformMatrices.data());
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, TransformsSsbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, IndirectDrawCommandsSsbo);

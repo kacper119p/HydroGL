@@ -181,10 +181,8 @@ namespace Core
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
 
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, _displacementTextures);
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, _slopeTextures);
+        glBindTextureUnit(3, _displacementTextures);
+        glBindTextureUnit(4, _slopeTextures);
 
         _oceanGrid.Draw();
 

@@ -67,16 +67,18 @@ int32_t Application::Application::Run(Platform::Window* Window)
         {
             const entt::entity boxEntity = entityRegistry->create();
 
+            const glm::vec3 position(static_cast<float>(i) * 3.0f, 0.0f,
+                                     static_cast<float>(j) * 3.0f);
+
             Core::TransformComponent& boxTransform = entityRegistry->emplace<Core::TransformComponent>(boxEntity);
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh, 0.98f, 0.999f, 5.0f, 512, 100.0f, 10.0f);
+                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 512, 100.0f, 10.0f);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;
-            boxTransform.SetWorldPosition(glm::vec3(static_cast<float>(i) * 3.0f, 0.0f,
-                                                    static_cast<float>(j) * 3.0f));
+            boxTransform.SetWorldPosition(position);
 
             Core::RigidbodyComponent boxRigidbodyComponent = engine->GetPhysicsSystem()->CreateRigidbodyComponent(
                 boxTransform, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
@@ -111,7 +113,8 @@ int32_t Application::Application::Run(Platform::Window* Window)
                                                                engine->GetWaterSystem()->GetDisplacementTextures(),
                                                                engine->GetWaterSystem()->GetWindVelocity(),
                                                                engine->GetWaterSystem()->GetVelocityTextures(),
-                                                               engine->GetWaterSystem()->GetCascadeSettingsSsbo());
+                                                               engine->GetWaterSystem()->GetCascadeSettingsSsbo(),
+                                                               PhysicsTimeStep);
             engine->GetPhysicsSystem()->Step(*entityRegistry, PhysicsTimeStep);
             physicsAccumulatedTime -= PhysicsTimeStep;
         }

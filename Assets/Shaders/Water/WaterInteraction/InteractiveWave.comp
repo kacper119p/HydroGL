@@ -1,21 +1,54 @@
 #version 460 core
-#extension GL_ARB_bindless_texture : enable
 
-layout(std140, binding = 0) uniform shaderInput
+layout(std140, binding = 0) uniform shaderUniforms
 {
-    mat4 ObjectToWorldMatrix;
+    vec2 PreviousObjectWorldPosition0;
+    vec2 PreviousObjectWorldPosition1;
+    vec2 CurrentObjectWorldPosition;
     float InteractiveWavesFieldSize;
-    float WaveDampingMin;
-    float WaveDampingMax;
-    float DampingMaxVelocity;
-    float DeltaTime;
-} ShaderInput;
+    float MaskFieldSize;
+    float WaveDampingFactor;
+    float AWaveFactor;
+    float DisplacementStrength;
+} ShaderUniforms;
 
-layout(bindless_image, rgba32f) readonly restrict uniform image2D previousFrameTex;
-layout(bindless_image, rgba32f) readonly restrict uniform image2D currentFrameTex;
+layout(binding = 0) uniform sampler2D PreviousFrameMask;
+layout(binding = 1) uniform sampler2D CurrentFrameMask;
+layout(binding = 2, r32f) readonly restrict uniform image2D PreviousFrameWaves0;
+layout(binding = 3, r32f) readonly restrict uniform image2D previousFrameWaves1;
+layout(binding = 4, r32f) writeonly restrict uniform image2D OutputWaves;
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
+    const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy) + ivec2(16);
+    const ivec2 textureResolution = imageSize(OutputWaves);
+    const ivec2 textureCenter = ivec2(textureResolution >> 1);
+    const ivec2 centeredPixelCoords = pixelCoords - textureCenter;
 
+    const float waveFieldTexelPhysicalSize = ShaderUniforms.InteractiveWavesFieldSize / float(textureResolution.x);
+
+    const vec2 previousOffset1 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition1;
+    const vec2 previousOffset0 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition0;
+
+    const ivec2 kl = pixelCoords - ivec2(previousOffset1 / waveFieldTexelPhysicalSize);
+    const ivec2 op = pixelCoords - ivec2(previousOffset0 / waveFieldTexelPhysicalSize);
+
+    const float rightSample = imageLoad(previousFrameWaves1, kl + ivec2(1, 0)).r;
+    const float leftSample = imageLoad(previousFrameWaves1, kl + ivec2(-1, 0)).r;
+    const float upSample = imageLoad(previousFrameWaves1, kl + ivec2(0, 1)).r;
+    const float downSample = imageLoad(previousFrameWaves1, kl + ivec2(0, -1)).r;
+    const float centerSample = imageLoad(previousFrameWaves1, kl).r;
+
+    const float oldWaveSample = imageLoad(PreviousFrameWaves0, op).r;
+
+    const float ASum = ShaderUniforms.AWaveFactor * (rightSample + leftSample + upSample + downSample - 4.0 * centerSample);
+    const float waveHeight = ShaderUniforms.WaveDampingFactor * (ASum + 2.0 * centerSample - oldWaveSample);
+
+    const float previousFrameMaskSample = texture(PreviousFrameMask, previousOffset1 / ShaderUniforms.MaskFieldSize).r;
+    const float currentMaskSample = texture(CurrentFrameMask, vec2(centeredPixelCoords) * waveFieldTexelPhysicalSize / ShaderUniforms.MaskFieldSize).r;
+
+    const float bodyDisplacement = (currentMaskSample - previousFrameMaskSample) * ShaderUniforms.DisplacementStrength;
+
+    imageStore(OutputWaves, pixelCoords, vec4(waveHeight + bodyDisplacement));
 }

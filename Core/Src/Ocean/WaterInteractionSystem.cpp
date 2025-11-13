@@ -1,6 +1,5 @@
 #include "WaterInteractionSystem.h"
 
-#include "spdlog/spdlog.h"
 #include "Components/WaterEffectorComponent.h"
 #include "glad/glad.h"
 #include "Math/Math.h"
@@ -44,11 +43,11 @@ namespace Core
               ShaderStage::ComputeShader).Build()),
           _intersectionMaskUbo(CreateIntersectionMaskUbo()),
           _meshDataUbo(CreateMeshDataUbo()),
+          _interactiveWavesUbo(CreateInteractiveWavesUbo()),
           _windVelocityLocation(_triangleProcessorComputeShader.GetUniformLocation("WindVelocity")),
           _triangleCountLocation(_triangleAggregationComputeShader.GetUniformLocation("TriangleCount")),
           _partialsCountLocation(_outputComputeShader.GetUniformLocation("PartialsCount"))
     {
-        spdlog::info("{}", _triangleBuffer.IntersectionPolygonsId);
     }
 
     WaterInteractionSystem::~WaterInteractionSystem()
@@ -63,31 +62,32 @@ namespace Core
 
     void WaterInteractionSystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem,
                                                const uint32_t DisplacementTextures,
-                                               const glm::vec2 WindVelocity, const uint32_t VelocityTextures,
-                                               const uint32_t CascadeSettingsBuffer)
+                                               const glm::vec2 WindVelocity,
+                                               const uint32_t VelocityTextures,
+                                               const uint32_t CascadeSettingsBuffer,
+                                               const float DeltaTime)
     {
         entt::registry* entityRegistry = Scene.GetEntityRegistry();
         const auto view = entityRegistry->view<WaterEffectorComponent, TransformComponent, RigidbodyComponent>();
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, DisplacementTextures);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, VelocityTextures);
+        glBindTextureUnit(0, DisplacementTextures);
+        glBindTextureUnit(1, VelocityTextures);
 
         _triangleProcessorComputeShader.Use();
         Shader::SetUniform(_windVelocityLocation, WindVelocity);
 
         for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
-            ProcessMesh(PhysicsSystem, waterEffector, transform, rigidbody, CascadeSettingsBuffer);
+            ProcessMesh(PhysicsSystem, waterEffector, transform, rigidbody, CascadeSettingsBuffer, DeltaTime);
         }
     }
 
     void WaterInteractionSystem::ProcessMesh(PhysicsSystem& PhysicsSystem,
-                                             const WaterEffectorComponent& WaterEffectorComponent,
+                                             WaterEffectorComponent& WaterEffectorComponent,
                                              const TransformComponent& Transform,
                                              const RigidbodyComponent& Rigidbody,
-                                             const uint32_t CascadeSettingsBuffer)
+                                             const uint32_t CascadeSettingsBuffer,
+                                             const float DeltaTime)
     {
         const Mesh& mesh = WaterEffectorComponent.Mesh;
         const uint32_t triangleCount = mesh.GetTriangleCount();
@@ -109,6 +109,7 @@ namespace Core
         DispatchOutputProcessing(aggregationGroups);
         ApplyForces(PhysicsSystem, Rigidbody, localToWorld, worldPosition);
         DispatchIntersectionMaskCompute(WaterEffectorComponent, worldPosition);
+        DispatchInteractiveWavesCompute(WaterEffectorComponent, meshVelocity, worldPosition, DeltaTime);
     }
 
     void WaterInteractionSystem::DispatchTriangleProcessing(const Mesh& Mesh,
@@ -162,19 +163,80 @@ namespace Core
     }
 
     void WaterInteractionSystem::DispatchIntersectionMaskCompute(
-        const WaterEffectorComponent& WaterEffectorComponent, const glm::vec3& WorldPosition) const
+        WaterEffectorComponent& WaterEffectorComponent, const glm::vec3& WorldPosition) const
     {
         _intersectionMaskComputeShader.Use();
-        const IntersectionMaskUbo uboData{{WorldPosition.x, WorldPosition.z}, WaterEffectorComponent.IntersectionMaskPhysicalSize};
+        const IntersectionMaskUbo uboData{
+            {WorldPosition.x, WorldPosition.z}, WaterEffectorComponent.IntersectionMaskFieldSize
+        };
+        std::swap(WaterEffectorComponent.MaskTextures[0], WaterEffectorComponent.MaskTextures[1]);
         glNamedBufferSubData(_intersectionMaskUbo, 0, sizeof(IntersectionMaskUbo), &uboData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _intersectionMaskUbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.IntersectionPolygonsId);
-        glBindImageTexture(0, WaterEffectorComponent.MaskTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+        glBindImageTexture(0, WaterEffectorComponent.MaskTextures[1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
-        Shader::DispatchCompute(WaterEffectorComponent.InteractiveWavesTextureResolution / WorkGroupDim2D,
-                                WaterEffectorComponent.InteractiveWavesTextureResolution / WorkGroupDim2D,
+        Shader::DispatchCompute(WaterEffectorComponent.TexturesResolution / WorkGroupDim2D,
+                                WaterEffectorComponent.TexturesResolution / WorkGroupDim2D,
                                 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    }
+
+    void WaterInteractionSystem::DispatchInteractiveWavesCompute(WaterEffectorComponent& WaterEffectorComponent,
+                                                                 const glm::vec3& ObjectVelocity,
+                                                                 const glm::vec3& WorldPosition,
+                                                                 const float DeltaTime) const
+    {
+        const float texelPhysicalSize = WaterEffectorComponent.InteractiveWavesFieldSize / static_cast<float>(
+                                            WaterEffectorComponent.TexturesResolution);
+        const float c = std::sqrtf(0.49f) * texelPhysicalSize / DeltaTime;
+        const float aFactor = c * c * DeltaTime * DeltaTime / (texelPhysicalSize * texelPhysicalSize);
+
+        const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity,
+                                              0.0f,
+                                              1.0f);
+        const float damping = Math::Lerp(WaterEffectorComponent.WaveDampingMin,
+                                         WaterEffectorComponent.WaveDampingMax,
+                                         dampingAlpha);
+
+        const uint32_t tmp = WaterEffectorComponent.InteractiveWavesTextures[0];
+        WaterEffectorComponent.InteractiveWavesTextures[0] = WaterEffectorComponent.InteractiveWavesTextures[1];
+        WaterEffectorComponent.InteractiveWavesTextures[1] = WaterEffectorComponent.InteractiveWavesTextures[2];
+        WaterEffectorComponent.InteractiveWavesTextures[2] = tmp;
+
+        const glm::vec2 worldPos2d(WorldPosition.x, WorldPosition.z);
+        const InteractiveWavesShaderUbo uboData
+        {
+            WaterEffectorComponent.PreviousPositions[0],
+            WaterEffectorComponent.PreviousPositions[1],
+            worldPos2d,
+            WaterEffectorComponent.InteractiveWavesFieldSize,
+            WaterEffectorComponent.IntersectionMaskFieldSize,
+            damping,
+            aFactor,
+            glm::length(ObjectVelocity) * 0.5f
+        };
+
+        _interactiveWavesComputeShader.Use();
+        glBindTextureUnit(0, WaterEffectorComponent.MaskTextures[0]);
+        glBindTextureUnit(1, WaterEffectorComponent.MaskTextures[1]);
+        glBindImageTexture(2, WaterEffectorComponent.InteractiveWavesTextures[0], 0, GL_FALSE, 0, GL_READ_ONLY,
+                           GL_R32F);
+        glBindImageTexture(3, WaterEffectorComponent.InteractiveWavesTextures[1], 0, GL_FALSE, 0, GL_READ_ONLY,
+                           GL_R32F);
+        glBindImageTexture(4, WaterEffectorComponent.InteractiveWavesTextures[2], 0, GL_FALSE, 0, GL_WRITE_ONLY,
+                           GL_R32F);
+
+        glNamedBufferSubData(_interactiveWavesUbo, 0, sizeof(InteractiveWavesShaderUbo), &uboData);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, _interactiveWavesUbo);
+
+        const int32_t simulationZonePixelSize = WaterEffectorComponent.TexturesResolution - 32;
+        Shader::DispatchCompute(simulationZonePixelSize / WorkGroupDim2D,
+                                simulationZonePixelSize / WorkGroupDim2D,
+                                1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        WaterEffectorComponent.PreviousPositions[0] = WaterEffectorComponent.PreviousPositions[1];
+        WaterEffectorComponent.PreviousPositions[1] = worldPos2d;
     }
 
     void WaterInteractionSystem::ApplyForces(PhysicsSystem& PhysicsSystem, const RigidbodyComponent& Rigidbody,
@@ -244,7 +306,7 @@ namespace Core
     {
         uint32_t id = 0;
         glCreateBuffers(1, &id);
-        glNamedBufferData(id, sizeof(ShaderMeshData), nullptr, GL_DYNAMIC_DRAW);
+        glNamedBufferStorage(id, sizeof(ShaderMeshData), nullptr, GL_DYNAMIC_STORAGE_BIT);
         return id;
     }
 
@@ -252,7 +314,15 @@ namespace Core
     {
         uint32_t id = 0;
         glCreateBuffers(1, &id);
-        glNamedBufferData(id, sizeof(IntersectionMaskUbo), nullptr, GL_DYNAMIC_DRAW);
+        glNamedBufferStorage(id, sizeof(IntersectionMaskUbo), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        return id;
+    }
+
+    uint32_t WaterInteractionSystem::CreateInteractiveWavesUbo()
+    {
+        uint32_t id = 0;
+        glCreateBuffers(1, &id);
+        glNamedBufferStorage(id, sizeof(InteractiveWavesShaderUbo), nullptr, GL_DYNAMIC_STORAGE_BIT);
         return id;
     }
 }

@@ -23,13 +23,13 @@ bool CheckRaySegmentIntersection(vec2 RayOrigin, vec2 P0, vec2 P1)
     {
         return false;
     }
-    float t = (RayOrigin.y - P0.y) / dy;
-    if (t < 0.0 || t > 1.0)
+    float t1 = (RayOrigin.y - P0.y) / dy;
+    if (t1 < 0.0 || t1 > 1.0)
     {
         return false;
     }
-    float xint = P0.x + t * (P1.x - P0.x);
-    return xint >= RayOrigin.x;
+    float t2 = P0.x + t1 * (P1.x - P0.x);
+    return t2 >= RayOrigin.x;
 }
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
@@ -52,10 +52,5 @@ void main()
             isInside = !isInside;
         }
     }
-    if (!isInside)
-    {
-        imageStore(Output, pixelCoords, vec4(0.0));
-        return;
-    }
-    imageStore(Output, pixelCoords, vec4(1.0));
+    imageStore(Output, pixelCoords, isInside ? vec4(1.0) : vec4(0.0));
 }
