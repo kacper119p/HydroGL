@@ -59,7 +59,6 @@ void Application::TextureArraySliceViewer::ShowLayer(const uint32_t ArrayTexture
     glBindFramebuffer(GL_FRAMEBUFFER, prevFbo);
     glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
 
-    // Draw using ImDrawList instead of ImGui::Image
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     const ImVec2 positionMin = position;
