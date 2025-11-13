@@ -24,7 +24,7 @@ bool CheckRaySegmentIntersection(vec2 RayOrigin, vec2 P0, vec2 P1)
         return false;
     }
     float t1 = (RayOrigin.y - P0.y) / dy;
-    if (t1 < 0.0 || t1 > 1.0)
+    if (t1 <= 0.0 || t1 >= 1.0)
     {
         return false;
     }
