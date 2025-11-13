@@ -6,7 +6,7 @@
 
 namespace Application
 {
-    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowSystemInfo)
+    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowSystemInfo, bool& ShowTextureViewer)
     {
         ImGui::BeginMainMenuBar();
         if (ImGui::Button("Spectrum Settings"))
@@ -16,6 +16,10 @@ namespace Application
         if (ImGui::Button("System Info"))
         {
             ShowSystemInfo = !ShowSystemInfo;
+        }
+        if (ImGui::Button("Texture Viewer"))
+        {
+            ShowTextureViewer = !ShowTextureViewer;
         }
 
         const std::string rightText = std::format("Application average: {:.3f} ms/frame({:.1f} FPS)",
