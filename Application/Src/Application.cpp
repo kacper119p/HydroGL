@@ -60,9 +60,9 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     Core::Mesh mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
 
-    for (int32_t i = -2; i <= 2; ++i)
+    for (int32_t i = -0; i <= 0; ++i)
     {
-        for (int32_t j = -2; j <= 2; ++j)
+        for (int32_t j = -0; j <= 0; ++j)
         {
             const entt::entity boxEntity = entityRegistry->create();
 
@@ -73,7 +73,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 0.25f, 512, 100.0f, 10.0f);
+                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 0.25f, 512, 500.0f, 10.0f);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;

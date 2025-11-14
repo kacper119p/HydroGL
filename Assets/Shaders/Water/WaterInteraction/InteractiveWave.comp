@@ -10,6 +10,7 @@ layout(std140, binding = 0) uniform shaderUniforms
     float WaveDampingFactor;
     float AWaveFactor;
     float DisplacementStrength;
+    float Delta;
 } ShaderUniforms;
 
 layout(binding = 0) uniform sampler2D PreviousFrameMask;
@@ -31,8 +32,8 @@ void main()
     const vec2 previousOffset1 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition1;
     const vec2 previousOffset0 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition0;
 
-    const ivec2 kl = pixelCoords - ivec2(previousOffset1 / waveFieldTexelPhysicalSize);
-    const ivec2 op = pixelCoords - ivec2(previousOffset0 / waveFieldTexelPhysicalSize);
+    const ivec2 kl = pixelCoords - ivec2(previousOffset1 / ShaderUniforms.Delta);
+    const ivec2 op = pixelCoords - ivec2(previousOffset0 / ShaderUniforms.Delta);
 
     const float rightSample = imageLoad(previousFrameWaves1, kl + ivec2(1, 0)).r;
     const float leftSample = imageLoad(previousFrameWaves1, kl + ivec2(-1, 0)).r;
@@ -42,8 +43,8 @@ void main()
 
     const float oldWaveSample = imageLoad(PreviousFrameWaves0, op).r;
 
-    const float ASum = ShaderUniforms.AWaveFactor * (rightSample + leftSample + upSample + downSample - 4.0 * centerSample);
-    const float waveHeight = ShaderUniforms.WaveDampingFactor * (ASum + 2.0 * centerSample - oldWaveSample);
+    const float laplacian = ShaderUniforms.AWaveFactor * (rightSample + leftSample + upSample + downSample - 4.0 * centerSample);
+    const float waveHeight = ShaderUniforms.WaveDampingFactor * (laplacian + 2.0 * centerSample - oldWaveSample);
 
     const vec2 currentLocalPosition = vec2(centeredPixelCoords) * waveFieldTexelPhysicalSize;
     const vec2 previousLocalPosition = currentLocalPosition - previousOffset1;

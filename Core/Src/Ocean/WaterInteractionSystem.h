@@ -76,6 +76,7 @@ namespace Core
             float WaveDampingFactor;
             float AWaveFactor;
             float DisplacementStrength;
+            float Delta;
         };
 
         struct IntersectionMaskUbo

@@ -195,10 +195,13 @@ namespace Core
                                                                  const glm::vec3& WorldPosition,
                                                                  const float DeltaTime) const
     {
-        const float texelPhysicalSize = WaterEffectorComponent.InteractiveWavesFieldSize / static_cast<float>(
-                                            WaterEffectorComponent.TexturesResolution);
-        const float c = std::sqrtf(0.49f) * texelPhysicalSize / DeltaTime;
-        const float aFactor = c * c * DeltaTime * DeltaTime / (texelPhysicalSize * texelPhysicalSize);
+        const float objectSpeed = glm::length(ObjectVelocity);
+        const float delta = std::clamp(std::max(0.999f * DeltaTime, 0.999f * DeltaTime * objectSpeed),
+                                       100.f / WaterEffectorComponent.TexturesResolution,
+                                       500.f / WaterEffectorComponent.TexturesResolution);
+        WaterEffectorComponent.InteractiveWavesFieldSize = delta * WaterEffectorComponent.TexturesResolution;
+        const float c = std::sqrtf(0.49f) * delta / DeltaTime;
+        const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
 
         const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity,
                                               0.0f,
@@ -226,7 +229,8 @@ namespace Core
             WaterEffectorComponent.IntersectionMaskFieldSize,
             damping,
             aFactor,
-            displacementStrength
+            displacementStrength,
+            delta
         };
 
         _interactiveWavesComputeShader.Use();

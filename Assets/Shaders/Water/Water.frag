@@ -34,12 +34,12 @@ struct dynamicWaveSampleParameters
     layout(bindless_sampler) sampler2D WaveFieldTexture;
 };
 
-layout(std430, binding = 1) readonly restrict buffer DynamicWavesBuffer
+layout(std430, binding = 1) readonly restrict buffer dynamicWavesBuffer
 {
     int DynamicWavesCount;
     float Padding[3];
     dynamicWaveSampleParameters Waves[];
-} dynamicWavesBuffer;
+} DynamicWavesBuffer;
 
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 layout (binding = 4) uniform sampler2DArray SlopeMaps;
@@ -76,14 +76,19 @@ void main()
     float roughness = mix(0.5, 1.0, foamMask);
 
     vec2 dynamicSlope = vec2(0.0);
-    for (int i = 0; i < dynamicWavesBuffer.DynamicWavesCount; ++i)
+    for (int i = 0; i < DynamicWavesBuffer.DynamicWavesCount; ++i)
     {
-        const vec2 waveLocalPosition =  dynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
-        const vec2 waveTexCoord = waveLocalPosition / dynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
-        const float height = texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
-        dynamicSlope += vec2(dFdxFine(height) / dFdxFine(waveLocalPosition.x), dFdyFine(height) / dFdyFine(waveLocalPosition.y));
-    }
+        const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
+        const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
+        float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
 
+        float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
+        float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
+
+        vec2 dh = vec2((hX - hC) / texel, (hY - hC) / texel);
+        dynamicSlope += dh;
+    }
     const vec3 normal = NormalFromSlope(slope + dynamicSlope);
 
     vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
