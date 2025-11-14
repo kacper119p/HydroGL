@@ -9,10 +9,12 @@ namespace Platform
     std::vector<std::pair<Input::CallbackId, Input::MovementCallback>> Input::_movementCallbacks;
     std::vector<std::pair<Input::CallbackId, Input::CameraRotationCallback>> Input::_cameraRotationCallbacks;
     std::vector<std::pair<Input::CallbackId, Input::CameraDragCallback>> Input::_cameraDragCallbacks;
+    std::vector<std::pair<Input::CallbackId, Input::ShowGuiCallback>> Input::_showGuiCallbacks;
 
     float Input::_inputX = 0.0f;
     float Input::_inputY = 0.0f;
     bool Input::_isCameraDragging = false;
+    bool Input::_isShowingGui = true;
 
     bool Input::_wPressed = false;
     bool Input::_aPressed = false;
@@ -112,6 +114,15 @@ namespace Platform
             callback(IsDragging);
         }
         _isCameraDragging = IsDragging;
+    }
+
+    void Input::DispatchShowGuiEvent()
+    {
+        _isShowingGui = !_isShowingGui;
+        for (const auto& callback : _showGuiCallbacks | std::views::values)
+        {
+            callback(_isShowingGui);
+        }
     }
 
     void Input::StopMovement()

@@ -14,7 +14,12 @@ namespace Application
         : _waterSystem(&WaterSystem),
           _textureArraySliceViewer(std::make_unique<TextureArraySliceViewer>()),
           _windowWidth(Window.GetWindowWidth()),
-          _windowHeight(Window.GetWindowHeight())
+          _windowHeight(Window.GetWindowHeight()),
+          _showGuiCallbackId(Platform::Input::SubscribeToShowGuiEvent(
+              [this](const bool ShowGui)
+              {
+                  _showGui = ShowGui;
+              }))
     {
         Platform::ImGuiContext::InitializeImGui(Window);
         constexpr float defaultImGuiFontSize = 13.0f;
@@ -25,23 +30,27 @@ namespace Application
     Gui::~Gui()
     {
         Platform::ImGuiContext::ImGuiShutdown();
+        Platform::Input::UnsubscribeToShowGuiEvent(_showGuiCallbackId);
     }
 
     void Gui::Render()
     {
         Platform::ImGuiContext::ImGuiBeginFrame();
-        GuiTopBar::Render(_showSpectrumSettings, _showSystemInfo, _showTextureViewer);
-        if (_showSpectrumSettings)
+        if (_showGui)
         {
-            SpectrumSettingsWindow::Render(_showSpectrumSettings, *_waterSystem);
-        }
-        if (_showSystemInfo)
-        {
-            SystemInfoWindow::Render(_showSystemInfo, _windowWidth, _windowHeight);
-        }
-        if (_showTextureViewer)
-        {
-            TextureViewerWindow::Render(_showTextureViewer, *_textureArraySliceViewer);
+            GuiTopBar::Render(_showSpectrumSettings, _showSystemInfo, _showTextureViewer);
+            if (_showSpectrumSettings)
+            {
+                SpectrumSettingsWindow::Render(_showSpectrumSettings, *_waterSystem);
+            }
+            if (_showSystemInfo)
+            {
+                SystemInfoWindow::Render(_showSystemInfo, _windowWidth, _windowHeight);
+            }
+            if (_showTextureViewer)
+            {
+                TextureViewerWindow::Render(_showTextureViewer, *_textureArraySliceViewer);
+            }
         }
         Platform::ImGuiContext::ImGuiEndFrame();
     }
