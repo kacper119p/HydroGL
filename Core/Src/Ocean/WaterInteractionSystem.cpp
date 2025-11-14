@@ -196,11 +196,12 @@ namespace Core
                                                                  const float DeltaTime) const
     {
         const float objectSpeed = glm::length(ObjectVelocity);
-        const float delta = std::clamp(std::max(0.999f * DeltaTime, 0.999f * DeltaTime * objectSpeed),
-                                       100.f / WaterEffectorComponent.TexturesResolution,
-                                       500.f / WaterEffectorComponent.TexturesResolution);
+        // const float delta = std::clamp(std::max(0.999f * DeltaTime, 0.999f * DeltaTime * objectSpeed * objectSpeed),
+        //                                50.f / WaterEffectorComponent.TexturesResolution,
+        //                                500.f / WaterEffectorComponent.TexturesResolution);
+        const float delta = 200.f / WaterEffectorComponent.TexturesResolution;
         WaterEffectorComponent.InteractiveWavesFieldSize = delta * WaterEffectorComponent.TexturesResolution;
-        const float c = std::sqrtf(0.49f) * delta / DeltaTime;
+        const float c = std::sqrtf(0.05f) * delta / DeltaTime;
         const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
 
         const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity,
@@ -236,17 +237,15 @@ namespace Core
         _interactiveWavesComputeShader.Use();
         glBindTextureUnit(0, WaterEffectorComponent.MaskTextures[0]);
         glBindTextureUnit(1, WaterEffectorComponent.MaskTextures[1]);
-        glBindImageTexture(2, WaterEffectorComponent.InteractiveWavesTextures[0], 0, GL_FALSE, 0, GL_READ_ONLY,
-                           GL_R32F);
-        glBindImageTexture(3, WaterEffectorComponent.InteractiveWavesTextures[1], 0, GL_FALSE, 0, GL_READ_ONLY,
-                           GL_R32F);
+        glBindTextureUnit(2, WaterEffectorComponent.InteractiveWavesTextures[0]);
+        glBindTextureUnit(3, WaterEffectorComponent.InteractiveWavesTextures[1]);
         glBindImageTexture(4, WaterEffectorComponent.InteractiveWavesTextures[2], 0, GL_FALSE, 0, GL_WRITE_ONLY,
                            GL_R32F);
 
         glNamedBufferSubData(_interactiveWavesUbo, 0, sizeof(InteractiveWavesShaderUbo), &uboData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _interactiveWavesUbo);
 
-        const int32_t simulationZonePixelSize = WaterEffectorComponent.TexturesResolution - 32;
+        const int32_t simulationZonePixelSize = WaterEffectorComponent.TexturesResolution;
         Shader::DispatchCompute(simulationZonePixelSize / WorkGroupDim2D,
                                 simulationZonePixelSize / WorkGroupDim2D,
                                 1);

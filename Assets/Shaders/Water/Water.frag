@@ -76,13 +76,15 @@ void main()
     float roughness = mix(0.5, 1.0, foamMask);
 
     vec2 dynamicSlope = vec2(0.0);
+    float hC;
     for (int i = 0; i < DynamicWavesBuffer.DynamicWavesCount; ++i)
     {
         const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
         float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
 
-        float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        //float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
         float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
         float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
 
@@ -98,6 +100,7 @@ void main()
     //vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.5, geometryNormal, DisplacedPosition, ViewDirection, 1.0);
 
     FragColor = vec4(color, 1.0);
+    //FragColor = vec4(hC, 0.0, 0.0, 1.0);
     // FragColor = vec4(vec3((1.0 - clamp(0.0, 1.0, abs(dot(normal, geometryNormal))))) * 100000.0, 1.0);
     //FragColor = vec4(normal, 1.0);
     //FragColor = vec4(texture(DisplacementMap, TexCoord).rgb + 0.1, 1.0);

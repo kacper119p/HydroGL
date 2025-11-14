@@ -73,7 +73,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 0.25f, 512, 500.0f, 10.0f);
+                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 0.01f, 512, 500.0f, 10.0f);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;
