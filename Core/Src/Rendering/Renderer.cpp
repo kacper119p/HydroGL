@@ -130,9 +130,9 @@ namespace Core
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
         _pbrShader.Use();
-        Shader::SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        Shader::SetUniform(_pbrProjectionMatrixLocation, camera.ProjectionMatrix);
-        Shader::SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
+        _pbrShader.SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
+        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.ProjectionMatrix);
+        _pbrShader.SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
 
@@ -151,8 +151,8 @@ namespace Core
         // ------------------------ SKYBOX ------------------------
 
         _skyboxShader.Use();
-        Shader::SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        Shader::SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
+        _skyboxShader.SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
+        _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
 
         glBindTextureUnit(3, scene.GetSkybox().GetCubeMap());
 

@@ -56,7 +56,7 @@ namespace Core
 
         for (uint32_t i = 0; i < 6; ++i)
         {
-            Shader::SetUniform(viewMatrixLocation, _captureViews[i]);
+            shader.SetUniform(viewMatrixLocation, _captureViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
             glClear(GL_COLOR_BUFFER_BIT);

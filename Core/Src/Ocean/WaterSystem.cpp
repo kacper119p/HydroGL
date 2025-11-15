@@ -173,11 +173,11 @@ namespace Core
                 glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
 
         _waterShader.Use();
-        Shader::SetUniform(_viewMatrixLocation, glm::inverse(CameraTransform.GetLocalToWorldMatrix()));
-        Shader::SetUniform(_projectionMatrixLocation, Camera.ProjectionMatrix);
-        Shader::SetUniform(_cameraPositionLocation, cameraPosition);
-        Shader::SetUniform(_timeLocation, Platform::TimeManager::GetTime());
-        Shader::SetUniform(_gridOriginLocation, gridOrigin);
+        _waterShader.SetUniform(_viewMatrixLocation, glm::inverse(CameraTransform.GetLocalToWorldMatrix()));
+        _waterShader.SetUniform(_projectionMatrixLocation, Camera.ProjectionMatrix);
+        _waterShader.SetUniform(_cameraPositionLocation, cameraPosition);
+        _waterShader.SetUniform(_timeLocation, Platform::TimeManager::GetTime());
+        _waterShader.SetUniform(_gridOriginLocation, gridOrigin);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, DynamicWavesSampleSsboId);

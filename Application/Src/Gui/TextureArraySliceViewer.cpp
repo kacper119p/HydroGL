@@ -48,7 +48,7 @@ void Application::TextureArraySliceViewer::ShowLayer(const uint32_t ArrayTexture
     _shaderProgram.Use();
     glBindTextureUnit(0, ArrayTexture);
     glActiveTexture(GL_TEXTURE0);
-    Core::Shader::SetUniform(_layerIndexLocation, LayerIndex);
+    _shaderProgram.SetUniform(_layerIndexLocation, LayerIndex);
 
     Core::ScreenQuad::Draw();
 

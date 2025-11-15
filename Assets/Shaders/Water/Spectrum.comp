@@ -73,7 +73,7 @@ void main()
     const vec2 dfhx = k * dx;
     const vec2 dfhz = k * dz;
 
-    vec2 hDz =  PackIffts(h, dz);
+    vec2 hDz = PackIffts(h, dz);
     vec2 dxDfhx = PackIffts(dx, dfhx);
     vec2 dfhzDfdxx = PackIffts(dfhz, dfdxx);
     vec2 dfdzxDfdzz = PackIffts(dfdzx, dfdzz);
@@ -97,7 +97,7 @@ void main()
             const float height = mix(VelocityMinHeight, VelocityMaxHeight, float(i + j) / float(VelocityLayers - 1));
             GetVelocityVector(vx[j], vy[j], vz[j], hv, k, dispersion, waveVector, height);
         }
-        
+
         const int writeBaseIndex = velocityBaseIndex + i * 3 / 4;
         imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex), vec4(PackIffts(vx[0], vy[0]), PackIffts(vz[0], vx[1])));
         imageStore(VelocityPacked, ivec3(pixelCoords, writeBaseIndex + 1), vec4(PackIffts(vy[1], vz[1]), PackIffts(vx[2], vy[2])));

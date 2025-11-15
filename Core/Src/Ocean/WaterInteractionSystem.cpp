@@ -81,7 +81,7 @@ namespace Core
         glBindTextureUnit(1, VelocityTextures);
 
         _triangleProcessorComputeShader.Use();
-        Shader::SetUniform(_windVelocityLocation, WindVelocity);
+        _triangleProcessorComputeShader.SetUniform(_windVelocityLocation, WindVelocity);
 
         for (const auto [entity,waterEffector, transform, rigidbody] : view.each())
         {
@@ -152,7 +152,7 @@ namespace Core
                                                              const int32_t AggregationGroupsCount) const -> void
     {
         _triangleAggregationComputeShader.Use();
-        Shader::SetUniform(_triangleCountLocation, static_cast<int32_t>(TriangleCount));
+        _triangleAggregationComputeShader.SetUniform(_triangleCountLocation, static_cast<int32_t>(TriangleCount));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.MainBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
 
@@ -164,7 +164,7 @@ namespace Core
     void WaterInteractionSystem::DispatchOutputProcessing(uint32_t AggregationGroupsCount) const
     {
         _outputComputeShader.Use();
-        Shader::SetUniform(_partialsCountLocation, static_cast<uint32_t>(AggregationGroupsCount));
+        _outputComputeShader.SetUniform(_partialsCountLocation, static_cast<uint32_t>(AggregationGroupsCount));
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
         Shader::DispatchCompute(1, 1, 1);
@@ -196,10 +196,10 @@ namespace Core
                                                                  const float DeltaTime) const
     {
         const float objectSpeed = glm::length(ObjectVelocity);
-        // const float delta = std::clamp(std::max(0.999f * DeltaTime, 0.999f * DeltaTime * objectSpeed * objectSpeed),
-        //                                50.f / WaterEffectorComponent.TexturesResolution,
-        //                                500.f / WaterEffectorComponent.TexturesResolution);
-        const float delta = 200.f / WaterEffectorComponent.TexturesResolution;
+        const float delta = std::clamp(std::max(0.999f * DeltaTime, 0.999f * DeltaTime * objectSpeed * objectSpeed),
+                                       100.f / WaterEffectorComponent.TexturesResolution,
+                                       500.f / WaterEffectorComponent.TexturesResolution);
+        //const float delta = 200.f / WaterEffectorComponent.TexturesResolution;
         WaterEffectorComponent.InteractiveWavesFieldSize = delta * WaterEffectorComponent.TexturesResolution;
         const float c = std::sqrtf(0.05f) * delta / DeltaTime;
         const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
