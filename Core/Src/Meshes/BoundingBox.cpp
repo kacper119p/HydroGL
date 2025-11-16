@@ -1,5 +1,4 @@
 #include "BoundingBox.h"
-
 #include "Meshes/MeshManager.h"
 
 namespace Core
@@ -11,16 +10,15 @@ namespace Core
     }
 
 
-    BoundingBox::BoundingBox(const Mesh& Mesh)
+    BoundingBox::BoundingBox(const glm::vec3* const Positions, const uint32_t VerticesCount)
     {
-        const glm::vec3* positions = MeshManager::GetPositionsBufferData(Mesh.GetVerticesIndex());
-        _min = positions[0];
-        _max = positions[0];
+        _min = Positions[0];
+        _max = Positions[0];
 
-        for (int i = 1; i < Mesh.GetVerticesCount(); ++i)
+        for (int i = 1; i < VerticesCount; ++i)
         {
-            _max = glm::max(_max, positions[i]);
-            _min = glm::min(_min, positions[i]);
+            _max = glm::max(_max, Positions[i]);
+            _min = glm::min(_min, Positions[i]);
         }
     }
 }

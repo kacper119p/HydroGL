@@ -1,8 +1,6 @@
 #pragma once
 #include <glm/vec3.hpp>
 
-#include "Meshes/Mesh.h"
-
 namespace Core
 {
     struct BoundingBox
@@ -14,7 +12,7 @@ namespace Core
     public:
         BoundingBox();
 
-        explicit BoundingBox(const Mesh& Mesh);
+        BoundingBox(const glm::vec3* Positions, uint32_t VerticesCount);
 
     public:
         [[nodiscard]] const glm::vec3& GetMin() const

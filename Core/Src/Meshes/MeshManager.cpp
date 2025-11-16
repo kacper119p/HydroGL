@@ -192,6 +192,8 @@ namespace Core
                 }
             }
         }
+
+        Mesh._boundingBox = BoundingBox(_vertexBuffer.Positions + Mesh._verticesIndex, Mesh._verticesCount);
     }
 
     void MeshManager::UploadToGpu(const Mesh& Mesh)
@@ -263,9 +265,9 @@ namespace Core
     {
         Assimp::Importer importer = Assimp::Importer();
         importer.SetPropertyInteger(
-                AI_CONFIG_PP_SBP_REMOVE,
-                aiPrimitiveType_LINE | aiPrimitiveType_POINT
-                );
+            AI_CONFIG_PP_SBP_REMOVE,
+            aiPrimitiveType_LINE | aiPrimitiveType_POINT
+        );
 
         const aiScene* scene = importer.ReadFile(Path,
                                                  aiProcess_Triangulate | aiProcess_GenNormals);
