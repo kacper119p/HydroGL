@@ -49,23 +49,24 @@ void main()
     const vec3 p1 = mix(tcPosition[3], tcPosition[2], u);
     const vec3 position = mix(p0, p1, v);
 
-    vec3 displacement = vec3(0.0);
-
+    vec3 tessendorfDisplacement = vec3(0.0);
     for (int i = 0; i < CascadeCount; ++i)
     {
         const vec2 texCoord = vec2(position.x, position.z) / CascadeSettings[i].Length;
-        displacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
+        tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
     }
+    vec3 tessendorfPosition = position + tessendorfDisplacement;
+
+    vec3 dynamicDisplacement = vec3(0.0);
     for (int i = 0; i < dynamicWavesBuffer.DynamicWavesCount; ++i)
     {
-        const vec2 waveLocalPosition =  dynamicWavesBuffer.Waves[i].ObjectPosition.xz - position.xz;
+        const vec2 waveLocalPosition =  dynamicWavesBuffer.Waves[i].ObjectPosition.xz - tessendorfPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / dynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
-        displacement.y += texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        dynamicDisplacement.y += texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
     }
-    vec3 finalPosition = position + displacement;
-
+    
     OriginalPosition = position;
-    DisplacedPosition = finalPosition;
+    DisplacedPosition = tessendorfPosition;
 
-    gl_Position = ProjectionMatrix * ViewMatrix * vec4(finalPosition, 1.0);
+    gl_Position = ProjectionMatrix * ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
 }

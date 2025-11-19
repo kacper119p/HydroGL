@@ -6,6 +6,7 @@
 #include "Physics/PhysicsSystem.h"
 #include "Physics/Components/RigidbodyComponent.h"
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Std140/Mat2.h"
 #include "Scene/Scene.h"
 
 namespace Core
@@ -69,20 +70,26 @@ namespace Core
         struct InteractiveWavesShaderUbo
         {
             glm::vec2 PreviousObjectWorldPosition0;
-            glm::vec2 PreviousObjectWorldPosition1;
-            glm::vec2 CurrentObjectWorldPosition;
-            float InteractiveWavesFieldSize;
-            float MaskFieldSize;
-            float WaveDampingFactor;
-            float AWaveFactor;
-            float DisplacementStrength;
-            float Delta;
+            alignas(8) glm::vec2 PreviousObjectWorldPosition1;
+            alignas(8) glm::vec2 CurrentObjectWorldPosition;
+            alignas(4) float InteractiveWavesFieldSize;
+            alignas(4) float MaskFieldSize;
+            alignas(4) float WaveDampingFactor;
+            alignas(4) float AWaveFactor;
+            alignas(4) float DisplacementStrength;
+            alignas(4) float Delta;
         };
 
         struct IntersectionMaskUbo
         {
-            glm::vec2 ObjectWorldPosition;
-            float InteractiveWavesFieldSize;
+            Std140::Mat2 VelocitySpaceTransform;
+            alignas(32) glm::vec2 ObjectWorldPosition;
+            alignas(8) glm::vec2 BoundBoxMin;
+            alignas(8) glm::vec2 BoundBoxMax;
+            alignas(4) float IntersectionMaskPhysicalSize;
+            alignas(4) float DisplacementStrength;
+            alignas(4) float Hf;
+            alignas(4) float Hb;
         };
 
         struct alignas(16) DynamicWaveSampleParameters
@@ -159,14 +166,18 @@ namespace Core
         void DispatchOutputProcessing(uint32_t AggregationGroupsCount) const;
 
         void DispatchIntersectionMaskCompute(WaterEffectorComponent& WaterEffectorComponent,
-                                             const glm::vec3& WorldPosition) const;
+                                             const glm::vec3& WorldPosition,
+                                             const glm::vec3& ObjectVelocity,
+                                             const glm::mat4& LocalToWorldMatrix,
+                                             float SubmergedVolume) const;
 
         void DispatchInteractiveWavesCompute(WaterEffectorComponent& WaterEffectorComponent,
                                              const glm::vec3& ObjectVelocity, const glm::vec3& WorldPosition,
                                              float DeltaTime) const;
 
         void ApplyForces(PhysicsSystem& PhysicsSystem, const RigidbodyComponent& Rigidbody,
-                         const glm::mat4& LocalToWorldMatrix, const glm::vec3& WorldPosition) const;
+                         const glm::mat4& LocalToWorldMatrix, const glm::vec3& WorldPosition,
+                         float& SubmergedVolume) const;
 
         void ResizeTriangleBuffers(uint32_t TriangleCount);
 

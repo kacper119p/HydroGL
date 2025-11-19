@@ -1,5 +1,6 @@
 #include "WaterInteractionSystem.h"
 
+#include "../../../cmake-build-release-visual-studio/vcpkg_installed/x64-windows/include/spdlog/spdlog.h"
 #include "Components/WaterEffectorComponent.h"
 #include "glad/glad.h"
 #include "Math/Math.h"
@@ -116,8 +117,10 @@ namespace Core
             triangleCount, AggregatorElementsPerGroup));
         DispatchTriangleAggregation(triangleCount, aggregationGroups);
         DispatchOutputProcessing(aggregationGroups);
-        ApplyForces(PhysicsSystem, Rigidbody, localToWorld, worldPosition);
-        DispatchIntersectionMaskCompute(WaterEffectorComponent, worldPosition);
+        float submergedVolume;
+        ApplyForces(PhysicsSystem, Rigidbody, localToWorld, worldPosition, submergedVolume);
+        DispatchIntersectionMaskCompute(WaterEffectorComponent, worldPosition, meshVelocity, localToWorld,
+                                        submergedVolume);
         DispatchInteractiveWavesCompute(WaterEffectorComponent, meshVelocity, worldPosition, DeltaTime);
     }
 
@@ -171,18 +174,46 @@ namespace Core
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
     }
 
-    void WaterInteractionSystem::DispatchIntersectionMaskCompute(
-        WaterEffectorComponent& WaterEffectorComponent, const glm::vec3& WorldPosition) const
+    void WaterInteractionSystem::DispatchIntersectionMaskCompute(WaterEffectorComponent& WaterEffectorComponent,
+                                                                 const glm::vec3& WorldPosition,
+                                                                 const glm::vec3& ObjectVelocity,
+                                                                 const glm::mat4& LocalToWorldMatrix,
+                                                                 float SubmergedVolume) const
     {
         _intersectionMaskComputeShader.Use();
+        glm::vec3 minBounds = glm::vec3(
+            LocalToWorldMatrix * glm::vec4(WaterEffectorComponent.Mesh.GetBoundingBox().GetMin(), 1.0f));
+        glm::vec3 maxBounds = glm::vec3(
+            LocalToWorldMatrix * glm::vec4(WaterEffectorComponent.Mesh.GetBoundingBox().GetMax(), 1.0f));
+        const float objectSpeed = glm::length(ObjectVelocity);
+
+        const glm::mat2 velocitySpaceTransform =
+                std::isnan(objectSpeed) || objectSpeed < 1e-3f
+                    ? glm::mat2(1.0f)
+                    : Math::CreateRotationMatrix2DFromUnitVector(
+                        glm::normalize(glm::vec2(ObjectVelocity.x, ObjectVelocity.z)));
+
+        const float bodyHeight = WaterEffectorComponent.Mesh.GetBoundingBox().GetMax().y - WaterEffectorComponent.Mesh.
+                                 GetBoundingBox().GetMin().y;
+        const float frontHeight = objectSpeed * bodyHeight * WaterEffectorComponent.FrontWaveHeightFactor *
+                                  SubmergedVolume /
+                                  WaterEffectorComponent.MeshTotalVolume;
+
         const IntersectionMaskUbo uboData{
-            {WorldPosition.x, WorldPosition.z}, WaterEffectorComponent.IntersectionMaskFieldSize
+            Std140::Mat2(velocitySpaceTransform),
+            {WorldPosition.x, WorldPosition.z},
+            {minBounds.x, minBounds.z},
+            {maxBounds.x, maxBounds.z},
+            WaterEffectorComponent.IntersectionMaskFieldSize,
+            WaterEffectorComponent.DisplacementStrength,
+            frontHeight,
+            WaterEffectorComponent.BackWaveHeightFactor
         };
-        std::swap(WaterEffectorComponent.MaskTextures[0], WaterEffectorComponent.MaskTextures[1]);
+
         glNamedBufferSubData(_intersectionMaskUbo, 0, sizeof(IntersectionMaskUbo), &uboData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _intersectionMaskUbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.IntersectionPolygonsId);
-        glBindImageTexture(0, WaterEffectorComponent.MaskTextures[1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+        glBindImageTexture(0, WaterEffectorComponent.MaskTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
         Shader::DispatchCompute(WaterEffectorComponent.TexturesResolution / WorkGroupDim2D,
                                 WaterEffectorComponent.TexturesResolution / WorkGroupDim2D,
@@ -235,11 +266,10 @@ namespace Core
         };
 
         _interactiveWavesComputeShader.Use();
-        glBindTextureUnit(0, WaterEffectorComponent.MaskTextures[0]);
-        glBindTextureUnit(1, WaterEffectorComponent.MaskTextures[1]);
-        glBindTextureUnit(2, WaterEffectorComponent.InteractiveWavesTextures[0]);
-        glBindTextureUnit(3, WaterEffectorComponent.InteractiveWavesTextures[1]);
-        glBindImageTexture(4, WaterEffectorComponent.InteractiveWavesTextures[2], 0, GL_FALSE, 0, GL_WRITE_ONLY,
+        glBindTextureUnit(0, WaterEffectorComponent.MaskTexture);
+        glBindTextureUnit(1, WaterEffectorComponent.InteractiveWavesTextures[0]);
+        glBindTextureUnit(2, WaterEffectorComponent.InteractiveWavesTextures[1]);
+        glBindImageTexture(3, WaterEffectorComponent.InteractiveWavesTextures[2], 0, GL_FALSE, 0, GL_WRITE_ONLY,
                            GL_R32F);
 
         glNamedBufferSubData(_interactiveWavesUbo, 0, sizeof(InteractiveWavesShaderUbo), &uboData);
@@ -255,8 +285,11 @@ namespace Core
         WaterEffectorComponent.PreviousPositions[1] = worldPos2d;
     }
 
-    void WaterInteractionSystem::ApplyForces(PhysicsSystem& PhysicsSystem, const RigidbodyComponent& Rigidbody,
-                                             const glm::mat4& LocalToWorldMatrix, const glm::vec3& WorldPosition) const
+    void WaterInteractionSystem::ApplyForces(PhysicsSystem& PhysicsSystem,
+                                             const RigidbodyComponent& Rigidbody,
+                                             const glm::mat4& LocalToWorldMatrix,
+                                             const glm::vec3& WorldPosition,
+                                             float& SubmergedVolume) const
     {
         GLsync fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
@@ -272,6 +305,8 @@ namespace Core
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
             LocalToWorldMatrix * glm::vec4(properties.CenterOfImmersion, 1.0f));
         PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.Drag, centerOfImmersionWorldSpace);
+
+        SubmergedVolume = properties.SubmergedVolume;
     }
 
     void WaterInteractionSystem::ResizeTriangleBuffers(const uint32_t TriangleCount)

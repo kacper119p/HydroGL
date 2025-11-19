@@ -52,4 +52,24 @@ namespace Core::Math
     {
         return A + Alpha * (B - A);
     }
+
+    /**
+     * @brief Creates a 2D rotation matrix from a given unit 'up' vector.
+     * @param NewUp New up vector in old coordinate system space (has to be normalized).
+     * @return Rotation matrix that transforms vectors from a new one system to the old one.
+     */
+    [[nodiscard]] inline glm::mat2 CreateRotationMatrix2DFromUnitVector(const glm::vec2& NewUp)
+    {
+        return glm::mat2(-NewUp.y, NewUp.x, NewUp.x, NewUp.y);
+    }
+
+    /**
+     * @brief Creates a 2D rotation matrix from a given unit 'up' vector.
+     * @param NewUp New up vector in old coordinate system space (has to be normalized).
+     * @return Rotation matrix that transforms vectors from the old coordinate system to a new one.
+     */
+    [[nodiscard]] inline glm::mat2 CreateInverseRotationMatrix2DFromUnitVector(const glm::vec2& NewUp)
+    {
+        return glm::transpose(CreateRotationMatrix2DFromUnitVector(NewUp));
+    }
 }

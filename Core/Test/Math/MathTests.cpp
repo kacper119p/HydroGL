@@ -1,3 +1,6 @@
+#include <glm/mat2x2.hpp>
+#include <glm/vec2.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <gtest/gtest.h>
 
 #include "Math/Math.h"
@@ -63,4 +66,17 @@ TEST_F(MathTests, Lerp)
 
     EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, 2.0), 20.0f);
     EXPECT_DOUBLE_EQ(Core::Math::Lerp(0.0, 10.0, -2.0), -20.0f);
+}
+
+TEST_F(MathTests, CreateRotationMatrix2DFromUnitVector)
+{
+    constexpr glm::vec2 Up = glm::vec2(0.0f, 1.0f);
+
+    glm::vec2 newUp = glm::vec2(0.0f, 1.0f);
+    glm::mat2 rotationMatrix = Core::Math::CreateRotationMatrix2DFromUnitVector(newUp);
+    EXPECT_EQ(newUp, Up * rotationMatrix);
+
+    newUp = glm::vec2(1.0f, 0.0f);
+    rotationMatrix = Core::Math::CreateRotationMatrix2DFromUnitVector(newUp);
+    EXPECT_EQ(newUp, Up * rotationMatrix);
 }

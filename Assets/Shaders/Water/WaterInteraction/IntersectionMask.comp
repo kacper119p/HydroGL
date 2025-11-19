@@ -4,8 +4,14 @@
 
 layout(std140, binding = 0) uniform shaderUniforms
 {
+    mat2 VelocitySpaceTransform;
     vec2 ObjectWorldPosition;
+    vec2 BoundBoxMin;
+    vec2 BoundBoxMax;
     float IntersectionMaskPhysicalSize;
+    float DisplacementStrength;
+    float Hf;
+    float Hb;
 } ShaderUniforms;
 
 layout (binding = 0, r32f) uniform writeonly restrict image2D Output;
@@ -40,8 +46,8 @@ void main()
     const ivec2 textureCenter = ivec2(textureResolution >> 1);
     const ivec2 centeredPixelCoords = pixelCoords - textureCenter;
 
-    const vec2 worldSpacePosition = (vec2(centeredPixelCoords) / vec2(textureResolution))
-    * ShaderUniforms.IntersectionMaskPhysicalSize + ShaderUniforms.ObjectWorldPosition;
+    const vec2 localSpacePosition = (vec2(centeredPixelCoords) / vec2(textureResolution)) * ShaderUniforms.IntersectionMaskPhysicalSize;
+    const vec2 worldSpacePosition = localSpacePosition + ShaderUniforms.ObjectWorldPosition;
 
     bool isInside = false;
 
@@ -52,5 +58,29 @@ void main()
             isInside = !isInside;
         }
     }
-    imageStore(Output, pixelCoords, isInside ? vec4(1.0) : vec4(0.0));
+
+    if (!isInside)
+    {
+        imageStore(Output, pixelCoords, vec4(0.0));
+        return;
+    }
+
+    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * localSpacePosition;
+    const vec2 objectPositionVelocitySpace = ShaderUniforms.VelocitySpaceTransform * (ShaderUniforms.ObjectWorldPosition - ShaderUniforms.ObjectWorldPosition);
+
+    const vec2 boundsMinVelocitySpace = ShaderUniforms.VelocitySpaceTransform * (ShaderUniforms.BoundBoxMin - ShaderUniforms.ObjectWorldPosition);
+    const vec2 boundsMaxVelocitySpace = ShaderUniforms.VelocitySpaceTransform * (ShaderUniforms.BoundBoxMax - ShaderUniforms.ObjectWorldPosition);
+
+    const vec2 boundsSizeVelocitySpace = abs(boundsMaxVelocitySpace - boundsMinVelocitySpace);
+
+    const float f = abs(velocitySpacePosition.x) / boundsSizeVelocitySpace.x;
+
+    const float zMin = min(boundsMinVelocitySpace.y, boundsMaxVelocitySpace.y);
+    const float zMax = max(boundsMinVelocitySpace.y, boundsMaxVelocitySpace.y);
+
+    const float a = (ShaderUniforms.Hf - ShaderUniforms.Hb) / (zMax - zMin);
+    const float b = ShaderUniforms.Hb - a * zMin;
+    const float g = a * velocitySpacePosition.y + b;
+
+    imageStore(Output, pixelCoords, vec4(ShaderUniforms.DisplacementStrength * (f + g)));
 }

@@ -4,6 +4,7 @@
 #include "TimeManager.h"
 #include "Camera/CameraComponent.h"
 #include "Meshes/MeshManager.h"
+#include "Meshes/MeshUtility.h"
 #include "Ocean/Components/WaterEffectorComponent.h"
 #include "Physics/MeshColliderFactory.h"
 #include "Physics/PhysicsSystem.h"
@@ -46,6 +47,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
                                                         0.1f, 1000.0f);
 
     const Core::Mesh cubeMesh = Core::MeshManager::GetMesh("Assets/Meshes/Cube.fbx");
+    const float cubeVolume = Core::MeshUtility::CalculateMeshVolume(cubeMesh);
     JPH::RefConst<JPH::Shape> colliderShape = Core::MeshColliderFactory::CreateConvexHullCollider(
         cubeMesh, 750.0f);
 
@@ -73,7 +75,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh, position, 0.98f, 0.999f, 5.0f, 0.01f, 512, 500.0f, 10.0f);
+                boxEntity, cubeMesh, position, cubeVolume, 0.98f, 0.999f, 5.0f, 0.002f, 1.0f, 1.0f, 512, 500.0f);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;

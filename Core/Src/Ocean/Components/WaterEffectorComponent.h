@@ -11,28 +11,44 @@ namespace Core
     {
     public:
         Mesh Mesh;
-        float WaveDampingMin;
-        float WaveDampingMax;
-        float DampingMaxVelocity;
-        float DisplacementStrength;
-        uint32_t MaskTextures[2];
+        uint32_t MaskTexture;
         uint32_t InteractiveWavesTextures[3];
         uint64_t InteractiveWavesTextureHandles[3];
         glm::vec2 PreviousPositions[2];
         float InteractiveWavesFieldSize;
         float IntersectionMaskFieldSize;
+        float MeshTotalVolume;
+        float WaveDampingMin;
+        float WaveDampingMax;
+        float DampingMaxVelocity;
+        float BackWaveHeightFactor;
+        float FrontWaveHeightFactor;
+        float DisplacementStrength;
         int32_t TexturesResolution;
 
     public:
+        WaterEffectorComponent(const class Mesh& Mesh,
+                               const glm::vec3& Position,
+                               float MeshTotalVolume,
+                               float WaveDampingMin,
+                               float WaveDampingMax,
+                               float DampingMaxVelocity,
+                               float DisplacementStrength,
+                               float BackWaveHeightFactor,
+                               float FrontWaveHeightFactor,
+                               int32_t TexturesResolution,
+                               float InteractiveWavesFieldSize);
+
         WaterEffectorComponent(const class Mesh& Mesh,
                                const glm::vec3& Position,
                                float WaveDampingMin,
                                float WaveDampingMax,
                                float DampingMaxVelocity,
                                float DisplacementStrength,
+                               float BackWaveHeightFactor,
+                               float FrontWaveHeightFactor,
                                int32_t TexturesResolution,
-                               float InteractiveWavesFieldSize,
-                               float IntersectionMaskPhysicalSize);
+                               float InteractiveWavesFieldSize);
 
     public:
         static void Destroy(const WaterEffectorComponent& ToDestroy);

@@ -12,6 +12,8 @@ namespace Core
     public:
         BoundingBox();
 
+        BoundingBox(const glm::vec3& Min, const glm::vec3& Max);
+
         BoundingBox(const glm::vec3* Positions, uint32_t VerticesCount);
 
     public:

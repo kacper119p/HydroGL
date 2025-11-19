@@ -9,6 +9,12 @@ namespace Core
     {
     }
 
+    BoundingBox::BoundingBox(const glm::vec3& Min, const glm::vec3& Max)
+        : _min(Min),
+          _max(Max)
+    {
+    }
+
 
     BoundingBox::BoundingBox(const glm::vec3* const Positions, const uint32_t VerticesCount)
     {
