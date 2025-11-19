@@ -90,6 +90,7 @@ namespace Core
             alignas(4) float DisplacementStrength;
             alignas(4) float Hf;
             alignas(4) float Hb;
+            alignas(4) float DeltaTime;
         };
 
         struct alignas(16) DynamicWaveSampleParameters
@@ -169,7 +170,8 @@ namespace Core
                                              const glm::vec3& WorldPosition,
                                              const glm::vec3& ObjectVelocity,
                                              const glm::mat4& LocalToWorldMatrix,
-                                             float SubmergedVolume) const;
+                                             float SubmergedVolume,
+                                             float DeltaTime) const;
 
         void DispatchInteractiveWavesCompute(WaterEffectorComponent& WaterEffectorComponent,
                                              const glm::vec3& ObjectVelocity, const glm::vec3& WorldPosition,

@@ -12,6 +12,7 @@ layout(std140, binding = 0) uniform shaderUniforms
     float DisplacementStrength;
     float Hf;
     float Hb;
+    float DeltaTime;
 } ShaderUniforms;
 
 layout (binding = 0, r32f) uniform writeonly restrict image2D Output;
@@ -82,5 +83,5 @@ void main()
     const float b = ShaderUniforms.Hb - a * zMin;
     const float g = a * velocitySpacePosition.y + b;
 
-    imageStore(Output, pixelCoords, vec4(ShaderUniforms.DisplacementStrength * (f + g)));
+    imageStore(Output, pixelCoords, vec4(ShaderUniforms.DisplacementStrength * (f + g) * ShaderUniforms.DeltaTime));
 }

@@ -120,7 +120,7 @@ namespace Core
         float submergedVolume;
         ApplyForces(PhysicsSystem, Rigidbody, localToWorld, worldPosition, submergedVolume);
         DispatchIntersectionMaskCompute(WaterEffectorComponent, worldPosition, meshVelocity, localToWorld,
-                                        submergedVolume);
+                                        submergedVolume, DeltaTime);
         DispatchInteractiveWavesCompute(WaterEffectorComponent, meshVelocity, worldPosition, DeltaTime);
     }
 
@@ -178,7 +178,8 @@ namespace Core
                                                                  const glm::vec3& WorldPosition,
                                                                  const glm::vec3& ObjectVelocity,
                                                                  const glm::mat4& LocalToWorldMatrix,
-                                                                 float SubmergedVolume) const
+                                                                 const float SubmergedVolume,
+                                                                 const float DeltaTime) const
     {
         _intersectionMaskComputeShader.Use();
         glm::vec3 minBounds = glm::vec3(
@@ -207,7 +208,8 @@ namespace Core
             WaterEffectorComponent.IntersectionMaskFieldSize,
             WaterEffectorComponent.DisplacementStrength,
             frontHeight,
-            WaterEffectorComponent.BackWaveHeightFactor
+            WaterEffectorComponent.BackWaveHeightFactor,
+            DeltaTime
         };
 
         glNamedBufferSubData(_intersectionMaskUbo, 0, sizeof(IntersectionMaskUbo), &uboData);
@@ -226,13 +228,9 @@ namespace Core
                                                                  const glm::vec3& WorldPosition,
                                                                  const float DeltaTime) const
     {
-        const float objectSpeed = glm::length(ObjectVelocity);
-        const float delta = std::clamp(std::max(0.999f * DeltaTime, 0.999f * DeltaTime * objectSpeed * objectSpeed),
-                                       100.f / WaterEffectorComponent.TexturesResolution,
-                                       500.f / WaterEffectorComponent.TexturesResolution);
-        //const float delta = 200.f / WaterEffectorComponent.TexturesResolution;
-        WaterEffectorComponent.InteractiveWavesFieldSize = delta * WaterEffectorComponent.TexturesResolution;
-        const float c = std::sqrtf(0.05f) * delta / DeltaTime;
+        const float delta = WaterEffectorComponent.InteractiveWavesFieldSize
+                            / static_cast<float>(WaterEffectorComponent.TexturesResolution);
+        const float c = std::sqrtf(0.49f) * delta / DeltaTime;
         const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
 
         const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity,
