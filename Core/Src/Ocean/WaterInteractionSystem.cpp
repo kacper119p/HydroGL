@@ -164,7 +164,7 @@ namespace Core
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 
-    void WaterInteractionSystem::DispatchOutputProcessing(uint32_t AggregationGroupsCount) const
+    void WaterInteractionSystem::DispatchOutputProcessing(const uint32_t AggregationGroupsCount) const
     {
         _outputComputeShader.Use();
         _outputComputeShader.SetUniform(_partialsCountLocation, static_cast<uint32_t>(AggregationGroupsCount));
@@ -182,33 +182,71 @@ namespace Core
                                                                  const float DeltaTime) const
     {
         _intersectionMaskComputeShader.Use();
-        glm::vec3 minBounds = glm::vec3(
-            LocalToWorldMatrix * glm::vec4(WaterEffectorComponent.Mesh.GetBoundingBox().GetMin(), 1.0f));
-        glm::vec3 maxBounds = glm::vec3(
-            LocalToWorldMatrix * glm::vec4(WaterEffectorComponent.Mesh.GetBoundingBox().GetMax(), 1.0f));
+
+        const glm::vec3& boundingBoxMin = WaterEffectorComponent.Mesh.GetBoundingBox().GetMin();
+        const glm::vec3& boundingBoxMax = WaterEffectorComponent.Mesh.GetBoundingBox().GetMax();
+
+        glm::vec3 corners[8] = {
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMin.x, boundingBoxMin.y, boundingBoxMin.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMax.x, boundingBoxMin.y, boundingBoxMin.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMin.x, boundingBoxMax.y, boundingBoxMin.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMax.x, boundingBoxMax.y, boundingBoxMin.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMin.x, boundingBoxMin.y, boundingBoxMax.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMax.x, boundingBoxMin.y, boundingBoxMax.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMin.x, boundingBoxMax.y, boundingBoxMax.z, 1.0f)),
+            glm::vec3(LocalToWorldMatrix * glm::vec4(boundingBoxMax.x, boundingBoxMax.y, boundingBoxMax.z, 1.0f))
+        };
+
+        glm::vec2 minBounds{corners[0].x, corners[0].z};
+        glm::vec2 maxBounds{corners[0].x, corners[0].z};
+        for (int i = 1; i < 8; ++i)
+        {
+            minBounds = glm::min(minBounds, {corners[i].x, corners[i].z});
+            maxBounds = glm::max(maxBounds, {corners[i].x, corners[i].z});
+        }
+
         const float objectSpeed = glm::length(ObjectVelocity);
 
-        const glm::mat2 velocitySpaceTransform =
+        glm::mat2 velocitySpaceTransform =
                 std::isnan(objectSpeed) || objectSpeed < 1e-3f
                     ? glm::mat2(1.0f)
                     : Math::CreateRotationMatrix2DFromUnitVector(
                         glm::normalize(glm::vec2(ObjectVelocity.x, ObjectVelocity.z)));
 
+        const glm::vec2 velocitySpaceCorners[4]{
+            velocitySpaceTransform * (glm::vec2(minBounds.x, minBounds.y)
+                                      - glm::vec2(WorldPosition.x, WorldPosition.z)),
+            velocitySpaceTransform * (glm::vec2(maxBounds.x, minBounds.y)
+                                      - glm::vec2(WorldPosition.x, WorldPosition.z)),
+            velocitySpaceTransform * (glm::vec2(minBounds.x, maxBounds.y)
+                                      - glm::vec2(WorldPosition.x, WorldPosition.z)),
+            velocitySpaceTransform * (glm::vec2(maxBounds.x, maxBounds.y)
+                                      - glm::vec2(WorldPosition.x, WorldPosition.z))
+        };
+
+        const glm::vec2 boundsMinVelocitySpace = glm::min(glm::min(velocitySpaceCorners[0], velocitySpaceCorners[1]),
+                                                          glm::min(velocitySpaceCorners[2], velocitySpaceCorners[3]));
+        const glm::vec2 boundsMaxVelocitySpace = glm::max(glm::max(velocitySpaceCorners[0], velocitySpaceCorners[1]),
+                                                          glm::max(velocitySpaceCorners[2], velocitySpaceCorners[3]));
+
         const float bodyHeight = WaterEffectorComponent.Mesh.GetBoundingBox().GetMax().y - WaterEffectorComponent.Mesh.
                                  GetBoundingBox().GetMin().y;
         const float frontHeight = objectSpeed * bodyHeight * WaterEffectorComponent.FrontWaveHeightFactor *
-                                  SubmergedVolume /
-                                  WaterEffectorComponent.MeshTotalVolume;
+                                  SubmergedVolume / WaterEffectorComponent.MeshTotalVolume;
+
+        const glm::vec2 boundsSizeVelocitySpace = abs(boundsMaxVelocitySpace - boundsMinVelocitySpace);
+
+        const float ga = WaterEffectorComponent.BackWaveHeightFactor - frontHeight / boundsSizeVelocitySpace.y;
+        const float gb = WaterEffectorComponent.BackWaveHeightFactor - ga * boundsSizeVelocitySpace.y;
 
         const IntersectionMaskUbo uboData{
             Std140::Mat2(velocitySpaceTransform),
             {WorldPosition.x, WorldPosition.z},
-            {minBounds.x, minBounds.z},
-            {maxBounds.x, maxBounds.z},
             WaterEffectorComponent.IntersectionMaskFieldSize,
+            boundsSizeVelocitySpace.x,
+            ga,
+            gb,
             WaterEffectorComponent.DisplacementStrength,
-            frontHeight,
-            WaterEffectorComponent.BackWaveHeightFactor,
             DeltaTime
         };
 
@@ -233,11 +271,11 @@ namespace Core
         const float c = std::sqrtf(0.49f) * delta / DeltaTime;
         const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
 
-        const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity,
+        const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / DampingMaxVelocity,
                                               0.0f,
                                               1.0f);
-        const float damping = Math::Lerp(WaterEffectorComponent.WaveDampingMin,
-                                         WaterEffectorComponent.WaveDampingMax,
+        const float damping = Math::Lerp(WaveDampingMin,
+                                         WaveDampingMax,
                                          dampingAlpha);
 
         const uint32_t tmp = WaterEffectorComponent.InteractiveWavesTextures[0];
@@ -246,7 +284,7 @@ namespace Core
         WaterEffectorComponent.InteractiveWavesTextures[2] = tmp;
 
         const float displacementStrength = glm::clamp(
-            glm::length(ObjectVelocity) / WaterEffectorComponent.DampingMaxVelocity * WaterEffectorComponent.
+            glm::length(ObjectVelocity) / DampingMaxVelocity * WaterEffectorComponent.
             DisplacementStrength, 0.0f, 1.0f);
 
         const glm::vec2 worldPos2d(WorldPosition.x, WorldPosition.z);
@@ -296,7 +334,9 @@ namespace Core
         const TriangleProperties& properties = *_triangleBuffer.MappedOutputBuffer;
         if (properties.SubmergedVolume <= 1e-3f)
         {
+            SubmergedVolume = 0.0f;
             PhysicsSystem.AddForce(Rigidbody, properties.Drag, WorldPosition);
+
             return;
         }
         const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);

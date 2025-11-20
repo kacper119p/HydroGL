@@ -6,12 +6,11 @@ layout(std140, binding = 0) uniform shaderUniforms
 {
     mat2 VelocitySpaceTransform;
     vec2 ObjectWorldPosition;
-    vec2 BoundBoxMin;
-    vec2 BoundBoxMax;
     float IntersectionMaskPhysicalSize;
+    float BoundsSizeX;
+    float Ga;
+    float Gb;
     float DisplacementStrength;
-    float Hf;
-    float Hb;
     float DeltaTime;
 } ShaderUniforms;
 
@@ -66,22 +65,9 @@ void main()
         return;
     }
 
-    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * localSpacePosition;
-    const vec2 objectPositionVelocitySpace = ShaderUniforms.VelocitySpaceTransform * (ShaderUniforms.ObjectWorldPosition - ShaderUniforms.ObjectWorldPosition);
+    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * worldSpacePosition;
+    const float f = abs(velocitySpacePosition.x) / ShaderUniforms.BoundsSizeX;
+    const float g = ShaderUniforms.Ga * velocitySpacePosition.y + ShaderUniforms.Gb;
 
-    const vec2 boundsMinVelocitySpace = ShaderUniforms.VelocitySpaceTransform * (ShaderUniforms.BoundBoxMin - ShaderUniforms.ObjectWorldPosition);
-    const vec2 boundsMaxVelocitySpace = ShaderUniforms.VelocitySpaceTransform * (ShaderUniforms.BoundBoxMax - ShaderUniforms.ObjectWorldPosition);
-
-    const vec2 boundsSizeVelocitySpace = abs(boundsMaxVelocitySpace - boundsMinVelocitySpace);
-
-    const float f = abs(velocitySpacePosition.x) / boundsSizeVelocitySpace.x;
-
-    const float zMin = min(boundsMinVelocitySpace.y, boundsMaxVelocitySpace.y);
-    const float zMax = max(boundsMinVelocitySpace.y, boundsMaxVelocitySpace.y);
-
-    const float a = (ShaderUniforms.Hf - ShaderUniforms.Hb) / (zMax - zMin);
-    const float b = ShaderUniforms.Hb - a * zMin;
-    const float g = a * velocitySpacePosition.y + b;
-
-    imageStore(Output, pixelCoords, vec4(ShaderUniforms.DisplacementStrength * (f + g) * ShaderUniforms.DeltaTime));
+    imageStore(Output, pixelCoords, vec4(clamp(ShaderUniforms.DisplacementStrength * (f + g) * ShaderUniforms.DeltaTime, -1.0, 1.0)));
 }

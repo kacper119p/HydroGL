@@ -18,9 +18,6 @@ namespace Core
         float InteractiveWavesFieldSize;
         float IntersectionMaskFieldSize;
         float MeshTotalVolume;
-        float WaveDampingMin;
-        float WaveDampingMax;
-        float DampingMaxVelocity;
         float BackWaveHeightFactor;
         float FrontWaveHeightFactor;
         float DisplacementStrength;
@@ -30,9 +27,6 @@ namespace Core
         WaterEffectorComponent(const class Mesh& Mesh,
                                const glm::vec3& Position,
                                float MeshTotalVolume,
-                               float WaveDampingMin,
-                               float WaveDampingMax,
-                               float DampingMaxVelocity,
                                float DisplacementStrength,
                                float BackWaveHeightFactor,
                                float FrontWaveHeightFactor,
@@ -41,9 +35,6 @@ namespace Core
 
         WaterEffectorComponent(const class Mesh& Mesh,
                                const glm::vec3& Position,
-                               float WaveDampingMin,
-                               float WaveDampingMax,
-                               float DampingMaxVelocity,
                                float DisplacementStrength,
                                float BackWaveHeightFactor,
                                float FrontWaveHeightFactor,

@@ -83,13 +83,12 @@ namespace Core
         struct IntersectionMaskUbo
         {
             Std140::Mat2 VelocitySpaceTransform;
-            alignas(32) glm::vec2 ObjectWorldPosition;
-            alignas(8) glm::vec2 BoundBoxMin;
-            alignas(8) glm::vec2 BoundBoxMax;
+            alignas(16) glm::vec2 ObjectWorldPosition;
             alignas(4) float IntersectionMaskPhysicalSize;
+            float BoundsSizeX;
+            float Ga;
+            float Gb;
             alignas(4) float DisplacementStrength;
-            alignas(4) float Hf;
-            alignas(4) float Hb;
             alignas(4) float DeltaTime;
         };
 
@@ -113,6 +112,11 @@ namespace Core
             int32_t Capacity;
             DynamicWavesSampleSsbo* DynamicWavesBuffer;
         };
+
+    private:
+        float WaveDampingMin = 0.98f;
+        float WaveDampingMax = 0.999f;
+        float DampingMaxVelocity = 5.0f;
 
     private:
         TriangleBuffer _triangleBuffer;
