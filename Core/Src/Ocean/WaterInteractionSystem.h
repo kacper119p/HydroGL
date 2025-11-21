@@ -72,12 +72,13 @@ namespace Core
             glm::vec2 PreviousObjectWorldPosition0;
             alignas(8) glm::vec2 PreviousObjectWorldPosition1;
             alignas(8) glm::vec2 CurrentObjectWorldPosition;
-            alignas(4) float InteractiveWavesFieldSize;
+            alignas(4) float PreviousInteractiveWavesFieldSize0;
+            alignas(4) float PreviousInteractiveWavesFieldSize1;
+            alignas(4) float CurrentInteractiveWavesFieldSize;
             alignas(4) float MaskFieldSize;
             alignas(4) float WaveDampingFactor;
             alignas(4) float AWaveFactor;
             alignas(4) float DisplacementStrength;
-            alignas(4) float Delta;
         };
 
         struct IntersectionMaskUbo
@@ -114,9 +115,10 @@ namespace Core
         };
 
     private:
-        float WaveDampingMin = 0.98f;
-        float WaveDampingMax = 0.999f;
-        float DampingMaxVelocity = 5.0f;
+        static constexpr float WaveDampingMin = 0.98f;
+        static constexpr float WaveDampingMax = 0.999f;
+        static constexpr float DampingMaxVelocity = 5.0f;
+        static constexpr float MaxDynamicWaveFieldSize = 500.0f;
 
     private:
         TriangleBuffer _triangleBuffer;

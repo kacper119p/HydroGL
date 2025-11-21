@@ -5,12 +5,13 @@ layout(std140, binding = 0) uniform shaderUniforms
     vec2 PreviousObjectWorldPosition0;
     vec2 PreviousObjectWorldPosition1;
     vec2 CurrentObjectWorldPosition;
-    float InteractiveWavesFieldSize;
+    float PreviousInteractiveWavesFieldSize0;
+    float PreviousInteractiveWavesFieldSize1;
+    float CurrentInteractiveWavesFieldSize;
     float MaskFieldSize;
     float WaveDampingFactor;
     float AWaveFactor;
     float DisplacementStrength;
-    float Delta;
 } ShaderUniforms;
 
 layout(binding = 0) uniform sampler2D DisplacementMask;
@@ -26,10 +27,14 @@ void main()
     const ivec2 textureCenter = ivec2(textureResolution >> 1);
     const ivec2 centeredPixelCoords = pixelCoords - textureCenter;
 
-    const vec2 previousOffset0 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition0;
-    const vec2 previousOffset1 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition1;
+    const vec2 previousPositionLocalSpace0 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition0;
+    const vec2 previousPositionLocalSpace1 = ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition1;
 
-    const vec2 previousTexelOffset1 = previousOffset1 / ShaderUniforms.Delta;
+    const float previousDelta0 = float(textureResolution.x) / ShaderUniforms.PreviousInteractiveWavesFieldSize0;
+    const float previousDelta1 = float(textureResolution.x) / ShaderUniforms.PreviousInteractiveWavesFieldSize1;
+    const float currentDelta = float(textureResolution.x) / ShaderUniforms.CurrentInteractiveWavesFieldSize;
+
+    const vec2 previousTexelOffset1 = previousPositionLocalSpace1 / previousDelta1;
 
     const vec2 previousSamplePosition1 = (vec2(pixelCoords) - previousTexelOffset1 + vec2(0.5)) / float(textureResolution);
 
@@ -37,19 +42,19 @@ void main()
     const vec2 dy = vec2(0.0, 1.0 / float(textureResolution));
 
     const float centerSample = texture(PreviousFrameWaves1, previousSamplePosition1).r;
-    const float rightSample  = texture(PreviousFrameWaves1, previousSamplePosition1 + dx).r;
-    const float leftSample   = texture(PreviousFrameWaves1, previousSamplePosition1 - dx).r;
-    const float upSample     = texture(PreviousFrameWaves1, previousSamplePosition1 + dy).r;
-    const float downSample   = texture(PreviousFrameWaves1, previousSamplePosition1 - dy).r;
+    const float rightSample = texture(PreviousFrameWaves1, previousSamplePosition1 + dx).r;
+    const float leftSample = texture(PreviousFrameWaves1, previousSamplePosition1 - dx).r;
+    const float upSample = texture(PreviousFrameWaves1, previousSamplePosition1 + dy).r;
+    const float downSample = texture(PreviousFrameWaves1, previousSamplePosition1 - dy).r;
 
-    const vec2 previousSamplePosition0 = (vec2(pixelCoords) - (previousOffset0 / ShaderUniforms.Delta) + vec2(0.5)) / float(textureResolution);
+    const vec2 previousSamplePosition0 = (vec2(pixelCoords) - (previousPositionLocalSpace0 / previousDelta0) + vec2(0.5)) / float(textureResolution);
     const float oldWaveSample = texture(PreviousFrameWaves0, previousSamplePosition0).r;
 
     const float laplacian = ShaderUniforms.AWaveFactor * (rightSample + leftSample + upSample + downSample - 4.0 * centerSample);
     const  float waveHeight = ShaderUniforms.WaveDampingFactor * (laplacian + 2.0 * centerSample - oldWaveSample);
 
-    const vec2 currentLocalPosition = vec2(centeredPixelCoords) * ShaderUniforms.Delta;
-    const vec2 maskTexCoord  = clamp(currentLocalPosition / ShaderUniforms.MaskFieldSize + 0.5, vec2(0.0), vec2(1.0));
+    const vec2 currentLocalPosition = vec2(centeredPixelCoords) * currentDelta;
+    const vec2 maskTexCoord  = currentLocalPosition / ShaderUniforms.MaskFieldSize + 0.5;
 
     const float maskDisplacement = texture(DisplacementMask, maskTexCoord).r;
 
