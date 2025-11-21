@@ -2,8 +2,7 @@
 
 #include <glad/glad.h>
 #include <glm/ext/scalar_int_sized.hpp>
-
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 
 #define NOTIFY_FAILED spdlog::error("Loading texture from {0} failed.", FilePath);
 
@@ -11,9 +10,9 @@ namespace Core
 {
     uint32_t DdsLoader::LoadDds(const std::string_view& FilePath)
     {
-        uint32_t Width;
-        uint32_t Height;
-        return LoadDds(FilePath, Width, Height);
+        uint32_t width;
+        uint32_t height;
+        return LoadDds(FilePath, width, height);
     }
 
     uint32_t DdsLoader::LoadDds(const std::string_view& FilePath, uint32_t& Width, uint32_t& Height)
