@@ -11,10 +11,8 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
                                                      const float DisplacementStrength,
                                                      const float BackWaveHeightFactor,
                                                      const float FrontWaveHeightFactor,
-                                                     const int32_t TexturesResolution,
-                                                     const float InteractiveWavesFieldSize)
+                                                     const int32_t TexturesResolution)
     : Mesh(Mesh),
-      InteractiveWavesFieldSize(InteractiveWavesFieldSize),
       IntersectionMaskFieldSize(glm::length(Mesh.GetBoundingBox().GetMax() -
                                             Mesh.GetBoundingBox().GetMin()) * 1.1f), MeshTotalVolume(MeshTotalVolume),
       BackWaveHeightFactor(BackWaveHeightFactor),
@@ -27,7 +25,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
 
     constexpr float borderColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     glCreateTextures(GL_TEXTURE_2D, 1, &MaskTexture);
-    glCreateTextures(GL_TEXTURE_2D, 3, InteractiveWavesTextures);
+    glCreateTextures(GL_TEXTURE_2D, 3, InteractiveWavesTextures.Data());
 
     void* textureData = calloc(TexturesResolution * TexturesResolution, sizeof(float));
 
@@ -63,8 +61,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
                                                      const float DisplacementStrength,
                                                      const float BackWaveHeightFactor,
                                                      const float FrontWaveHeightFactor,
-                                                     const int32_t TexturesResolution,
-                                                     const float InteractiveWavesFieldSize)
+                                                     const int32_t TexturesResolution)
     : WaterEffectorComponent(
         Mesh,
         Position,
@@ -72,8 +69,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
         DisplacementStrength,
         BackWaveHeightFactor,
         FrontWaveHeightFactor,
-        TexturesResolution,
-        InteractiveWavesFieldSize)
+        TexturesResolution)
 {
 }
 
@@ -84,5 +80,5 @@ void Core::WaterEffectorComponent::Destroy(const WaterEffectorComponent& ToDestr
     {
         glMakeTextureHandleNonResidentARB(ToDestroy.InteractiveWavesTextureHandles[i]);
     }
-    glDeleteTextures(3, ToDestroy.InteractiveWavesTextures);
+    glDeleteTextures(3, ToDestroy.InteractiveWavesTextures.Data());
 }

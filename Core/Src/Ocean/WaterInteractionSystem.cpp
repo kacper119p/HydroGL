@@ -266,10 +266,11 @@ namespace Core
                                                                  const glm::vec3& WorldPosition,
                                                                  const float DeltaTime) const
     {
-        const float delta = WaterEffectorComponent.InteractiveWavesFieldSize
+        const float delta = 100.0f //TODO: Proper calculation
                             / static_cast<float>(WaterEffectorComponent.TexturesResolution);
-        const float c = std::sqrtf(0.49f) * delta / DeltaTime;
-        const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
+        //const float c = std::sqrtf(0.49f) * delta / DeltaTime;
+        //const float aFactor = c * c * DeltaTime * DeltaTime / (delta * delta);
+        constexpr float aFactor = 0.49f;
 
         const float dampingAlpha = std::clamp(glm::length(ObjectVelocity) / DampingMaxVelocity,
                                               0.0f,
@@ -278,11 +279,7 @@ namespace Core
                                          WaveDampingMax,
                                          dampingAlpha);
 
-        const uint32_t tmp = WaterEffectorComponent.InteractiveWavesTextures[0];
-        WaterEffectorComponent.InteractiveWavesTextures[0] = WaterEffectorComponent.InteractiveWavesTextures[1];
-        WaterEffectorComponent.InteractiveWavesTextures[1] = WaterEffectorComponent.InteractiveWavesTextures[2];
-        WaterEffectorComponent.InteractiveWavesTextures[2] = tmp;
-
+        WaterEffectorComponent.InteractiveWavesTextures.AdvanceDown();
         const float displacementStrength = glm::clamp(
             glm::length(ObjectVelocity) / DampingMaxVelocity * WaterEffectorComponent.
             DisplacementStrength, 0.0f, 1.0f);
@@ -293,7 +290,7 @@ namespace Core
             WaterEffectorComponent.PreviousPositions[0],
             WaterEffectorComponent.PreviousPositions[1],
             worldPos2d,
-            WaterEffectorComponent.InteractiveWavesFieldSize,
+            100.0f, //TODO: Replace with proper variable
             WaterEffectorComponent.IntersectionMaskFieldSize,
             damping,
             aFactor,
@@ -396,7 +393,7 @@ namespace Core
             _dynamicWavesSampleBuffer.DynamicWavesBuffer->DynamicWaves[count]
                     = DynamicWaveSampleParameters{
                         transform.GetWorldPosition(),
-                        waterEffector.InteractiveWavesFieldSize,
+                        100.0f, //TODO: Replace with proper variable
                         waterEffector.InteractiveWavesTextureHandles[2]
                     };
             ++count;

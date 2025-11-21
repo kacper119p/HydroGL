@@ -80,3 +80,27 @@ TEST_F(MathTests, CreateRotationMatrix2DFromUnitVector)
     rotationMatrix = Core::Math::CreateRotationMatrix2DFromUnitVector(newUp);
     EXPECT_EQ(newUp, Up * rotationMatrix);
 }
+
+TEST_F(MathTests, CreateInverseRotationMatrix2DFromUnitVector)
+{
+    constexpr glm::vec2 up = glm::vec2(0.0f, 1.0f);
+
+    glm::vec2 newUp = glm::vec2(0.0f, 1.0f);
+    glm::mat2 inverseRotationMatrix = Core::Math::CreateInverseRotationMatrix2DFromUnitVector(newUp);
+    EXPECT_EQ(newUp, inverseRotationMatrix * up);
+
+    newUp = glm::vec2(1.0f, 0.0f);
+    inverseRotationMatrix = Core::Math::CreateInverseRotationMatrix2DFromUnitVector(newUp);
+    EXPECT_EQ(newUp, inverseRotationMatrix * up);
+
+    // Test that inverse is actually the inverse of the regular rotation matrix
+    newUp = glm::normalize(glm::vec2(1.0f, 1.0f));
+    const glm::mat2 rotationMatrix = Core::Math::CreateRotationMatrix2DFromUnitVector(newUp);
+    inverseRotationMatrix = Core::Math::CreateInverseRotationMatrix2DFromUnitVector(newUp);
+    glm::mat2 identity = rotationMatrix * inverseRotationMatrix;
+
+    EXPECT_FLOAT_EQ(identity[0][0], 1.0f);
+    EXPECT_FLOAT_EQ(identity[0][1], 0.0f);
+    EXPECT_FLOAT_EQ(identity[1][0], 0.0f);
+    EXPECT_FLOAT_EQ(identity[1][1], 1.0f);
+}
