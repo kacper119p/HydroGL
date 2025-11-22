@@ -37,6 +37,21 @@ float calculateR(const float Omega, const float OmegaP)
     return exp(numerator * numerator / denominator);
 }
 
+float CalcualteWindBias(const vec2 WaveVector, const vec2 WindVelocity)
+{
+    const float windBias = atan(WaveVector.y, WaveVector.x) - atan(SpectrumParams.WindVelocity.y, SpectrumParams.WindVelocity.x);
+
+    if (windBias > PI)
+    {
+        return windBias - 2.0f * PI;
+    }
+    else if (windBias < -PI)
+    {
+        return windBias + 2.0f * PI;
+    }
+    return windBias;
+}
+
 float CalculateBeta(const float ROmega)
 {
     if (ROmega < 0.95)
@@ -98,7 +113,7 @@ float CalculateNormalizationFactor(const float ROmega, const float Beta)
 float DirectionalSpectrum(const vec2 WaveVector, const float Omega)
 {
     const float rOmega = Omega / SpectrumParams.PeakWaveFrequency;
-    const float windBias = atan(WaveVector.y, WaveVector.x) - atan(SpectrumParams.WindVelocity.y, SpectrumParams.WindVelocity.x);
+    const float windBias = CalcualteWindBias(WaveVector, SpectrumParams.WindVelocity);
     const float beta = CalculateBeta(rOmega);
 
     const float normalizationFactor = CalculateNormalizationFactor(rOmega, beta);
