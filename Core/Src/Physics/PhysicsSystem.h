@@ -36,9 +36,9 @@ namespace Core
                                                                   JPH::EActivation Activation,
                                                                   uint32_t CollisionLayer) const;
 
-        void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force);
+        void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force) const;
 
-        void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force, const glm::vec3& Position);
+        void AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force, const glm::vec3& Position) const;
 
         [[nodiscard]] glm::vec3 GetLinearVelocity(const RigidbodyComponent& Rigidbody) const;
 
