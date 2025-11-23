@@ -121,6 +121,15 @@ def ten_pow_formatter(val, pos):
     return r'$10^{%.1f}$' % val
 
 
+def ten_pow_from_value(x, pos):
+    if x <= 0:
+        return '0'
+    e = np.log10(x)
+    exponent = int(np.floor(e))
+    mantissa = x / (10 ** exponent)
+    return r'$%.1f \cdot 10^{%d}$' % (mantissa, exponent)
+
+
 # Create wavenumber grid
 k_max = 2.0  # rad/m
 k_res = 100
@@ -219,9 +228,12 @@ S_omega = np.array([jonswap(w) for w in omega_range])
 plt.figure(figsize=(8, 5), dpi=300)
 plt.plot(omega_range, S_omega)
 plt.xlabel(r'Dispersion $\omega\ \left[\frac{rad}{s}\right]$')
-plt.ylabel(r'$S(\omega)\ \left[\frac{m^2s}{rad}\right]$')
+plt.ylabel(r'$S(\omega)\ \left[\frac{m^2s}{rad}\right]$', labelpad=2)
 plt.title('JONSWAP Frequency Spectrum')
 plt.grid(True)
+ax = plt.gca()
+ax.yaxis.set_major_formatter(ticker.FuncFormatter(ten_pow_from_value))
+
 plt.show()
 
 # Plot 1D frequency spectrum segmented and colored
