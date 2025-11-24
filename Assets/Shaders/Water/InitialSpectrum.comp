@@ -27,12 +27,12 @@ layout(std140, binding = 0) uniform spectrumParams
     float _padding;
 } SpectrumParams;
 
-float calculateR(const float Omega, const float OmegaP)
+float calculateR(const float Omega)
 {
-    const float sigma = (Omega <= OmegaP) ? 0.07 : 0.09;
+    const float sigma = (Omega <= SpectrumParams.PeakWaveFrequency) ? 0.07 : 0.09;
 
-    const float numerator = Omega - OmegaP;
-    const float denominator = -2.0 * sigma * sigma * OmegaP * OmegaP;
+    const float numerator = Omega - SpectrumParams.PeakWaveFrequency;
+    const float denominator = -2.0 * sigma * sigma * SpectrumParams.PeakWaveFrequency * SpectrumParams.PeakWaveFrequency;
 
     return exp(numerator * numerator / denominator);
 }
@@ -81,7 +81,7 @@ float CalculateSwellDirectionalSpread(const float WindBias, const float ROmega)
 
 float Jonswap(const float omega)
 {
-    const float r = calculateR(omega, SpectrumParams.PeakWaveFrequency);
+    const float r = calculateR(omega);
 
     const float omega2 = omega * omega;
     const float omega5 = omega2 * omega2 * omega;
@@ -90,7 +90,7 @@ float Jonswap(const float omega)
     const float omegaPByOmega2 = omegaPByOmega * omegaPByOmega;
     const float omegaPByOmega4 = omegaPByOmega2 * omegaPByOmega2;
 
-    return SpectrumParams.Alpha * G2 / (omega5 * 16.0 * PI * PI * PI * PI) * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
+    return SpectrumParams.Alpha * G2 / omega5 * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
 }
 
 float CalculateNormalizationFactor(const float ROmega, const float Beta)
@@ -125,12 +125,13 @@ float DirectionalSpectrum(const vec2 WaveVector, const float Omega)
     return mix(1.0 / (2.0 * PI), finalSpectrum, SpectrumParams.Delta);
 }
 
-float CalculateInitialSpectrum(const vec2 WaveVector, const float K, const float CascadeLength)
+float CalculateInitialSpectrum(const vec2 WaveVector, const float K, const float CascadeLength, const float DeltaK)
 {
     const float omega = CalculateDispersion(K);
     const float frequencySpectrum = Jonswap(omega);
     const float directionalSpectrum = DirectionalSpectrum(WaveVector, omega);
-    return sqrt(max(4 * PI / (CascadeLength * K) * frequencySpectrum * directionalSpectrum * G / (2 * omega), 0.0));
+    const float OmegaDk = G / (2.0 * omega);
+    return sqrt(max((0.5 * frequencySpectrum * directionalSpectrum) * DeltaK * DeltaK * OmegaDk / K, 0.0));
 }
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
@@ -143,7 +144,8 @@ void main()
 
     const ivec2 textureCenter = ivec2(TextureResolution >> 1);
     const ivec2 waveCoords = pixelCoords - textureCenter;
-    const vec2 waveVector = (2.0 * PI * vec2(waveCoords)) / cascadeLength;
+    const float deltaK = (2.0 * PI) / cascadeLength;
+    const vec2 waveVector = vec2(waveCoords) * deltaK;
     const float k = length(waveVector);
 
     if (k < CascadeSettings[cascadeIndex].WaveLengthLowerBound || k >= CascadeSettings[cascadeIndex].WaveLengthUpperBound)
@@ -155,8 +157,8 @@ void main()
     const vec4 gaussSample = imageLoad(GaussianNoise, pixelCoords);
     const vec4 gaussSampleMirror = imageLoad(GaussianNoise, ivec2(TextureResolution - pixelCoords));
 
-    const vec2 h0 = gaussSample.rg * CalculateInitialSpectrum(waveVector, k, cascadeLength);
-    vec2 h0Star = gaussSampleMirror.rg * CalculateInitialSpectrum(-waveVector, k, cascadeLength);
+    const vec2 h0 = gaussSample.rg * CalculateInitialSpectrum(waveVector, k, cascadeLength, deltaK);
+    vec2 h0Star = gaussSampleMirror.rg * CalculateInitialSpectrum(-waveVector, k, cascadeLength, deltaK);
     h0Star.y = -h0Star.y;
 
     imageStore(Output, ivec3(pixelCoords, cascadeIndex), vec4(h0, h0Star));

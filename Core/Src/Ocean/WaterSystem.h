@@ -219,7 +219,7 @@ namespace Core
             const glm::vec2 WindVelocity, const float Fetch,
             const float Gravity)
         {
-            return 22.0f * Gravity * Gravity / (glm::length(WindVelocity) * Fetch);
+            return 22.0f * std::powf(Gravity * Gravity / (glm::length(WindVelocity) * Fetch), 1.0f / 3.0f);
         }
 
     public:
