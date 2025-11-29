@@ -276,7 +276,7 @@ namespace Core
         float delta = objectSpeed < 1.0f ? 0.999f * DeltaTime : 0.999f * DeltaTime * objectSpeed;
         const float waveMaskPhysicalSize = std::clamp(
             delta * static_cast<float>(WaterEffectorComponent.TexturesResolution),
-            2.0f * boundsDiagonal, MaxDynamicWaveFieldSize);
+            5.0f * boundsDiagonal, MaxDynamicWaveFieldSize);
         delta = waveMaskPhysicalSize / static_cast<float>(WaterEffectorComponent.TexturesResolution);
 
         if (WaterEffectorComponent.PreviousInteractiveWavesFieldSizes[0] == 0.0f)
