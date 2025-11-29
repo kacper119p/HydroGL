@@ -6,12 +6,17 @@
 
 namespace Application
 {
-    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowSystemInfo, bool& ShowTextureViewer)
+    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowFoamSettings, bool& ShowSystemInfo,
+                           bool& ShowTextureViewer)
     {
         ImGui::BeginMainMenuBar();
         if (ImGui::Button("Spectrum Settings"))
         {
             ShowSpectrumSettings = !ShowSpectrumSettings;
+        }
+        if (ImGui::Button("Foam Settings"))
+        {
+            ShowFoamSettings = !ShowFoamSettings;
         }
         if (ImGui::Button("System Info"))
         {

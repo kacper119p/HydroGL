@@ -3,6 +3,7 @@
 #include <imgui.h>
 
 #include "ImGuiContext.h"
+#include "Gui/FoamSettingsWindow.h"
 #include "Gui/GuiTopBar.h"
 #include "Gui/SpectrumSettingsWindow.h"
 #include "Gui/SystemInfoWindow.h"
@@ -38,10 +39,14 @@ namespace Application
         Platform::ImGuiContext::ImGuiBeginFrame();
         if (_showGui)
         {
-            GuiTopBar::Render(_showSpectrumSettings, _showSystemInfo, _showTextureViewer);
+            GuiTopBar::Render(_showSpectrumSettings, _showFoamSettings, _showSystemInfo, _showTextureViewer);
             if (_showSpectrumSettings)
             {
                 SpectrumSettingsWindow::Render(_showSpectrumSettings, *_waterSystem);
+            }
+            if (_showFoamSettings)
+            {
+                FoamSettingsWindow::Render(_showFoamSettings, *_waterSystem);
             }
             if (_showSystemInfo)
             {

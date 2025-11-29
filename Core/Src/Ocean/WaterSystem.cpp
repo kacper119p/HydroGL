@@ -21,9 +21,9 @@ namespace Core
         constexpr float DefaultDelta = 1.0f;
         constexpr float DefaultSwell = 0.0f;
 
-        constexpr float DefaultFoamThreshold = 0.8f;
+        constexpr float DefaultFoamThreshold = 0.9f;
         constexpr float DefaultFoamExponent = 1.0f;
-        constexpr float DefaultFoamIntensity = 5.0f;
+        constexpr float DefaultFoamIntensity = 2.0f;
     }
 
     WaterSystem::WaterShaderUniformLocations::WaterShaderUniformLocations(const Shader WaterShader)
@@ -353,8 +353,7 @@ namespace Core
 
     void WaterSystem::SentFoamMaskSettingsToGpu() const
     {
-        constexpr int64_t decayRateOffset = offsetof(FoamMaskShaderUniforms, FoamMaskShaderUniforms::FoamThreshold);
-        glNamedBufferSubData(_initialSpectrumSettingsUbo, decayRateOffset,
+        glNamedBufferSubData(_foamMaskSettingsUbo, 0,
                              static_cast<int64_t>(sizeof(_initialSpectrumSettingsBufferData)),
                              &_foamUniformBufferData);
     }

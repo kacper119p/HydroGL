@@ -15,6 +15,7 @@ namespace Application
         Platform::Input::CallbackId _showGuiCallbackId = 0;
         bool _showGui = true;
         bool _showSpectrumSettings = false;
+        bool _showFoamSettings = false;
         bool _showSystemInfo = false;
         bool _showTextureViewer = false;
 

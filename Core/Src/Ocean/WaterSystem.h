@@ -283,6 +283,39 @@ namespace Core
         }
 
     public:
+        void SetFoamThreshold(const float FoamThreshold)
+        {
+            _foamUniformBufferData.FoamThreshold = FoamThreshold;
+            SentFoamMaskSettingsToGpu();
+        }
+
+        [[nodiscard]] float GetFoamThreshold() const
+        {
+            return _foamUniformBufferData.FoamThreshold;
+        }
+
+        void SetFoamExponent(const float FoamExponent)
+        {
+            _foamUniformBufferData.FoamExponent = FoamExponent;
+            SentFoamMaskSettingsToGpu();
+        }
+
+        [[nodiscard]] float GetFoamExponent() const
+        {
+            return _foamUniformBufferData.FoamExponent;
+        }
+
+        void SetFoamIntensity(const float FoamIntensity)
+        {
+            _foamUniformBufferData.FoamIntensity = FoamIntensity;
+            SentFoamMaskSettingsToGpu();
+        }
+
+        [[nodiscard]] float GetFoamIntensity() const
+        {
+            return _foamUniformBufferData.FoamIntensity;
+        }
+
         void SetWindVelocity(const glm::vec2 WindVelocity)
         {
             _initialSpectrumSettingsBufferData.WindVelocity = WindVelocity;

@@ -10,7 +10,7 @@
 
 namespace Application
 {
-    void SystemInfoWindow::Render(bool& ShowSystemInfo, uint32_t WindowWidth, uint32_t WindowHeight)
+    void SystemInfoWindow::Render(bool& ShowSystemInfo, const uint32_t WindowWidth, const uint32_t WindowHeight)
     {
         constexpr ImGuiWindowFlags windowFlags =
                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize |
