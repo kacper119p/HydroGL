@@ -1,6 +1,6 @@
-#version 460
+#version 460 core
 
-#include "TriangleProperties.glsl"
+#include "WaterInteractionStructs.glsl"
 
 layout(std430, binding = 0) readonly restrict buffer InputBuffer
 {

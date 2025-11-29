@@ -22,12 +22,10 @@ namespace Core
         {
         }
 
-        Shader(const Shader& Other) noexcept : _id(Other._id)
-        {
-        }
+        Shader(const Shader& Other) noexcept = default;
 
     public:
-        [[nodiscard]] static glm::ivec3 GetComputeShaderWorkGroupSize(const Shader& Shader)
+        [[nodiscard]] glm::ivec3 GetComputeShaderWorkGroupSize(const Shader& Shader)
         {
             int localWorkGroupSize[3];
             glGetProgramiv(Shader.GetId(), GL_COMPUTE_WORK_GROUP_SIZE, localWorkGroupSize);
@@ -71,9 +69,9 @@ namespace Core
             return glGetUniformLocation(_id, Name);
         }
 
-        static void SetUniform(const int32_t UniformId, const float Value)
+        void SetUniform(const int32_t UniformId, const float Value) const
         {
-            glUniform1f(UniformId, Value);
+            glProgramUniform1f(_id, UniformId, Value);
         }
 
         void SetUniform(const char* const Name, const float Value) const
@@ -81,9 +79,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::vec2& Value)
+        void SetUniform(const int32_t UniformId, const glm::vec2& Value) const
         {
-            glUniform2f(UniformId, Value.x, Value.y);
+            glProgramUniform2f(_id, UniformId, Value.x, Value.y);
         }
 
         void SetUniform(const char* const Name, const glm::vec2& Value) const
@@ -91,9 +89,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::vec3& Value)
+        void SetUniform(const int32_t UniformId, const glm::vec3& Value) const
         {
-            glUniform3f(UniformId, Value.x, Value.y, Value.z);
+            glProgramUniform3f(_id, UniformId, Value.x, Value.y, Value.z);
         }
 
         void SetUniform(const char* const Name, const glm::vec3& Value) const
@@ -101,9 +99,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::vec4& Value)
+        void SetUniform(const int32_t UniformId, const glm::vec4& Value) const
         {
-            glUniform4f(UniformId, Value.x, Value.y, Value.z, Value.w);
+            glProgramUniform4f(_id, UniformId, Value.x, Value.y, Value.z, Value.w);
         }
 
         void SetUniform(const char* const Name, const glm::vec4& Value) const
@@ -111,9 +109,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const int32_t Value)
+        void SetUniform(const int32_t UniformId, const int32_t Value) const
         {
-            glUniform1i(UniformId, Value);
+            glProgramUniform1i(_id, UniformId, Value);
         }
 
         void SetUniform(const char* const Name, const int32_t Value) const
@@ -121,9 +119,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::ivec2& Value)
+        void SetUniform(const int32_t UniformId, const glm::ivec2& Value) const
         {
-            glUniform2i(UniformId, Value.x, Value.y);
+            glProgramUniform2i(_id, UniformId, Value.x, Value.y);
         }
 
         void SetUniform(const char* const Name, const glm::ivec2& Value) const
@@ -131,9 +129,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::ivec3& Value)
+        void SetUniform(const int32_t UniformId, const glm::ivec3& Value) const
         {
-            glUniform3i(UniformId, Value.x, Value.y, Value.z);
+            glProgramUniform3i(_id, UniformId, Value.x, Value.y, Value.z);
         }
 
         void SetUniform(const char* const Name, const glm::ivec3& Value) const
@@ -141,9 +139,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::ivec4& Value)
+        void SetUniform(const int32_t UniformId, const glm::ivec4& Value) const
         {
-            glUniform4i(UniformId, Value.x, Value.y, Value.z, Value.w);
+            glProgramUniform4i(_id, UniformId, Value.x, Value.y, Value.z, Value.w);
         }
 
         void SetUniform(const char* const Name, const glm::ivec4& Value) const
@@ -151,9 +149,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const bool Value)
+        void SetUniform(const int32_t UniformId, const bool Value) const
         {
-            glUniform1i(UniformId, static_cast<int>(Value));
+            glProgramUniform1i(_id, UniformId, static_cast<int>(Value));
         }
 
         void SetUniform(const char* const Name, const bool Value) const
@@ -161,9 +159,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const uint32_t Value)
+        void SetUniform(const int32_t UniformId, const uint32_t Value) const
         {
-            glUniform1ui(UniformId, Value);
+            glProgramUniform1ui(_id, UniformId, Value);
         }
 
         void SetUniform(const char* const Name, const uint32_t Value) const
@@ -171,9 +169,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::uvec2 Value)
+        void SetUniform(const int32_t UniformId, const glm::uvec2 Value) const
         {
-            glUniform2ui(UniformId, Value.x, Value.y);
+            glProgramUniform2ui(_id, UniformId, Value.x, Value.y);
         }
 
         void SetUniform(const char* const Name, const glm::uvec2& Value) const
@@ -181,9 +179,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::uvec3& Value)
+        void SetUniform(const int32_t UniformId, const glm::uvec3& Value) const
         {
-            glUniform3ui(UniformId, Value.x, Value.y, Value.z);
+            glProgramUniform3ui(_id, UniformId, Value.x, Value.y, Value.z);
         }
 
         void SetUniform(const char* const Name, const glm::uvec3& Value) const
@@ -191,9 +189,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::uvec4& Value)
+        void SetUniform(const int32_t UniformId, const glm::uvec4& Value) const
         {
-            glUniform4ui(UniformId, Value.x, Value.y, Value.z, Value.w);
+            glProgramUniform4ui(_id, UniformId, Value.x, Value.y, Value.z, Value.w);
         }
 
         void SetUniform(const char* const Name, const glm::uvec4& Value) const
@@ -201,9 +199,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat2& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat2& Value) const
         {
-            glUniformMatrix2fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix2fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat2& Value) const
@@ -211,9 +209,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat2x3& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat2x3& Value) const
         {
-            glUniformMatrix2x3fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix2x3fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat2x3& Value) const
@@ -226,9 +224,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat2x4& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat2x4& Value) const
         {
-            glUniformMatrix2x4fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix2x4fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat3& Value) const
@@ -236,9 +234,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat3& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat3& Value) const
         {
-            glUniformMatrix3fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix3fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat3x2& Value) const
@@ -246,9 +244,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat3x2& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat3x2& Value) const
         {
-            glUniformMatrix3x2fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix3x2fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat3x4& Value) const
@@ -256,14 +254,14 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat3x4& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat3x4& Value) const
         {
-            glUniformMatrix3x4fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix3x4fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat4& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat4& Value) const
         {
-            glUniformMatrix4fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix4fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat4& Value) const
@@ -271,39 +269,39 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniformArray(const int32_t UniformId, const float* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const float* Array, const int32_t Count) const
         {
-            glUniform1fv(UniformId, Count, Array);
+            glProgramUniform1fv(_id, UniformId, Count, Array);
         }
 
         void SetUniformArray(const char* const Name, const float* Array, const int32_t Count) const
         {
-            glUniform1fv(GetUniformLocation(Name), Count, Array);
+            glProgramUniform1fv(_id, GetUniformLocation(Name), Count, Array);
         }
 
-        static void SetUniformArray(const int32_t UniformId, const int32_t* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const int32_t* Array, const int32_t Count) const
         {
-            glUniform1iv(UniformId, Count, Array);
+            glProgramUniform1iv(_id, UniformId, Count, Array);
         }
 
         void SetUniformArray(const char* const Name, const int32_t* Array, const int32_t Count) const
         {
-            glUniform1iv(GetUniformLocation(Name), Count, Array);
+            glProgramUniform1iv(_id, GetUniformLocation(Name), Count, Array);
         }
 
-        static void SetUniformArray(const int32_t UniformId, const uint32_t* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const uint32_t* Array, const int32_t Count) const
         {
-            glUniform1uiv(UniformId, Count, Array);
+            glProgramUniform1uiv(_id, UniformId, Count, Array);
         }
 
         void SetUniformArray(const char* const Name, const uint32_t* Array, const int32_t Count) const
         {
-            glUniform1uiv(GetUniformLocation(Name), Count, Array);
+            glProgramUniform1uiv(_id, GetUniformLocation(Name), Count, Array);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat4x2& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat4x2& Value) const
         {
-            glUniformMatrix4x2fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix4x2fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat4x2& Value) const
@@ -311,9 +309,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniform(const int32_t UniformId, const glm::mat4x3& Value)
+        void SetUniform(const int32_t UniformId, const glm::mat4x3& Value) const
         {
-            glUniformMatrix4x3fv(UniformId, 1, false, glm::value_ptr(Value));
+            glProgramUniformMatrix4x3fv(_id, UniformId, 1, false, glm::value_ptr(Value));
         }
 
         void SetUniform(const char* const Name, const glm::mat4x3& Value) const
@@ -321,9 +319,9 @@ namespace Core
             SetUniform(GetUniformLocation(Name), Value);
         }
 
-        static void SetTextureHandle(const int32_t UniformId, const uint64_t Value)
+        void SetTextureHandle(const int32_t UniformId, const uint64_t Value) const
         {
-            glUniformHandleui64ARB(UniformId, Value);
+            glProgramUniformHandleui64ARB(_id, UniformId, Value);
         }
 
         void SetTextureHandle(const char* const Name, const uint64_t Value) const
@@ -331,195 +329,195 @@ namespace Core
             SetTextureHandle(GetUniformLocation(Name), Value);
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::vec2* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::vec2* Array, const int32_t Count) const
         {
-            glUniform2fv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform2fv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::vec2* Array, const int32_t Count) const
         {
-            glUniform2fv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform2fv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::vec3* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::vec3* Array, const int32_t Count) const
         {
-            glUniform3fv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform3fv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::vec3* Array, const int32_t Count) const
         {
-            glUniform3fv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform3fv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::vec4* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::vec4* Array, const int32_t Count) const
         {
-            glUniform4fv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform4fv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::vec4* Array, const int32_t Count) const
         {
-            glUniform4fv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform4fv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::ivec2* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::ivec2* Array, const int32_t Count) const
         {
-            glUniform2iv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform2iv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::ivec2* Array, const int32_t Count) const
         {
-            glUniform2iv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform2iv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::ivec3* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::ivec3* Array, const int32_t Count) const
         {
-            glUniform3iv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform3iv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::ivec3* Array, const int32_t Count) const
         {
-            glUniform3iv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform3iv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::ivec4* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::ivec4* Array, const int32_t Count) const
         {
-            glUniform4iv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform4iv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::ivec4* Array, const int32_t Count) const
         {
-            glUniform4iv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform4iv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::uvec2* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::uvec2* Array, const int32_t Count) const
         {
-            glUniform2uiv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform2uiv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::uvec2* Array, const int32_t Count) const
         {
-            glUniform2uiv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform2uiv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::uvec3* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::uvec3* Array, const int32_t Count) const
         {
-            glUniform3uiv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform3uiv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::uvec3* Array, const int32_t Count) const
         {
-            glUniform3uiv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform3uiv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::uvec4* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::uvec4* Array, const int32_t Count) const
         {
-            glUniform4uiv(UniformId, Count, glm::value_ptr(*Array));
+            glProgramUniform4uiv(_id, UniformId, Count, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::uvec4* Array, const int32_t Count) const
         {
-            glUniform4uiv(GetUniformLocation(Name), Count, glm::value_ptr(*Array));
+            glProgramUniform4uiv(_id, GetUniformLocation(Name), Count, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat2* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat2* Array, const int32_t Count) const
         {
-            glUniformMatrix2fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix2fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat2* Array, const int32_t Count) const
         {
-            glUniformMatrix2fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix2fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat2x3* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat2x3* Array, const int32_t Count) const
         {
-            glUniformMatrix2x3fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix2x3fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat2x3* Array, const int32_t Count) const
         {
-            glUniformMatrix2x3fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix2x3fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat2x4* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat2x4* Array, const int32_t Count) const
         {
-            glUniformMatrix2x4fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix2x4fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat2x4* Array, const int32_t Count) const
         {
-            glUniformMatrix2x4fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix2x4fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat3* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat3* Array, const int32_t Count) const
         {
-            glUniformMatrix3fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix3fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat3* Array, const int32_t Count) const
         {
-            glUniformMatrix3fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix3fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat3x2* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat3x2* Array, const int32_t Count) const
         {
-            glUniformMatrix3x2fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix3x2fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat3x2* Array, const int32_t Count) const
         {
-            glUniformMatrix3x2fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix3x2fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat3x4* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat3x4* Array, const int32_t Count) const
         {
-            glUniformMatrix3x4fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix3x4fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat3x4* Array, const int32_t Count) const
         {
-            glUniformMatrix3x4fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix3x4fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat4* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat4* Array, const int32_t Count) const
         {
-            glUniformMatrix4fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix4fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat4* Array, const int32_t Count) const
         {
-            glUniformMatrix4fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix4fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat4x2* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat4x2* Array, const int32_t Count) const
         {
-            glUniformMatrix4x2fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix4x2fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat4x2* Array, const int32_t Count) const
         {
-            glUniformMatrix4x2fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix4x2fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
-        static void SetUniformArray(const int32_t UniformId, const glm::mat4x3* Array, const int32_t Count)
+        void SetUniformArray(const int32_t UniformId, const glm::mat4x3* Array, const int32_t Count) const
         {
-            glUniformMatrix4x3fv(UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix4x3fv(_id, UniformId, Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
         void SetUniformArray(const char* const Name, const glm::mat4x3* Array, const int32_t Count) const
         {
-            glUniformMatrix4x3fv(GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
+            glProgramUniformMatrix4x3fv(_id, GetUniformLocation(Name), Count, GL_FALSE, glm::value_ptr(*Array));
         }
 
     public:
-        bool operator==(const Shader& Other) const
+        friend bool operator==(const Shader& Rhs, const Shader& Lhs)
         {
-            return Other._id == this->_id;
+            return Rhs._id == Lhs._id;
         }
 
-        bool operator!=(const Shader& Other) const
+        friend bool operator!=(const Shader& Rhs, const Shader& Lhs)
         {
-            return !(*this == Other);
+            return !(Rhs == Lhs);
         }
     };
 }

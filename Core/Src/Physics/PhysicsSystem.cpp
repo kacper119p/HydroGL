@@ -64,14 +64,15 @@ namespace Core
         return RigidbodyComponent(_jphPhysicsSystem->GetBodyInterface().CreateAndAddBody(creationSettings, Activation));
     }
 
-    void PhysicsSystem::AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force)
+    void PhysicsSystem::AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force) const
     {
         const JPH::BodyID bodyId = Rigidbody.GetBodyId();
         const JPH::Vec3 joltForce(Force.x, Force.y, Force.z);
         _jphPhysicsSystem->GetBodyInterface().AddForce(bodyId, joltForce);
     }
 
-    void PhysicsSystem::AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force, const glm::vec3& Position)
+    void PhysicsSystem::AddForce(const RigidbodyComponent& Rigidbody, const glm::vec3& Force,
+                                 const glm::vec3& Position) const
     {
         const JPH::BodyID bodyId = Rigidbody.GetBodyId();
         const JPH::Vec3 joltForce(Force.x, Force.y, Force.z);
@@ -102,7 +103,7 @@ namespace Core
 
     void PhysicsSystem::SyncTransforms(entt::registry& Registry) const
     {
-        const auto view = Registry.view<Core::TransformComponent, Core::RigidbodyComponent>();
+        const auto view = Registry.view<TransformComponent, RigidbodyComponent>();
 
         for (auto [entity, transformComponent, rigidbodyComponent] : view.each())
         {

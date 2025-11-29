@@ -101,6 +101,11 @@ namespace Core
             }
 
         public:
+            ~CascadeSettingsBuffer()
+            {
+                free(_buffer);
+            }
+
             [[nodiscard]] int32_t GetTextureResolution() const
             {
                 return _buffer->TextureResolution;
@@ -152,7 +157,7 @@ namespace Core
         static constexpr float Gravity = 9.80665f;
         static constexpr int32_t CascadeCount = 3;
         static constexpr int32_t TextureResolution = 512; // Must be power of 2
-        static constexpr int32_t VelocityLayers = 8;
+        static constexpr int32_t VelocityLayers = 8; // Must be multiple of 4
         static constexpr int32_t VelocityPackedTexturesCount = VelocityLayers * 3 / 4;
         static constexpr float VelocityMinHeight = -40.0f;
         static constexpr float VelocityMaxHeight = 0.0f;
@@ -177,9 +182,10 @@ namespace Core
         uint32_t _initialSpectrumTextures;
         uint32_t _hDzDxDfhxTextures;
         uint32_t _dfhzDfdxxDfdzxDfdzz;
-        uint32_t _velocityTextures;
+        uint32_t _velocityPackedTextures;
         uint32_t _slopeTextures;
         uint32_t _displacementTextures;
+        uint32_t _velocityTextures;
         uint32_t _tmpTextures;
         uint32_t _gaussianNoiseTexture;
 
@@ -193,8 +199,8 @@ namespace Core
         WaterSystem();
 
     private:
-        static uint32_t CreateTextureArray(int32_t Resolution, int32_t Layers, int32_t InternalFormat, int32_t Format,
-                                           int32_t Type, int32_t Filter, int32_t Wrap);
+        static uint32_t CreateTextureArray(int32_t Resolution, int32_t Layers, int32_t InternalFormat, int32_t Filter,
+                                           int32_t Wrap);
 
         static uint32_t CreateGaussianNoise(int32_t Resolution);
 
@@ -213,7 +219,7 @@ namespace Core
             const glm::vec2 WindVelocity, const float Fetch,
             const float Gravity)
         {
-            return 22.0f * Gravity * Gravity / (glm::length(WindVelocity) * Fetch);
+            return 22.0f * std::powf(Gravity * Gravity / (glm::length(WindVelocity) * Fetch), 1.0f / 3.0f);
         }
 
     public:
@@ -288,7 +294,8 @@ namespace Core
             return _cascadeSettingsSsbo;
         }
 
-        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera) const;
+        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera,
+                    uint32_t DynamicWavesSampleSsboId) const;
 
     private:
         void UpdateInitialSpectrum() const;

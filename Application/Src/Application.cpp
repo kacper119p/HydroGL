@@ -4,12 +4,12 @@
 #include "TimeManager.h"
 #include "Camera/CameraComponent.h"
 #include "Meshes/MeshManager.h"
+#include "Meshes/MeshUtility.h"
 #include "Ocean/Components/WaterEffectorComponent.h"
 #include "Physics/MeshColliderFactory.h"
 #include "Physics/PhysicsSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Components/RenderedMeshComponent.h"
-#include "Rendering/Shaders/ShaderBuilder.h"
 #include "Rendering/Textures/Texture.h"
 #include "Scene/TransformComponent.h"
 
@@ -47,6 +47,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
                                                         0.1f, 1000.0f);
 
     const Core::Mesh cubeMesh = Core::MeshManager::GetMesh("Assets/Meshes/Cube.fbx");
+    const float cubeVolume = Core::MeshUtility::CalculateMeshVolume(cubeMesh);
     JPH::RefConst<JPH::Shape> colliderShape = Core::MeshColliderFactory::CreateConvexHullCollider(
         cubeMesh, 750.0f);
 
@@ -61,22 +62,24 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     Core::Mesh mesh = Core::MeshManager::GetMesh("Assets/Meshes/Box.fbx");
 
-    for (int32_t i = -2; i <= 2; ++i)
+    for (int32_t i = -0; i <= 0; ++i)
     {
-        for (int32_t j = -2; j <= 2; ++j)
+        for (int32_t j = -0; j <= 0; ++j)
         {
             const entt::entity boxEntity = entityRegistry->create();
+
+            const glm::vec3 position(static_cast<float>(i) * 3.0f, 0.0f,
+                                     static_cast<float>(j) * 3.0f);
 
             Core::TransformComponent& boxTransform = entityRegistry->emplace<Core::TransformComponent>(boxEntity);
             Core::RenderedMeshComponent& boxRenderedMesh = entityRegistry->emplace<Core::RenderedMeshComponent>(
                 boxEntity);
             Core::WaterEffectorComponent& boxWaterEffector = entityRegistry->emplace<Core::WaterEffectorComponent>(
-                boxEntity, cubeMesh);
+                boxEntity, cubeMesh, position, cubeVolume, 0.25, -0.25f, 0.05f, 512);
 
             boxRenderedMesh.Mesh = mesh;
             boxRenderedMesh.Material = material;
-            boxTransform.SetWorldPosition(glm::vec3(static_cast<float>(i) * 3.0f, 0.0f,
-                                                    static_cast<float>(j) * 3.0f));
+            boxTransform.SetWorldPosition(position);
 
             Core::RigidbodyComponent boxRigidbodyComponent = engine->GetPhysicsSystem()->CreateRigidbodyComponent(
                 boxTransform, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
@@ -107,15 +110,15 @@ int32_t Application::Application::Run(Platform::Window* Window)
         physicsAccumulatedTime += deltaTime;
         while (physicsAccumulatedTime >= PhysicsTimeStep)
         {
-            engine->GetBuoyancySystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
-                                                       engine->GetWaterSystem()->GetDisplacementTextures(),
-                                                       engine->GetWaterSystem()->GetWindVelocity(),
-                                                       engine->GetWaterSystem()->GetVelocityTextures(),
-                                                       engine->GetWaterSystem()->GetCascadeSettingsSsbo());
+            engine->GetWaterInteractionSystem()->ProcessMeshes(*engine->GetScene(), *engine->GetPhysicsSystem(),
+                                                               engine->GetWaterSystem()->GetDisplacementTextures(),
+                                                               engine->GetWaterSystem()->GetWindVelocity(),
+                                                               engine->GetWaterSystem()->GetVelocityTextures(),
+                                                               engine->GetWaterSystem()->GetCascadeSettingsSsbo(),
+                                                               PhysicsTimeStep);
             engine->GetPhysicsSystem()->Step(*entityRegistry, PhysicsTimeStep);
             physicsAccumulatedTime -= PhysicsTimeStep;
         }
-
         _cameraManager->Update(*scene, deltaTime);
 
         engine->GetRenderer()->RenderFrame(*engine, deltaTime);

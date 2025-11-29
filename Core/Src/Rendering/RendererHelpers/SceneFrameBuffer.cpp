@@ -4,11 +4,11 @@ namespace Core
 {
     SceneFrameBuffer::SceneFrameBuffer(const glm::ivec2& Resolution) : _resolution(Resolution)
     {
-        glGenFramebuffers(1, &_multiSampledId);
-        glGenFramebuffers(1, &_resolvedId);
-        glGenTextures(1, &_colorBuffer);
-        glGenTextures(1, &_resolvedColorBuffer);
-        glGenRenderbuffers(1, &_depthStencilBuffer);
+        glCreateFramebuffers(1, &_multiSampledId);
+        glCreateFramebuffers(1, &_resolvedId);
+        glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &_colorBuffer);
+        glCreateTextures(GL_TEXTURE_2D, 1, &_resolvedColorBuffer);
+        glCreateRenderbuffers(1, &_depthStencilBuffer);
         UpdateBuffers();
     }
 
@@ -31,34 +31,24 @@ namespace Core
 
     void SceneFrameBuffer::UpdateBuffers() const
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, _multiSampledId);
+        glTextureStorage2DMultisample(_colorBuffer, Samples, GL_RGBA16F, _resolution.x, _resolution.y, GL_TRUE);
+        glNamedFramebufferTexture(_multiSampledId, GL_COLOR_ATTACHMENT0, _colorBuffer, 0);
 
-        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, _colorBuffer);
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, Samples, GL_RGBA16F, _resolution.x, _resolution.y, GL_TRUE);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, _colorBuffer, 0);
+        glNamedRenderbufferStorageMultisample(_depthStencilBuffer, Samples, GL_DEPTH24_STENCIL8, _resolution.x,
+                                              _resolution.y);
+        glNamedFramebufferRenderbuffer(_multiSampledId, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
+                                       _depthStencilBuffer);
 
         constexpr GLenum attachments[1] = {GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, attachments);
+        glNamedFramebufferDrawBuffers(_multiSampledId, 1, attachments);
 
-        glBindRenderbuffer(GL_RENDERBUFFER, _depthStencilBuffer);
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, Samples, GL_DEPTH24_STENCIL8, _resolution.x, _resolution.y);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _depthStencilBuffer);
+        glTextureStorage2D(_resolvedColorBuffer, 1, GL_RGBA16F, _resolution.x, _resolution.y);
+        glTextureParameteri(_resolvedColorBuffer, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(_resolvedColorBuffer, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(_resolvedColorBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(_resolvedColorBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-
-        glBindFramebuffer(GL_FRAMEBUFFER, _resolvedId);
-
-        glBindTexture(GL_TEXTURE_2D, _resolvedColorBuffer);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _resolution.x, _resolution.y, 0, GL_RGBA, GL_FLOAT, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _resolvedColorBuffer, 0);
-
-        glDrawBuffers(1, attachments);
-
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glNamedFramebufferTexture(_resolvedId, GL_COLOR_ATTACHMENT0, _resolvedColorBuffer, 0);
+        glNamedFramebufferDrawBuffers(_resolvedId, 1, attachments);
     }
 }

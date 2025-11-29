@@ -4,8 +4,10 @@
 
 layout (binding = 0, rgba32f) readonly uniform image2DArray HDzDxDfhx;
 layout (binding = 1, rgba32f) readonly uniform image2DArray DfhzDfdxxDfdzxDfdzz;
+layout (binding = 2, rgba32f) readonly uniform image2DArray VelocityPacked;
 layout (binding = 3, rgba32f) writeonly uniform image2DArray SlopeTextures;
 layout (binding = 4, rgba32f) writeonly uniform image2DArray DisplacementTexture;
+layout (binding = 5, rgba32f) writeonly uniform image2DArray Velocity;
 
 layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
 {
@@ -45,4 +47,33 @@ void main()
 
     imageStore(SlopeTextures, sampleCoords, vec4(slope, JacobianDerivatives.xy));
     imageStore(DisplacementTexture, sampleCoords, vec4(displacement, JacobianDerivatives.z));
+
+    const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
+
+
+    const int velocityPackedBaseIndex = cascadeIndex * velocityPackedTextureCount;
+
+
+    const int velocityBaseIndex = cascadeIndex * VelocityLayers;
+
+    for (int i = 0; i < velocityPackedTextureCount; i += 3)
+    {
+        const int readBaseIndex = velocityPackedBaseIndex + i;
+        const vec4 packedVelocity0 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex)) * phaseCorrection;
+        const vec4 packedVelocity1 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex + 1)) * phaseCorrection;
+        const vec4 packedVelocity2 = imageLoad(VelocityPacked, ivec3(pixelCoords, readBaseIndex + 2)) * phaseCorrection;
+
+        const vec3 velocity0 = packedVelocity0.xyz;// (vx0, vy0, vz0)
+        const vec3 velocity1 = vec3(packedVelocity0.w, packedVelocity1.xy);// (vx1, vy1, vz1)
+        const vec3 velocity2 = vec3(packedVelocity1.zw, packedVelocity2.x);// (vx2, vy2, vz2)
+        const vec3 velocity3 = packedVelocity2.yzw;// (vx3, vy3, vz3)
+
+        const int baseWriteIndex = velocityBaseIndex + i * 4 / 3;
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex), vec4(velocity0, 0.0));
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 1), vec4(velocity1, 0.0));
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 2), vec4(velocity2, 0.0));
+        imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 3), vec4(velocity3, 0.0));
+
+
+    }
 }

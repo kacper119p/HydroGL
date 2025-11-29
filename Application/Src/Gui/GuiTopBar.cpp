@@ -6,7 +6,7 @@
 
 namespace Application
 {
-    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowSystemInfo)
+    void GuiTopBar::Render(bool& ShowSpectrumSettings, bool& ShowSystemInfo, bool& ShowTextureViewer)
     {
         ImGui::BeginMainMenuBar();
         if (ImGui::Button("Spectrum Settings"))
@@ -17,6 +17,12 @@ namespace Application
         {
             ShowSystemInfo = !ShowSystemInfo;
         }
+        if (ImGui::Button("Texture Viewer"))
+        {
+            ShowTextureViewer = !ShowTextureViewer;
+        }
+
+        ImGui::Text("Press [H] to toggle GUI");
 
         const std::string rightText = std::format("Application average: {:.3f} ms/frame({:.1f} FPS)",
                                                   1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

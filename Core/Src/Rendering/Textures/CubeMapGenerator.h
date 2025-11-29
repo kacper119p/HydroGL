@@ -28,7 +28,7 @@ namespace Core
     private:
         static void InitializeFbo(uint32_t& Fbo);
 
-        static void InitializeCubeMap(uint32_t& CubeMap, uint32_t Resolution);
+        static void InitializeCubeMap(uint32_t& CubeMap, uint32_t Resolution, int32_t MipCount);
 
         static void InitializeViewPort(uint32_t Resolution);
 

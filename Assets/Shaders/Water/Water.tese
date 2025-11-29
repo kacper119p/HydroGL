@@ -1,4 +1,5 @@
 #version 460 core
+#extension GL_ARB_bindless_texture : enable
 
 #include "WaterCommon.glsl"
 
@@ -22,6 +23,20 @@ layout(std430, binding = 0) readonly  restrict buffer CascadeSettingsBuffer
     cascadeSettings CascadeSettings[];
 };
 
+struct dynamicWaveSampleParameters
+{
+    vec3 ObjectPosition;
+    float WaveFieldSize;
+    layout(bindless_sampler) sampler2D WaveFieldTexture;
+};
+
+layout(std430, binding = 1) readonly restrict buffer DynamicWavesBuffer
+{
+    int DynamicWavesCount;
+    float Padding[3];
+    dynamicWaveSampleParameters Waves[];
+} dynamicWavesBuffer;
+
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 
 
@@ -34,17 +49,24 @@ void main()
     const vec3 p1 = mix(tcPosition[3], tcPosition[2], u);
     const vec3 position = mix(p0, p1, v);
 
-    vec3 displacement = vec3(0.0);
-
+    vec3 tessendorfDisplacement = vec3(0.0);
     for (int i = 0; i < CascadeCount; ++i)
     {
         const vec2 texCoord = vec2(position.x, position.z) / CascadeSettings[i].Length;
-        displacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
+        tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
     }
-    vec3 finalPosition = position + displacement;
+    vec3 tessendorfPosition = position + tessendorfDisplacement;
 
+    vec3 dynamicDisplacement = vec3(0.0);
+    for (int i = 0; i < dynamicWavesBuffer.DynamicWavesCount; ++i)
+    {
+        const vec2 waveLocalPosition =  dynamicWavesBuffer.Waves[i].ObjectPosition.xz - tessendorfPosition.xz;
+        const vec2 waveTexCoord = waveLocalPosition / dynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
+        dynamicDisplacement.y += texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+    }
+    
     OriginalPosition = position;
-    DisplacedPosition = finalPosition;
+    DisplacedPosition = tessendorfPosition;
 
-    gl_Position = ProjectionMatrix * ViewMatrix * vec4(finalPosition, 1.0);
+    gl_Position = ProjectionMatrix * ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
 }

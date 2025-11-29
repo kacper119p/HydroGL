@@ -1,4 +1,5 @@
 #version 460 core
+#extension GL_ARB_bindless_texture : enable
 
 #include "WaterCommon.glsl"
 #include "Normal.glsl"
@@ -25,6 +26,20 @@ layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
     float Padding[3];
     cascadeSettings CascadeSettings[];
 };
+
+struct dynamicWaveSampleParameters
+{
+    vec3 ObjectPosition;
+    float WaveFieldSize;
+    layout(bindless_sampler) sampler2D WaveFieldTexture;
+};
+
+layout(std430, binding = 1) readonly restrict buffer dynamicWavesBuffer
+{
+    int DynamicWavesCount;
+    float Padding[3];
+    dynamicWaveSampleParameters Waves[];
+} DynamicWavesBuffer;
 
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 layout (binding = 4) uniform sampler2DArray SlopeMaps;
@@ -60,7 +75,23 @@ void main()
     float metallic = mix(0.05, 0.0, foamMask);
     float roughness = mix(0.5, 1.0, foamMask);
 
-    const vec3 normal = NormalFromSlope(slope);
+    vec2 dynamicSlope = vec2(0.0);
+    float hC;
+    for (int i = 0; i < DynamicWavesBuffer.DynamicWavesCount; ++i)
+    {
+        const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
+        const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
+        float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
+
+        //float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
+        float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
+
+        vec2 dh = vec2((hX - hC) / texel, (hY - hC) / texel);
+        dynamicSlope += dh;
+    }
+    const vec3 normal = NormalFromSlope(slope + dynamicSlope);
 
     vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
     //vec3 color = CalculateLight(vec3(1.0, 1.0, 1.0), 0.0, 1.0, geometryNormal, DisplacedPosition, ViewDirection, 1.0);
@@ -69,6 +100,7 @@ void main()
     //vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.5, geometryNormal, DisplacedPosition, ViewDirection, 1.0);
 
     FragColor = vec4(color, 1.0);
+    //FragColor = vec4(hC, 0.0, 0.0, 1.0);
     // FragColor = vec4(vec3((1.0 - clamp(0.0, 1.0, abs(dot(normal, geometryNormal))))) * 100000.0, 1.0);
     //FragColor = vec4(normal, 1.0);
     //FragColor = vec4(texture(DisplacementMap, TexCoord).rgb + 0.1, 1.0);

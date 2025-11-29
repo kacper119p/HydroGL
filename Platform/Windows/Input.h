@@ -32,16 +32,19 @@ namespace Platform
         using MovementCallback = std::function<void(float, float)>;
         using CameraRotationCallback = std::function<void(float, float)>;
         using CameraDragCallback = std::function<void(bool)>;
+        using ShowGuiCallback = std::function<void(bool)>;
 
     private:
         static std::vector<std::pair<CallbackId, MovementCallback>> _movementCallbacks;
         static std::vector<std::pair<CallbackId, CameraRotationCallback>> _cameraRotationCallbacks;
         static std::vector<std::pair<CallbackId, CameraDragCallback>> _cameraDragCallbacks;
+        static std::vector<std::pair<CallbackId, ShowGuiCallback>> _showGuiCallbacks;
         static CallbackId _nextCallbackId;
 
         static float _inputX;
         static float _inputY;
         static bool _isCameraDragging;
+        static bool _isShowingGui;
 
         static bool _wPressed;
         static bool _aPressed;
@@ -72,7 +75,6 @@ namespace Platform
                                                          {
                                                              return Pair.first == Id;
                                                          }).begin();
-            _movementCallbacks.erase(iterator, _movementCallbacks.end());
         }
 
         static CallbackId SubscribeToCameraRotationEvent(const CameraRotationCallback& Callback)
@@ -88,7 +90,6 @@ namespace Platform
                                                          {
                                                              return Pair.first == Id;
                                                          }).begin();
-            _cameraRotationCallbacks.erase(iterator, _cameraRotationCallbacks.end());
         }
 
         static CallbackId SubscribeToCameraDragEvent(const CameraDragCallback& Callback)
@@ -104,7 +105,21 @@ namespace Platform
                                                    {
                                                        return Pair.first == Id;
                                                    }).begin();
-            _cameraDragCallbacks.erase(it, _cameraDragCallbacks.end());
+        }
+
+        static CallbackId SubscribeToShowGuiEvent(const ShowGuiCallback& Callback)
+        {
+            _showGuiCallbacks.emplace_back(++_nextCallbackId, Callback);
+            return _nextCallbackId;
+        }
+
+        static void UnsubscribeToShowGuiEvent(CallbackId Id)
+        {
+            const auto it = std::ranges::remove_if(_showGuiCallbacks,
+                                                   [Id](const auto& Pair)
+                                                   {
+                                                       return Pair.first == Id;
+                                                   }).begin();
         }
 
         static void DispatchMovementEvent(KeyboardButton Button, ButtonEventType Type);
@@ -112,6 +127,8 @@ namespace Platform
         static void DispatchCameraRotationEvent(float DeltaX, float DeltaY);
 
         static void DispatchCameraDragEvent(bool IsDragging);
+
+        static void DispatchShowGuiEvent();
 
         static void StopMovement();
     };

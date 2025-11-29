@@ -60,6 +60,9 @@ namespace Platform
                     case 'D':
                         Input::DispatchMovementEvent(Input::KeyboardButton::D, Input::ButtonEventType::KeyPressed);
                         break;
+                    case 'H':
+                        Input::DispatchShowGuiEvent();
+                        break;
                     default:
                         break;
                 }

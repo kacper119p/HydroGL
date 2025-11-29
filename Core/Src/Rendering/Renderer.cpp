@@ -41,11 +41,17 @@ namespace Core
                                                        _frameBuffer(Resolution),
                                                        _bloomPostprocessingEffect(Resolution)
     {
-        glGenBuffers(1, &IndirectDrawCommandsSsbo);
-        glGenBuffers(1, &TransformsSsbo);
-        glGenBuffers(1, &_lightsSsbo);
-        _indirectDrawCommands.resize(1024);
-        _transformMatrices.resize(1024);
+        constexpr int32_t defaultBufferSize = 1024;
+        glCreateBuffers(1, &IndirectDrawCommandsSsbo);
+        glCreateBuffers(1, &TransformsSsbo);
+        glCreateBuffers(1, &_lightsSsbo);
+        _indirectDrawCommands.resize(defaultBufferSize);
+        _transformMatrices.resize(defaultBufferSize);
+        glNamedBufferData(IndirectDrawCommandsSsbo,
+                          static_cast<GLsizeiptr>(defaultBufferSize * sizeof(DrawElementsIndirectCommand)),
+                          _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+        glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(defaultBufferSize * sizeof(glm::mat4)),
+                          _transformMatrices.data(), GL_DYNAMIC_DRAW);
     }
 
     Renderer::~Renderer()
@@ -95,6 +101,11 @@ namespace Core
         {
             _indirectDrawCommands.resize(countHint);
             _transformMatrices.resize(countHint);
+            glNamedBufferData(IndirectDrawCommandsSsbo,
+                              static_cast<GLsizeiptr>(countHint * sizeof(DrawElementsIndirectCommand)),
+                              _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+            glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(countHint * sizeof(glm::mat4)),
+                              _transformMatrices.data(), GL_DYNAMIC_DRAW);
         }
 
         size_t trueCount = 0;
@@ -119,40 +130,37 @@ namespace Core
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
         _pbrShader.Use();
-        Shader::SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        Shader::SetUniform(_pbrProjectionMatrixLocation, camera.ProjectionMatrix);
-        Shader::SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
+        _pbrShader.SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
+        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.ProjectionMatrix);
+        _pbrShader.SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
 
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
-        glBufferData(
-            GL_DRAW_INDIRECT_BUFFER,
-            static_cast<int64_t>(trueCount * sizeof(DrawElementsIndirectCommand)),
-            _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+        glNamedBufferSubData(IndirectDrawCommandsSsbo, 0,
+                             static_cast<GLsizeiptr>(trueCount * sizeof(DrawElementsIndirectCommand)),
+                             _indirectDrawCommands.data());
+        glNamedBufferSubData(TransformsSsbo, 0, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
+                             _transformMatrices.data());
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, TransformsSsbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<int64_t>(trueCount * sizeof(glm::mat4)),
-                     _transformMatrices.data(), GL_DYNAMIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, TransformsSsbo);
-
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, IndirectDrawCommandsSsbo);
 
-        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr,
-                                    static_cast<int32_t>(trueCount), 0);
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
+        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
         // ------------------------ SKYBOX ------------------------
 
         _skyboxShader.Use();
-        Shader::SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        Shader::SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
+        _skyboxShader.SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
+        _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
 
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, scene.GetSkybox().GetCubeMap());
+        glBindTextureUnit(3, scene.GetSkybox().GetCubeMap());
 
         CubeRenderer::Draw();
 
-        Engine.GetWaterSystem()->Render(cameraTransform, camera);
+        Engine.GetWaterSystem()->Render(cameraTransform,
+                                        camera,
+                                        Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
 
         _frameBuffer.ResolveMultisampling();
         _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());
@@ -231,15 +239,11 @@ namespace Core
         }
         _lightDataBuffer.SpotlightCount = spotlightCount;
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _lightsSsbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(LightDataBuffer), &_lightDataBuffer, GL_DYNAMIC_DRAW);
+        glNamedBufferData(_lightsSsbo, sizeof(LightDataBuffer), &_lightDataBuffer, GL_DYNAMIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _lightsSsbo);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, Skybox.GetIrradianceMapMap());
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, Skybox.GetPrefilterMap());
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, _brdfLut);
+        glBindTextureUnit(0, Skybox.GetIrradianceMapMap());
+        glBindTextureUnit(1, Skybox.GetPrefilterMap());
+        glBindTextureUnit(2, _brdfLut);
     }
 }
