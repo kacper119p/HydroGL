@@ -18,6 +18,8 @@ uniform float Swell = 0.5;
 
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
+DEFINE_FOAM_PARAMETERS_BUFFER(0);
+
 struct dynamicWaveSampleParameters
 {
     vec3 ObjectPosition;
@@ -56,12 +58,8 @@ void main()
     const vec2 slope = slopeDfdxxDfdzz.xy;
     const float jacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
 
-    const float FoamThreshold = 0.8;
-    const float FoamExponent  = 1.0;
-    const float FoamIntensity = 5.0;
-
-    float compression = clamp((FoamThreshold - jacobian) / FoamThreshold, 0.0, 1.0);
-    float foamMask = clamp(FoamIntensity * pow(compression, FoamExponent), 0.0, 1.0);
+    float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
+    float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
     vec3 surfaceColor = mix(vec3(0.005, 0.1, 0.2), vec3(1.0, 1.0, 1.0), foamMask);
     float metallic = mix(0.05, 0.0, foamMask);
     float roughness = mix(0.5, 1.0, foamMask);

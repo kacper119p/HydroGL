@@ -16,11 +16,19 @@ const float G2 = G * G;
         cascadeSettings CascadeSettings[]; \
  } CascadeSettingsBuffer;\
 
+#define DEFINE_FOAM_PARAMETERS_BUFFER(binding_point) \
+    layout(std140, binding = binding_point) uniform foamParameters \
+    { \
+        float FoamThreshold; \
+        float FoamExponent; \
+        float FoamIntensity; \
+ } FoamParameters;
+
 struct cascadeSettings
 {
     float WaveLengthLowerBound;
     float WaveLengthUpperBound;
-    int Length;
+    float Length;
     float Padding;
 };
 
