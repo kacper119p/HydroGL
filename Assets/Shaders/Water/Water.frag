@@ -16,16 +16,7 @@ uniform float Fetch = 10000.0;
 uniform float Delta = 1.0;
 uniform float Swell = 0.5;
 
-layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
-{
-    int TextureResolution;
-    int CascadeCount;
-    int VelocityLayers;
-    float VelocityMinHeight;
-    float VelocityMaxHeight;
-    float Padding[3];
-    cascadeSettings CascadeSettings[];
-};
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 struct dynamicWaveSampleParameters
 {
@@ -51,13 +42,13 @@ void main()
 {
     vec3 geometryNormal = normalize(cross(dFdy(DisplacedPosition), dFdx(DisplacedPosition)));
 
-    const vec2 texCoord = vec2(OriginalPosition.x, OriginalPosition.z) / CascadeSettings[0].Length;
+    const vec2 texCoord = vec2(OriginalPosition.x, OriginalPosition.z) / CascadeSettingsBuffer.CascadeSettings[0].Length;
     vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
     float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
 
-    for (int i = 1; i < CascadeCount; ++i)
+    for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
     {
-        const vec2 texCoord = vec2(OriginalPosition.x, OriginalPosition.z) / CascadeSettings[i].Length;
+        const vec2 texCoord = vec2(OriginalPosition.x, OriginalPosition.z) / CascadeSettingsBuffer.CascadeSettings[i].Length;
         slopeDfdxxDfdzz += texture(SlopeMaps, vec3(texCoord, i));
         dfdzx += texture(DisplacementMaps, vec3(texCoord, i)).w;
     }
@@ -65,11 +56,11 @@ void main()
     const vec2 slope = slopeDfdxxDfdzz.xy;
     const float jacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
 
-    const float FoamThreshold = 1.1;
+    const float FoamThreshold = 0.8;
     const float FoamExponent  = 1.0;
     const float FoamIntensity = 5.0;
 
-    float compression = clamp((jacobian - FoamThreshold) / FoamThreshold, 0.0, 1.0);
+    float compression = clamp((FoamThreshold - jacobian) / FoamThreshold, 0.0, 1.0);
     float foamMask = clamp(FoamIntensity * pow(compression, FoamExponent), 0.0, 1.0);
     vec3 surfaceColor = mix(vec3(0.005, 0.1, 0.2), vec3(1.0, 1.0, 1.0), foamMask);
     float metallic = mix(0.05, 0.0, foamMask);

@@ -5,16 +5,7 @@
 layout (binding = 0, rgba32f) writeonly restrict uniform image2DArray Output;
 layout (binding = 1, rg32f) readonly restrict uniform image2D GaussianNoise;
 
-layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
-{
-    int TextureResolution;
-    int CascadeCount;
-    int VelocityLayers;
-    float VelocityMinHeight;
-    float VelocityMaxHeight;
-    float Padding[3];
-    cascadeSettings CascadeSettings[];
-};
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 layout(std140, binding = 0) uniform spectrumParams
 {
@@ -140,22 +131,23 @@ void main()
     const ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
     const int cascadeIndex = int(gl_GlobalInvocationID.z);
 
-    const float cascadeLength = float(CascadeSettings[cascadeIndex].Length);
+    const float cascadeLength = float(CascadeSettingsBuffer.CascadeSettings[cascadeIndex].Length);
 
-    const ivec2 textureCenter = ivec2(TextureResolution >> 1);
+    const ivec2 textureCenter = ivec2(CascadeSettingsBuffer.TextureResolution >> 1);
     const ivec2 waveCoords = pixelCoords - textureCenter;
     const float deltaK = (2.0 * PI) / cascadeLength;
     const vec2 waveVector = vec2(waveCoords) * deltaK;
     const float k = length(waveVector);
 
-    if (k < CascadeSettings[cascadeIndex].WaveLengthLowerBound || k >= CascadeSettings[cascadeIndex].WaveLengthUpperBound)
+    if (k < CascadeSettingsBuffer.CascadeSettings[cascadeIndex].WaveLengthLowerBound
+    || k >= CascadeSettingsBuffer.CascadeSettings[cascadeIndex].WaveLengthUpperBound)
     {
         imageStore(Output, ivec3(pixelCoords, cascadeIndex), vec4(0.0));
         return;
     }
 
     const vec4 gaussSample = imageLoad(GaussianNoise, pixelCoords);
-    const vec4 gaussSampleMirror = imageLoad(GaussianNoise, ivec2(TextureResolution - pixelCoords));
+    const vec4 gaussSampleMirror = imageLoad(GaussianNoise, ivec2(CascadeSettingsBuffer.TextureResolution - pixelCoords));
 
     const vec2 h0 = gaussSample.rg * CalculateInitialSpectrum(waveVector, k, cascadeLength, deltaK);
     vec2 h0Star = gaussSampleMirror.rg * CalculateInitialSpectrum(-waveVector, k, cascadeLength, deltaK);

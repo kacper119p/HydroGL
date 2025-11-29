@@ -16,16 +16,7 @@ layout(std140, binding = 0) uniform meshDataBuffer
 
 uniform vec2 WindVelocity;
 
-layout(std430, binding = 0) readonly restrict buffer cascadeSettingsBuffer
-{
-    int TextureResolution;
-    int CascadeCount;
-    int VelocityLayers;
-    float VelocityMinHeight;
-    float VelocityMaxHeight;
-    float Padding[3];
-    cascadeSettings CascadeSettings[];
-};
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 layout(std430, binding = 1) writeonly restrict buffer trianglePropertiesBuffer
 {
@@ -63,9 +54,9 @@ float RetrieveWaterHeight(vec2 position)
     {
         vec2 shiftedPosition = position - displacement.xz;
         displacement = vec3(0.0);
-        for (int cascade = 0; cascade < CascadeCount; ++cascade)
+        for (int cascade = 0; cascade < CascadeSettingsBuffer.CascadeCount; ++cascade)
         {
-            const vec2 texCoord = vec2(shiftedPosition.x, shiftedPosition.y) / CascadeSettings[cascade].Length;
+            const vec2 texCoord = vec2(shiftedPosition.x, shiftedPosition.y) / CascadeSettingsBuffer.CascadeSettings[cascade].Length;
             displacement += texture(DisplacementMaps, vec3(texCoord, cascade)).xyz;
         }
     }
@@ -80,17 +71,17 @@ float Remap(float value, float inMin, float inMax, float outMin, float outMax)
 vec3 RetrieveWaterVelocity(vec3 position)
 {
     vec3 velocity = vec3(0.0);
-    for (int cascade = 0; cascade < CascadeCount; ++cascade)
+    for (int cascade = 0; cascade < CascadeSettingsBuffer.CascadeCount; ++cascade)
     {
-        const int velocityBaseIndex = cascade * VelocityLayers;
-        float textureIndex = velocityBaseIndex + Remap(position.y, VelocityMinHeight, VelocityMaxHeight, 0.0, float(VelocityLayers - 1));
-        textureIndex = clamp(textureIndex, velocityBaseIndex, velocityBaseIndex + VelocityLayers - 1);
+        const int velocityBaseIndex = cascade * CascadeSettingsBuffer.VelocityLayers;
+        float textureIndex = velocityBaseIndex + Remap(position.y, CascadeSettingsBuffer.VelocityMinHeight, CascadeSettingsBuffer.VelocityMaxHeight, 0.0, float(CascadeSettingsBuffer.VelocityLayers - 1));
+        textureIndex = clamp(textureIndex, velocityBaseIndex, velocityBaseIndex + CascadeSettingsBuffer.VelocityLayers - 1);
 
         const float lowerIndex = floor(textureIndex);
         const float upperIndex = ceil(textureIndex);
         const float t = textureIndex - lowerIndex;
 
-        const vec2 texCoord = vec2(position.x, position.z) / CascadeSettings[cascade].Length;
+        const vec2 texCoord = vec2(position.x, position.z) / CascadeSettingsBuffer.CascadeSettings[cascade].Length;
 
         const vec3 lowerValue = texture(Velocity, vec3(texCoord, lowerIndex)).xyz;
         const vec3 upperValue = texture(Velocity, vec3(texCoord, upperIndex)).xyz;

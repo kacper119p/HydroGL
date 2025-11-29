@@ -12,16 +12,7 @@ out vec3 DisplacedPosition;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
-layout(std430, binding = 0) readonly  restrict buffer CascadeSettingsBuffer
-{
-    int TextureResolution;
-    int CascadeCount;
-    int VelocityLayers;
-    float VelocityMinHeight;
-    float VelocityMaxHeight;
-    float Padding[3];
-    cascadeSettings CascadeSettings[];
-};
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 struct dynamicWaveSampleParameters
 {
@@ -50,9 +41,9 @@ void main()
     const vec3 position = mix(p0, p1, v);
 
     vec3 tessendorfDisplacement = vec3(0.0);
-    for (int i = 0; i < CascadeCount; ++i)
+    for (int i = 0; i < CascadeSettingsBuffer.CascadeCount; ++i)
     {
-        const vec2 texCoord = vec2(position.x, position.z) / CascadeSettings[i].Length;
+        const vec2 texCoord = vec2(position.x, position.z) / CascadeSettingsBuffer.CascadeSettings[i].Length;
         tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
     }
     vec3 tessendorfPosition = position + tessendorfDisplacement;
