@@ -3,7 +3,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-#include "Collections/LoopBuffer.h"
+#include "Collections/CyclicBuffer.h"
 #include "Meshes/Mesh.h"
 
 namespace Core
@@ -13,10 +13,10 @@ namespace Core
     public:
         Mesh Mesh;
         uint32_t MaskTexture;
-        LoopBuffer<uint32_t, 3> InteractiveWavesTextures;
-        LoopBuffer<uint64_t, 3> InteractiveWavesTextureHandles;
-        LoopBuffer<glm::vec2, 2> PreviousPositions;
-        LoopBuffer<float, 2> PreviousInteractiveWavesFieldSizes;
+        CyclicBuffer<uint32_t, 3> InteractiveWavesTextures;
+        CyclicBuffer<uint64_t, 3> InteractiveWavesTextureHandles;
+        CyclicBuffer<glm::vec2, 2> PreviousPositions;
+        CyclicBuffer<float, 2> PreviousInteractiveWavesFieldSizes;
         float IntersectionMaskFieldSize;
         float MeshTotalVolume;
         float BackWaveHeightFactor;

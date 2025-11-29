@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Collections/LoopBuffer.h"
+#include "Collections/CyclicBuffer.h"
 
 class LoopBufferTests : public testing::Test
 {
@@ -8,34 +8,34 @@ protected:
     LoopBufferTests() = default;
 };
 
-TEST_F(LoopBufferTests, AdvanceUp)
+TEST_F(LoopBufferTests, AdvanceRight)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
-    buffer.AdvanceUp();
+    buffer.AdvanceRight();
 
     EXPECT_EQ(buffer[0], 3);
     EXPECT_EQ(buffer[1], 1);
     EXPECT_EQ(buffer[2], 2);
 
-    buffer.AdvanceUp();
+    buffer.AdvanceRight();
 
     EXPECT_EQ(buffer[0], 2);
     EXPECT_EQ(buffer[1], 3);
     EXPECT_EQ(buffer[2], 1);
 }
 
-TEST_F(LoopBufferTests, AdvanceDown)
+TEST_F(LoopBufferTests, AdvanceLeft)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
-    buffer.AdvanceDown();
+    buffer.AdvanceLeft();
 
     EXPECT_EQ(buffer[0], 2);
     EXPECT_EQ(buffer[1], 3);
     EXPECT_EQ(buffer[2], 1);
 
-    buffer.AdvanceDown();
+    buffer.AdvanceLeft();
 
     EXPECT_EQ(buffer[0], 3);
     EXPECT_EQ(buffer[1], 1);
@@ -44,7 +44,7 @@ TEST_F(LoopBufferTests, AdvanceDown)
 
 TEST_F(LoopBufferTests, Iterator)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     int32_t expectedValue = 1;
     for (const int32_t& value : buffer)
@@ -53,7 +53,7 @@ TEST_F(LoopBufferTests, Iterator)
         ++expectedValue;
     }
 
-    Core::LoopBuffer<int32_t, 3> constBuffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> constBuffer{1, 2, 3};
     expectedValue = 1;
     for (const int32_t& value : constBuffer)
     {
@@ -64,7 +64,7 @@ TEST_F(LoopBufferTests, Iterator)
 
 TEST_F(LoopBufferTests, DefaultConstructor)
 {
-    Core::LoopBuffer<int32_t, 3> buffer;
+    Core::CyclicBuffer<int32_t, 3> buffer;
 
     EXPECT_EQ(buffer[0], 0);
     EXPECT_EQ(buffer[1], 0);
@@ -73,7 +73,7 @@ TEST_F(LoopBufferTests, DefaultConstructor)
 
 TEST_F(LoopBufferTests, InitializerListConstructor)
 {
-    Core::LoopBuffer<int32_t, 5> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 5> buffer{1, 2, 3};
 
     EXPECT_EQ(buffer[0], 1);
     EXPECT_EQ(buffer[1], 2);
@@ -84,14 +84,14 @@ TEST_F(LoopBufferTests, InitializerListConstructor)
 
 TEST_F(LoopBufferTests, Size)
 {
-    Core::LoopBuffer<int32_t, 3> buffer;
+    Core::CyclicBuffer<int32_t, 3> buffer;
 
     EXPECT_EQ(buffer.Size(), 3);
 }
 
 TEST_F(LoopBufferTests, Data)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     int32_t* data = buffer.Data();
     EXPECT_EQ(data[0], 1);
@@ -101,7 +101,7 @@ TEST_F(LoopBufferTests, Data)
 
 TEST_F(LoopBufferTests, ConstData)
 {
-    const Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    const Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     const int32_t* data = buffer.Data();
     EXPECT_EQ(data[0], 1);
@@ -111,7 +111,7 @@ TEST_F(LoopBufferTests, ConstData)
 
 TEST_F(LoopBufferTests, OperatorBracketWithIterator)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     auto it = buffer.begin();
     EXPECT_EQ(buffer[it], 1);
@@ -121,7 +121,7 @@ TEST_F(LoopBufferTests, OperatorBracketWithIterator)
 
 TEST_F(LoopBufferTests, ConstOperatorBracketWithIterator)
 {
-    const Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    const Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     auto it = buffer.begin();
     EXPECT_EQ(buffer[it], 1);
@@ -131,7 +131,7 @@ TEST_F(LoopBufferTests, ConstOperatorBracketWithIterator)
 
 TEST_F(LoopBufferTests, IteratorDecrement)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     auto it = buffer.end();
     --it;
@@ -142,7 +142,7 @@ TEST_F(LoopBufferTests, IteratorDecrement)
 
 TEST_F(LoopBufferTests, IteratorPostDecrement)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     auto it = buffer.end();
     auto prev = it--;
@@ -157,7 +157,7 @@ TEST_F(LoopBufferTests, IteratorArrow)
         int32_t value;
     };
 
-    Core::LoopBuffer<TestStruct, 3> buffer{{1}, {2}, {3}};
+    Core::CyclicBuffer<TestStruct, 3> buffer{{1}, {2}, {3}};
 
     auto it = buffer.begin();
     EXPECT_EQ(it->value, 1);
@@ -165,7 +165,7 @@ TEST_F(LoopBufferTests, IteratorArrow)
 
 TEST_F(LoopBufferTests, ConstIterator)
 {
-    const Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    const Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
     auto it = buffer.cbegin();
     EXPECT_EQ(*it, 1);
@@ -175,10 +175,10 @@ TEST_F(LoopBufferTests, ConstIterator)
 
 TEST_F(LoopBufferTests, MultipleAdvanceOperations)
 {
-    Core::LoopBuffer<int32_t, 3> buffer{1, 2, 3};
+    Core::CyclicBuffer<int32_t, 3> buffer{1, 2, 3};
 
-    buffer.AdvanceUp();
-    buffer.AdvanceDown();
+    buffer.AdvanceRight();
+    buffer.AdvanceLeft();
 
     EXPECT_EQ(buffer[0], 1);
     EXPECT_EQ(buffer[1], 2);

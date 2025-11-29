@@ -266,7 +266,7 @@ namespace Core
                                                                  const glm::vec3& WorldPosition,
                                                                  const float DeltaTime) const
     {
-        WaterEffectorComponent.InteractiveWavesTextures.AdvanceDown();
+        WaterEffectorComponent.InteractiveWavesTextures.AdvanceLeft();
 
         const float boundsDiagonal = glm::length(
             WaterEffectorComponent.Mesh.GetBoundingBox().GetMax() - WaterEffectorComponent.Mesh.GetBoundingBox().
@@ -328,10 +328,10 @@ namespace Core
                                 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-        WaterEffectorComponent.PreviousPositions.AdvanceDown();
+        WaterEffectorComponent.PreviousPositions.AdvanceLeft();
         WaterEffectorComponent.PreviousPositions[1] = worldPos2d;
 
-        WaterEffectorComponent.PreviousInteractiveWavesFieldSizes.AdvanceDown();
+        WaterEffectorComponent.PreviousInteractiveWavesFieldSizes.AdvanceLeft();
         WaterEffectorComponent.PreviousInteractiveWavesFieldSizes[1] = waveMaskPhysicalSize;
     }
 
