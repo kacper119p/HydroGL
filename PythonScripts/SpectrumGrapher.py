@@ -35,7 +35,6 @@ PEAK_WAVE_FREQUENCY = calculate_peak_wave_frequency(WIND_VELOCITY, FETCH)
 # ==========================================
 
 def calculate_r(omega):
-    # Matches shader: calculateR
     sigma = 0.07 if omega <= PEAK_WAVE_FREQUENCY else 0.09
     numerator = omega - PEAK_WAVE_FREQUENCY
     denominator = -2.0 * sigma * sigma * PEAK_WAVE_FREQUENCY * PEAK_WAVE_FREQUENCY
@@ -168,7 +167,7 @@ if __name__ == "__main__":
     fig.subplots_adjust(left=0.07, right=0.98, top=0.90, bottom=0.10, wspace=0.35)
 
     ax1 = fig.add_subplot(121, projection='3d')
-    surf = ax1.plot_surface(K_X, K_Y, np.log10(S + 1e-20), cmap=cm.viridis, linewidth=0, antialiased=True)
+    surf = ax1.plot_surface(K_X, K_Y, np.log10(np.maximum(S , 1e-20)), cmap=cm.viridis, linewidth=0, antialiased=True)
     ax1.set_xlabel(r'$k_x$')
     ax1.set_ylabel(r'$k_y$')
     ax1.set_zlabel(r'$\log_{10}(S(k))$', labelpad=10)
@@ -190,7 +189,7 @@ if __name__ == "__main__":
     cb2.update_ticks()
     plt.show()
 
-    # --- Plot 2: Directional Spread Only (UPDATED) ---
+    # --- Plot 2: Directional Spread Only ---
     D = np.zeros_like(K_X)
     for i in range(k_res):
         for j in range(k_res):
@@ -212,9 +211,8 @@ if __name__ == "__main__":
     ax1.set_title('Directional Spread Function (Linear)')
     fig.colorbar(surf, ax=ax1, shrink=0.5, pad=0.15)
 
-    # 2D Plot (Log Scale as requested)
+    # 2D Plot
     ax2 = fig.add_subplot(122)
-    # Using log10 with small epsilon to handle zeros
     contour = ax2.contourf(K_X, K_Y, np.log10(D + 1e-10), levels=20, cmap=cm.viridis)
     ax2.set_xlabel(r'$k_x$')
     ax2.set_ylabel(r'$k_y$')
@@ -238,8 +236,6 @@ if __name__ == "__main__":
     plt.ylabel(r'$S(\omega)\ \left[\frac{m^2 s}{rad}\right]$', labelpad=2)
     plt.title('JONSWAP Frequency Spectrum (1D)')
     plt.grid(True)
-    ax = plt.gca()
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(ten_pow_from_value))
     plt.show()
 
     # --- Plot 4: Segmented Frequency Spectrum ---
