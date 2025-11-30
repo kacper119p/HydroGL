@@ -20,15 +20,15 @@ namespace Core
 
     std::unordered_map<std::string, Mesh> MeshManager::_meshCache(256);
 
-    uint32_t MeshManager::_glVertexArray = 0;
-    uint32_t MeshManager::_glElementBuffer = 0;
-    uint32_t MeshManager::_glVertexBuffer = 0;
+    GlVertexArrayUnique MeshManager::_glVertexArray;
+    GlBufferUnique MeshManager::_glElementBuffer;
+    GlBufferUnique MeshManager::_glVertexBuffer;
 
     void MeshManager::Initialize()
     {
-        glGenVertexArrays(1, &_glVertexArray);
-        glGenBuffers(1, &_glElementBuffer);
-        glGenBuffers(1, &_glVertexBuffer);
+        _glVertexArray = GlVertexArrayUnique::Create();
+        _glElementBuffer = GlBufferUnique::Create();
+        _glVertexBuffer = GlBufferUnique::Create();
 
         glBindVertexArray(_glVertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, _glVertexBuffer);
@@ -64,10 +64,6 @@ namespace Core
 
     void MeshManager::FreeResources()
     {
-        glDeleteVertexArrays(1, &_glVertexArray);
-        glDeleteBuffers(1, &_glElementBuffer);
-        glDeleteBuffers(1, &_glVertexBuffer);
-
         //TODO: Free remaining resources
     }
 

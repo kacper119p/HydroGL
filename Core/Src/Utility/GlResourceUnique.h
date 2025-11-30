@@ -11,7 +11,7 @@ namespace Core::Detail
         static uint32_t Create()
         {
             uint32_t id;
-            glGenBuffers(1, &id);
+            glCreateBuffers(1, &id);
             return id;
         }
 
@@ -23,10 +23,10 @@ namespace Core::Detail
 
     struct TextureTraits
     {
-        static uint32_t Create()
+        static uint32_t Create(const GLenum Target)
         {
             uint32_t id;
-            glGenTextures(1, &id);
+            glCreateTextures(Target, 1, &id);
             return id;
         }
 
@@ -41,7 +41,7 @@ namespace Core::Detail
         static uint32_t Create()
         {
             uint32_t id;
-            glGenVertexArrays(1, &id);
+            glCreateVertexArrays(1, &id);
             return id;
         }
 
@@ -56,13 +56,58 @@ namespace Core::Detail
         static uint32_t Create()
         {
             uint32_t id;
-            glGenFramebuffers(1, &id);
+            glCreateFramebuffers(1, &id);
             return id;
         }
 
         static void Delete(const uint32_t id)
         {
             glDeleteFramebuffers(1, &id);
+        }
+    };
+
+    struct RenderbufferTraits
+    {
+        static uint32_t Create()
+        {
+            uint32_t id;
+            glCreateRenderbuffers(1, &id);
+            return id;
+        }
+
+        static void Delete(const uint32_t id)
+        {
+            glDeleteRenderbuffers(1, &id);
+        }
+    };
+
+    struct SamplerTraits
+    {
+        static uint32_t Create()
+        {
+            uint32_t id;
+            glCreateSamplers(1, &id);
+            return id;
+        }
+
+        static void Delete(const uint32_t id)
+        {
+            glDeleteSamplers(1, &id);
+        }
+    };
+
+    struct QueryTraits
+    {
+        static uint32_t Create(const GLenum target)
+        {
+            uint32_t id;
+            glCreateQueries(target, 1, &id);
+            return id;
+        }
+
+        static void Delete(const uint32_t id)
+        {
+            glDeleteQueries(1, &id);
         }
     };
 
@@ -73,9 +118,10 @@ namespace Core::Detail
         uint32_t _id;
 
     public:
-        [[nodiscard]] static GlResourceUnique Create()
+        template<typename... Args>
+        [[nodiscard]] static GlResourceUnique Create(Args&&... args)
         {
-            return GlResourceUnique(Traits::Create());
+            return GlResourceUnique(Traits::Create(std::forward<Args>(args)...));
         }
 
     public:
@@ -183,8 +229,11 @@ namespace Core::Detail
 
 namespace Core
 {
-    using glBufferUnique = Detail::GlResourceUnique<Detail::BufferTraits>;
-    using glTextureUnique = Detail::GlResourceUnique<Detail::TextureTraits>;
-    using glVertexArrayUnique = Detail::GlResourceUnique<Detail::VertexArrayTraits>;
-    using glFramebufferUnique = Detail::GlResourceUnique<Detail::FramebufferTraits>;
+    using GlBufferUnique = Detail::GlResourceUnique<Detail::BufferTraits>;
+    using GlTextureUnique = Detail::GlResourceUnique<Detail::TextureTraits>;
+    using GlVertexArrayUnique = Detail::GlResourceUnique<Detail::VertexArrayTraits>;
+    using GlFramebufferUnique = Detail::GlResourceUnique<Detail::FramebufferTraits>;
+    using GlRenderbufferUnique = Detail::GlResourceUnique<Detail::RenderbufferTraits>;
+    using GlSamplerUnique = Detail::GlResourceUnique<Detail::SamplerTraits>;
+    using GlQueryUnique = Detail::GlResourceUnique<Detail::QueryTraits>;
 }

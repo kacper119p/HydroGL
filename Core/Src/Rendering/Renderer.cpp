@@ -42,9 +42,9 @@ namespace Core
                                                        _bloomPostprocessingEffect(Resolution)
     {
         constexpr int32_t defaultBufferSize = 1024;
-        glCreateBuffers(1, &IndirectDrawCommandsSsbo);
-        glCreateBuffers(1, &TransformsSsbo);
-        glCreateBuffers(1, &_lightsSsbo);
+        IndirectDrawCommandsSsbo = GlBufferUnique::Create();
+        TransformsSsbo = GlBufferUnique::Create();
+        _lightsSsbo = GlBufferUnique::Create();
         _indirectDrawCommands.resize(defaultBufferSize);
         _transformMatrices.resize(defaultBufferSize);
         glNamedBufferData(IndirectDrawCommandsSsbo,
@@ -54,12 +54,7 @@ namespace Core
                           _transformMatrices.data(), GL_DYNAMIC_DRAW);
     }
 
-    Renderer::~Renderer()
-    {
-        glDeleteBuffers(1, &IndirectDrawCommandsSsbo);
-        glDeleteBuffers(1, &TransformsSsbo);
-        glDeleteBuffers(1, &_lightsSsbo);
-    }
+    Renderer::~Renderer() = default;
 
     void Renderer::RenderFrame(const Engine& Engine, const float DeltaTime)
     {

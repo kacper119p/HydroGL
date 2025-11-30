@@ -5,29 +5,49 @@
 
 #include "Utility/GlResourceUnique.h"
 
-struct MockTraits
+struct MockState
 {
     static inline uint32_t NextId = 1;
     static inline std::vector<uint32_t> DeletedIds;
+    static inline uint32_t LastTargetArg = 0; // To verify argument forwarding
 
+    static void Reset()
+    {
+        NextId = 1;
+        DeletedIds.clear();
+        LastTargetArg = 0;
+    }
+};
+
+struct MockBufferTraits
+{
     static uint32_t Create()
     {
-        return NextId++;
+        return MockState::NextId++;
     }
 
     static void Delete(const uint32_t id)
     {
-        DeletedIds.push_back(id);
-    }
-
-    static void ResetState()
-    {
-        NextId = 1;
-        DeletedIds.clear();
+        MockState::DeletedIds.push_back(id);
     }
 };
 
-using TestResource = Core::Detail::GlResourceUnique<MockTraits>;
+struct MockTextureTraits
+{
+    static uint32_t Create(const uint32_t target)
+    {
+        MockState::LastTargetArg = target; // Capture the argument
+        return MockState::NextId++;
+    }
+
+    static void Delete(const uint32_t id)
+    {
+        MockState::DeletedIds.push_back(id);
+    }
+};
+
+using TestResource = Core::Detail::GlResourceUnique<MockBufferTraits>;
+using TestResourceWithArgument = Core::Detail::GlResourceUnique<MockTextureTraits>;
 
 class GlResourceUniqueTests : public testing::Test
 {
@@ -36,8 +56,7 @@ protected:
 
     void SetUp() override
     {
-        // Ensure a clean state before every test
-        MockTraits::ResetState();
+        MockState::Reset();
     }
 };
 
@@ -50,8 +69,8 @@ TEST_F(GlResourceUniqueTests, LifecycleCreatesAndDeletes)
     } // resource goes out of scope here
 
     // Verify Delete was called exactly once with the correct ID
-    ASSERT_EQ(MockTraits::DeletedIds.size(), 1);
-    EXPECT_EQ(MockTraits::DeletedIds[0], 1u);
+    ASSERT_EQ(MockState::DeletedIds.size(), 1);
+    EXPECT_EQ(MockState::DeletedIds[0], 1u);
 }
 
 TEST_F(GlResourceUniqueTests, MoveConstructorTransfersOwnership)
@@ -66,7 +85,7 @@ TEST_F(GlResourceUniqueTests, MoveConstructorTransfersOwnership)
     EXPECT_FALSE(source);
 
     // No deletions should have occurred yet
-    EXPECT_TRUE(MockTraits::DeletedIds.empty());
+    EXPECT_TRUE(MockState::DeletedIds.empty());
 }
 
 TEST_F(GlResourceUniqueTests, MoveAssignmentDeletesOldAndAdoptsNew)
@@ -81,8 +100,8 @@ TEST_F(GlResourceUniqueTests, MoveAssignmentDeletesOldAndAdoptsNew)
     EXPECT_EQ(newRes.Get(), 0u);
 
     // Verify ID 1 was deleted immediately
-    ASSERT_EQ(MockTraits::DeletedIds.size(), 1);
-    EXPECT_EQ(MockTraits::DeletedIds[0], 1u);
+    ASSERT_EQ(MockState::DeletedIds.size(), 1);
+    EXPECT_EQ(MockState::DeletedIds[0], 1u);
 }
 
 TEST_F(GlResourceUniqueTests, MoveAssignmentSelfAssignmentDoNothing)
@@ -93,7 +112,7 @@ TEST_F(GlResourceUniqueTests, MoveAssignmentSelfAssignmentDoNothing)
 
     // Should remain unchanged
     EXPECT_EQ(res.Get(), 1u);
-    EXPECT_TRUE(MockTraits::DeletedIds.empty());
+    EXPECT_TRUE(MockState::DeletedIds.empty());
 }
 
 TEST_F(GlResourceUniqueTests, ResetDeletesOldAndSetsNew)
@@ -104,8 +123,8 @@ TEST_F(GlResourceUniqueTests, ResetDeletesOldAndSetsNew)
 
     EXPECT_EQ(res.Get(), 99u);
     // Verify ID 1 was deleted
-    ASSERT_EQ(MockTraits::DeletedIds.size(), 1);
-    EXPECT_EQ(MockTraits::DeletedIds[0], 1u);
+    ASSERT_EQ(MockState::DeletedIds.size(), 1);
+    EXPECT_EQ(MockState::DeletedIds[0], 1u);
 }
 
 TEST_F(GlResourceUniqueTests, ResetSameIdDoesNothing)
@@ -115,7 +134,7 @@ TEST_F(GlResourceUniqueTests, ResetSameIdDoesNothing)
     res.Reset(1u);
 
     EXPECT_EQ(res.Get(), 1u);
-    EXPECT_TRUE(MockTraits::DeletedIds.empty());
+    EXPECT_TRUE(MockState::DeletedIds.empty());
 }
 
 TEST_F(GlResourceUniqueTests, ReleaseDetachesOwnership)
@@ -129,7 +148,7 @@ TEST_F(GlResourceUniqueTests, ReleaseDetachesOwnership)
     } // Destructor runs here, but should do nothing
 
     // Verify NOTHING was deleted because we released it
-    EXPECT_TRUE(MockTraits::DeletedIds.empty());
+    EXPECT_TRUE(MockState::DeletedIds.empty());
     // Verify we got the correct ID back
     EXPECT_EQ(detachedId, 1u);
 }
@@ -150,4 +169,20 @@ TEST_F(GlResourceUniqueTests, EqualityOperators)
     EXPECT_NE(res1, res2);
     EXPECT_EQ(res1, 1u);
     EXPECT_NE(res1, 2u);
+}
+
+TEST_F(GlResourceUniqueTests, CreateForwardsArguments)
+{
+    constexpr uint32_t argument = 0xFFFF;
+    TestResourceWithArgument res = TestResourceWithArgument::Create(argument);
+
+    // 1. Verify ID generation still works
+    EXPECT_EQ(res.Get(), 1u);
+
+    // 2. Verify the argument was actually passed to the Mock
+    EXPECT_EQ(MockState::LastTargetArg, argument);
+
+    // 3. Verify deletion still works
+    res.Reset(0);
+    EXPECT_EQ(MockState::DeletedIds[0], 1u);
 }

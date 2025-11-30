@@ -11,6 +11,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Skybox.h"
 #include "Scene/Scene.h"
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
@@ -47,14 +48,14 @@ namespace Core
         int32_t _pbrProjectionMatrixLocation;
         int32_t _cameraPositionLocation;
 
-        uint32_t IndirectDrawCommandsSsbo = 0;
-        uint32_t TransformsSsbo = 0;
+        GlBufferUnique IndirectDrawCommandsSsbo;
+        GlBufferUnique TransformsSsbo;
 
         std::vector<DrawElementsIndirectCommand> _indirectDrawCommands;
         std::vector<glm::mat4> _transformMatrices;
 
-        uint32_t _lightsSsbo = 0;
-        uint32_t _brdfLut = 0;
+        GlBufferUnique _lightsSsbo;
+        GlTextureUnique _brdfLut;
         LightDataBuffer _lightDataBuffer;
 
         glm::mat4 DirectionalLightProjectionMatrix;
