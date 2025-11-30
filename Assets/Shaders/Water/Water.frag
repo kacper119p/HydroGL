@@ -1,7 +1,7 @@
 #version 460 core
 #extension GL_ARB_bindless_texture : enable
 
-#include "WaterCommon.glsl"
+#include "Water/WaterCommon.glsl"
 #include "Normal.glsl"
 #include "Lighting.glsl"
 

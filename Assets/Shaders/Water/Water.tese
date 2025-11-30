@@ -1,7 +1,7 @@
 #version 460 core
 #extension GL_ARB_bindless_texture : enable
 
-#include "WaterCommon.glsl"
+#include "Water/WaterCommon.glsl"
 
 layout (quads, equal_spacing, ccw) in;
 

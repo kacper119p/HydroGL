@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "WaterCommon.glsl"
+#include "Water/WaterCommon.glsl"
 
 layout (binding = 0, rgba32f) readonly uniform image2DArray HDzDxDfhx;
 layout (binding = 1, rgba32f) readonly uniform image2DArray DfhzDfdxxDfdzxDfdzz;

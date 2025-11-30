@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "WaterInteractionStructs.glsl"
+#include "Water/WaterInteraction/WaterInteractionStructs.glsl"
 
 const int LOCAL_SIZE = 64;
 

@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "WaterInteractionStructs.glsl"
+#include "Water/WaterInteraction/WaterInteractionStructs.glsl"
 #include "Water/WaterCommon.glsl"
 #include "Constants.glsl"
 

@@ -52,18 +52,23 @@ namespace Core
               ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
               SetStage("Assets/Shaders/Water/Water.tesc", ShaderStage::TesselationControlShader).
               SetStage("Assets/Shaders/Water/Water.tese", ShaderStage::TesselationEvaluationShader).
-              SetStage("Assets/Shaders/Water/Water.frag", ShaderStage::FragmentShader).Build()),
+              SetStage("Assets/Shaders/Water/Water.frag", ShaderStage::FragmentShader)
+              .Build()),
           _fftHorizontalShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/FftHorizontal.comp", ShaderStage::ComputeShader).Build()),
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/FftHorizontal.comp", ShaderStage::ComputeShader)
+              .Build()),
           _fftVerticalShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/FftVertical.comp", ShaderStage::ComputeShader).Build()),
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/FftVertical.comp", ShaderStage::ComputeShader)
+              .Build()),
           _assembleComputeShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/Assemble.comp", ShaderStage::ComputeShader).Build()),
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Assemble.comp", ShaderStage::ComputeShader)
+              .Build()),
           _initialSpectrumComputeShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/InitialSpectrum.comp", ShaderStage::ComputeShader).
-              Build()),
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/InitialSpectrum.comp", ShaderStage::ComputeShader)
+              .Build()),
           _spectrumComputeShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum.comp", ShaderStage::ComputeShader).Build()),
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Spectrum.comp", ShaderStage::ComputeShader)
+              .Build()),
           _foamMaskComputeShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/FoamMask.comp", ShaderStage::ComputeShader).Build()),
           _waterShaderUniformLocations(_waterShader),

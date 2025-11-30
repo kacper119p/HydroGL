@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "WaterCommon.glsl"
+#include "Water/WaterCommon.glsl"
 
 layout (binding = 1) uniform sampler2DArray SlopeTextures;
 layout (binding = 2) uniform sampler2DArray DisplacementTextures;
