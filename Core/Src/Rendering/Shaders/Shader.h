@@ -25,10 +25,10 @@ namespace Core
         Shader(const Shader& Other) noexcept = default;
 
     public:
-        [[nodiscard]] glm::ivec3 GetComputeShaderWorkGroupSize(const Shader& Shader)
+        [[nodiscard]] glm::ivec3 GetComputeShaderWorkGroupSize()
         {
             int localWorkGroupSize[3];
-            glGetProgramiv(Shader.GetId(), GL_COMPUTE_WORK_GROUP_SIZE, localWorkGroupSize);
+            glGetProgramiv(_id, GL_COMPUTE_WORK_GROUP_SIZE, localWorkGroupSize);
             return glm::ivec3(localWorkGroupSize[0], localWorkGroupSize[1], localWorkGroupSize[2]);
         }
 
