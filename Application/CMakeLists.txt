@@ -33,8 +33,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRARY_SUFFIX="")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Src)
 
-#Disable console for Release builds
+# Windows specific settings
 if (MSVC)
+    #Disable console for Release builds
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
     else ()
@@ -42,6 +43,10 @@ if (MSVC)
     endif ()
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX)
+
+    target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Windows/resources.rc")
+    set(ICON_RC "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Windows/resources.rc")
+    target_sources(${PROJECT_NAME} PRIVATE ${ICON_RC})
 endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
