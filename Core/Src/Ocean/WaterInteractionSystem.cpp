@@ -472,7 +472,6 @@ namespace Core
         DynamicWavesSampleSsbo* data = static_cast<DynamicWavesSampleSsbo*>(malloc(bufferSize));
         glCreateBuffers(1, &id);
         glNamedBufferData(id, bufferSize, nullptr, GL_DYNAMIC_COPY);
-        free(data);
         return DynamicWavesSampleBuffer{GlBufferUnique(id), DefaultDynamicWavesCapacity, data};
     }
 }
