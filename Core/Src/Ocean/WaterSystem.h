@@ -1,9 +1,10 @@
 #pragma once
 #include "Camera/CameraComponent.h"
-#include "Collections/CyclicBuffer.h"
 #include "Ocean/OceanGrid.h"
+#include "Ocean/SprayManager.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
@@ -231,24 +232,24 @@ namespace Core
         FftShaderUniformLocations _fftVerticalShaderUniformLocations;
         SpectrumShaderUniformLocations _spectrumShaderUniformLocations;
 
-        uint32_t _initialSpectrumTextures;
-        uint32_t _hDzDxDfhxTextures;
-        uint32_t _dfhzDfdxxDfdzxDfdzz;
-        uint32_t _velocityPackedTextures;
-        uint32_t _slopeTextures;
-        uint32_t _displacementTextures;
-        uint32_t _velocityTextures;
-        uint32_t _tmpTextures;
-        uint32_t _gaussianNoiseTexture;
-        uint32_t _foamMaskTextures;
+        GlTextureUnique _initialSpectrumTextures;
+        GlTextureUnique _hDzDxDfhxTextures;
+        GlTextureUnique _dfhzDfdxxDfdzxDfdzz;
+        GlTextureUnique _velocityPackedTextures;
+        GlTextureUnique _slopeTextures;
+        GlTextureUnique _displacementTextures;
+        GlTextureUnique _velocityTextures;
+        GlTextureUnique _tmpTextures;
+        GlTextureUnique _gaussianNoiseTexture;
+        GlTextureUnique _foamMaskTextures;
 
         FoamMaskShaderUniforms _foamUniformBufferData;
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
         CascadeSettingsBuffer _cascadeSettings;
 
-        uint32_t _initialSpectrumSettingsUbo = 0;
-        uint32_t _foamMaskSettingsUbo = 0;
-        uint32_t _cascadeSettingsSsbo = 0;
+        GlBufferUnique _initialSpectrumSettingsUbo;
+        GlBufferUnique _foamMaskSettingsUbo;
+        GlBufferUnique _cascadeSettingsSsbo;
 
     public:
         WaterSystem();

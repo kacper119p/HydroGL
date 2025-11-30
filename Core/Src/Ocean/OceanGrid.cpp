@@ -57,10 +57,10 @@ namespace Core
             }
         }
 
-        glGenVertexArrays(1, &_vao);
-        glGenBuffers(1, &_vbo);
-        glGenBuffers(1, &_patchPositionsVbo);
-        glGenBuffers(1, &_ebo);
+        _vao = GlVertexArrayUnique::Create();
+        _vbo = GlBufferUnique::Create();
+        _patchPositionsVbo = GlBufferUnique::Create();
+        _ebo = GlBufferUnique::Create();
 
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -99,11 +99,5 @@ namespace Core
                                 nullptr, _patchCount);
     }
 
-    OceanGrid::~OceanGrid()
-    {
-        glDeleteVertexArrays(1, &_vao);
-        glDeleteBuffers(1, &_vbo);
-        glDeleteBuffers(1, &_patchPositionsVbo);
-        glDeleteBuffers(1, &_ebo);
-    }
+    OceanGrid::~OceanGrid() = default;
 }

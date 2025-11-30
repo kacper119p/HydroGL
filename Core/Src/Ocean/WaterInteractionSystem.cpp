@@ -56,15 +56,7 @@ namespace Core
 
     WaterInteractionSystem::~WaterInteractionSystem()
     {
-        glDeleteBuffers(1, &_triangleBuffer.MainBufferId);
-        glDeleteBuffers(1, &_triangleBuffer.PartialSumsBufferId);
-        glDeleteBuffers(1, &_triangleBuffer.OutputBufferId);
-        glDeleteBuffers(1, &_triangleBuffer.IntersectionPolygonsId);
-        glDeleteBuffers(1, &_dynamicWavesSampleBuffer.GpuBufferId);
         free(_dynamicWavesSampleBuffer.DynamicWavesBuffer);
-        glDeleteBuffers(1, &_meshDataUbo);
-        glDeleteBuffers(1, &_intersectionMaskUbo);
-        glDeleteBuffers(1, &_interactiveWavesUbo);
     }
 
     void WaterInteractionSystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem,
@@ -141,10 +133,10 @@ namespace Core
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _meshDataUbo);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadeSettingsBuffer);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.MainBufferId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.MainBuffer);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, MeshManager::GetVertexBufferId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, MeshManager::GetElementBufferId());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, _triangleBuffer.IntersectionPolygonsId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, _triangleBuffer.IntersectionPolygons);
 
         Shader::DispatchCompute(static_cast<int32_t>(Math::IntegerDivCeilPositive(TriangleCount, WorkGroupDim1D)),
                                 1, 1);
@@ -156,8 +148,8 @@ namespace Core
     {
         _triangleAggregationComputeShader.Use();
         _triangleAggregationComputeShader.SetUniform(_triangleCountLocation, static_cast<int32_t>(TriangleCount));
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.MainBufferId);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.MainBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBuffer);
 
         Shader::DispatchCompute(AggregationGroupsCount, 1, 1);
 
@@ -168,8 +160,8 @@ namespace Core
     {
         _outputComputeShader.Use();
         _outputComputeShader.SetUniform(_partialsCountLocation, static_cast<uint32_t>(AggregationGroupsCount));
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBufferId);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBufferId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBuffer);
         Shader::DispatchCompute(1, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
     }
@@ -252,7 +244,7 @@ namespace Core
 
         glNamedBufferSubData(_intersectionMaskUbo, 0, sizeof(IntersectionMaskUbo), &uboData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _intersectionMaskUbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.IntersectionPolygonsId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _triangleBuffer.IntersectionPolygons);
         glBindImageTexture(0, WaterEffectorComponent.MaskTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
         Shader::DispatchCompute(WaterEffectorComponent.TexturesResolution / WorkGroupDim2D,
@@ -363,15 +355,15 @@ namespace Core
 
     void WaterInteractionSystem::ResizeTriangleBuffers(const uint32_t TriangleCount)
     {
-        glNamedBufferData(_triangleBuffer.MainBufferId,
+        glNamedBufferData(_triangleBuffer.MainBuffer,
                           static_cast<GLsizeiptr>(sizeof(TriangleProperties) * TriangleCount),
                           nullptr, TriangleBufferUsage);
         const int32_t elementCount = static_cast<int32_t>(Math::IntegerDivCeilPositive(
             TriangleCount, AggregatorElementsPerGroup));
-        glNamedBufferData(_triangleBuffer.PartialSumsBufferId,
+        glNamedBufferData(_triangleBuffer.PartialSumsBuffer,
                           static_cast<GLsizeiptr>(sizeof(TriangleProperties) * elementCount),
                           nullptr, TriangleBufferUsage);
-        glNamedBufferData(_triangleBuffer.IntersectionPolygonsId,
+        glNamedBufferData(_triangleBuffer.IntersectionPolygons,
                           static_cast<int64_t>(IntersectionPolygonsHeaderSize + sizeof(IntersectionSegment) *
                                                TriangleCount),
                           nullptr, TriangleBufferUsage);
@@ -382,7 +374,7 @@ namespace Core
     void WaterInteractionSystem::ResetIntersectionPolygonsBuffer() const
     {
         constexpr int32_t data = 0;
-        glNamedBufferSubData(_triangleBuffer.IntersectionPolygonsId, 0, sizeof(int32_t), &data);
+        glNamedBufferSubData(_triangleBuffer.IntersectionPolygons, 0, sizeof(int32_t), &data);
     }
 
     void WaterInteractionSystem::ResizeDynamicWavesSampleSsbo(const uint32_t Count)
@@ -392,7 +384,7 @@ namespace Core
         _dynamicWavesSampleBuffer.DynamicWavesBuffer
                 = static_cast<DynamicWavesSampleSsbo*>(
                     realloc(_dynamicWavesSampleBuffer.DynamicWavesBuffer, bufferSize));
-        glNamedBufferData(_dynamicWavesSampleBuffer.GpuBufferId, bufferSize, nullptr, GL_DYNAMIC_COPY);
+        glNamedBufferData(_dynamicWavesSampleBuffer.GpuBuffer, bufferSize, nullptr, GL_DYNAMIC_COPY);
         _dynamicWavesSampleBuffer.Capacity = static_cast<int32_t>(Count);
     }
 
@@ -415,7 +407,7 @@ namespace Core
                     };
             ++count;
         }
-        glNamedBufferSubData(_dynamicWavesSampleBuffer.GpuBufferId,
+        glNamedBufferSubData(_dynamicWavesSampleBuffer.GpuBuffer,
                              0,
                              DynamicWavesHeaderSize + count * static_cast<int64_t>(sizeof(DynamicWaveSampleParameters)),
                              _dynamicWavesSampleBuffer.DynamicWavesBuffer);
@@ -438,7 +430,14 @@ namespace Core
             ids[3], IntersectionPolygonsHeaderSize + sizeof(IntersectionSegment) * DefaultTriangleBufferSize, nullptr,
             TriangleBufferUsage);
 
-        return TriangleBuffer{ids[0], ids[1], ids[2], ids[3], DefaultTriangleBufferSize, ptr};
+        return TriangleBuffer{
+            GlBufferUnique(ids[0]),
+            GlBufferUnique(ids[1]),
+            GlBufferUnique(ids[2]),
+            GlBufferUnique(ids[3]),
+            DefaultTriangleBufferSize,
+            ptr
+        };
     }
 
     uint32_t WaterInteractionSystem::CreateMeshDataUbo()
@@ -473,6 +472,6 @@ namespace Core
         DynamicWavesSampleSsbo* data = static_cast<DynamicWavesSampleSsbo*>(malloc(bufferSize));
         glCreateBuffers(1, &id);
         glNamedBufferData(id, bufferSize, nullptr, GL_DYNAMIC_COPY);
-        return DynamicWavesSampleBuffer{id, DefaultDynamicWavesCapacity, data};
+        return DynamicWavesSampleBuffer{GlBufferUnique(id), DefaultDynamicWavesCapacity, data};
     }
 }
