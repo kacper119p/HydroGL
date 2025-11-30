@@ -21,8 +21,8 @@ namespace Core
         constexpr float DefaultDelta = 1.0f;
         constexpr float DefaultSwell = 0.0f;
 
-        constexpr float DefaultFoamThreshold = 0.9f;
-        constexpr float DefaultFoamExponent = 1.0f;
+        constexpr float DefaultFoamThreshold = 2.0f;
+        constexpr float DefaultFoamExponent = 4.45f;
         constexpr float DefaultFoamIntensity = 2.0f;
     }
 
