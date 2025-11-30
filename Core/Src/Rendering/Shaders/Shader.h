@@ -64,7 +64,14 @@ namespace Core
             return _id;
         }
 
-        int32_t GetUniformLocation(const char* const Name) const
+        [[nodiscard]] glm::ivec3 GetLocalWorkGroupSize() const
+        {
+            int32_t localWorkGroupSize[3];
+            glGetProgramiv(_id, GL_COMPUTE_WORK_GROUP_SIZE, localWorkGroupSize);
+            return glm::ivec3(localWorkGroupSize[0], localWorkGroupSize[1], localWorkGroupSize[2]);
+        }
+
+        [[nodiscard]] int32_t GetUniformLocation(const char* const Name) const
         {
             return glGetUniformLocation(_id, Name);
         }
@@ -510,12 +517,12 @@ namespace Core
         }
 
     public:
-        friend bool operator==(const Shader& Rhs, const Shader& Lhs)
+        [[nodiscard]] friend bool operator==(const Shader& Rhs, const Shader& Lhs)
         {
             return Rhs._id == Lhs._id;
         }
 
-        friend bool operator!=(const Shader& Rhs, const Shader& Lhs)
+        [[nodiscard]] friend bool operator!=(const Shader& Rhs, const Shader& Lhs)
         {
             return !(Rhs == Lhs);
         }
