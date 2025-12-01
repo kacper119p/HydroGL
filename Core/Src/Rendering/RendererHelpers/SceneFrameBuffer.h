@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include "Utility/GlResourceUnique.h"
+
 namespace Core
 {
     /**
@@ -14,13 +16,13 @@ namespace Core
         static constexpr uint8_t Samples = 16;
 
     private:
-        uint32_t _multiSampledId = 0;
+        GlFramebufferUnique _multiSampledBuffer;
         glm::ivec2 _resolution;
-        uint32_t _colorBuffer = 0;
-        uint32_t _depthStencilBuffer = 0;
+        GlTextureUnique _colorBuffer;
+        GlRenderbufferUnique _depthStencilBuffer;
 
-        uint32_t _resolvedId = 0;
-        uint32_t _resolvedColorBuffer = 0;
+        GlFramebufferUnique _resolvedBuffer;
+        GlTextureUnique _resolvedColorBuffer;
 
     public:
         explicit SceneFrameBuffer(const glm::ivec2& Resolution);
@@ -33,7 +35,7 @@ namespace Core
          */
         [[nodiscard]] unsigned int GetMultiSampledId() const
         {
-            return _multiSampledId;
+            return _multiSampledBuffer;
         }
 
         /**
@@ -59,12 +61,12 @@ namespace Core
          */
         void BindMultiSampled() const
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, _multiSampledId);
+            glBindFramebuffer(GL_FRAMEBUFFER, _multiSampledBuffer);
         }
 
         void BindResolved() const
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, _resolvedId);
+            glBindFramebuffer(GL_FRAMEBUFFER, _resolvedBuffer);
         }
 
         /**
