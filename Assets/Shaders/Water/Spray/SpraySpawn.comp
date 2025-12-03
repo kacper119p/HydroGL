@@ -1,0 +1,54 @@
+#version 460
+#include "Random.glsl"
+#include "Water/WaterCommon.glsl"
+#include "Water/Spray/SprayCommon.glsl"
+
+layout (binding = 3) uniform sampler2DArray DisplacementMaps;
+layout (binding = 4) uniform sampler2DArray SlopeMaps;
+
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
+DEFINE_PARTICLE_DATA_BUFFER(1, writeonly);
+DEFINE_PARTICLE_FREE_LIST_BUFFER(2, coherent);
+//DEFINE_INDIRECT_DRAW_BUFFER(3, coherent);
+
+vec3 GetSpawnPosition(vec2 basePosition)
+{
+    vec3 tessendorfDisplacement = vec3(0.0);
+    for (int i = 0; i < CascadeSettingsBuffer.CascadeCount; ++i)
+    {
+        const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[i].Length;
+        tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
+    }
+    return vec3(basePosition.x , 0.0, basePosition.y) + tessendorfDisplacement;
+}
+
+void MakeParticle(out particle Particle)
+{
+    uint seed = uint(gl_GlobalInvocationID.x) + Seed;
+    seed = pcg_hash(seed);
+
+    const vec2 randomOffset = rng(vec2(-SpawnRange), vec2(SpawnRange), seed);
+    const vec2 basePosition = CameraPosition.xz + randomOffset;
+    Particle.Position = GetSpawnPosition(basePosition);
+    Particle.Rotation = rng(0.0, 6.28318530718, seed);
+    Particle.Velocity = vec3(0.0);
+    Particle.LifeTime = LifeTime;
+}
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+    const uint index = gl_GlobalInvocationID.x;
+
+    if (index >= ParticlesSpawnedThisFrame)
+    return;
+
+    const int freeListIndex = atomicAdd(FreeListBuffer.Count, -1) - 1;
+    if (freeListIndex < 0) {
+        atomicAdd(FreeListBuffer.Count, 1);
+        return;
+    }
+
+    const uint particleIndex = FreeListBuffer.Indices[freeListIndex];
+    MakeParticle(ParticleDataBuffer.Particles[particleIndex]);
+}

@@ -117,7 +117,7 @@ namespace Core
                 renderedMesh.Mesh.GetIndicesCount(),
                 1,
                 renderedMesh.Mesh.GetIndicesIndex(),
-                renderedMesh.Mesh.GetVerticesIndex(),
+                static_cast<int32_t>(renderedMesh.Mesh.GetVerticesIndex()),
                 renderedMesh.Material
             };
         }
@@ -153,7 +153,8 @@ namespace Core
 
         CubeRenderer::Draw();
 
-        Engine.GetWaterSystem()->Render(cameraTransform,
+        Engine.GetWaterSystem()->Render(DeltaTime,
+                                        cameraTransform,
                                         camera,
                                         Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
 

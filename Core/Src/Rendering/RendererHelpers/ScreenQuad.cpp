@@ -21,7 +21,6 @@ namespace Core
         }
         glBindVertexArray(_cachedData.VertexArray);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        glBindVertexArray(0);
     }
 
     void ScreenQuad::Initialize()

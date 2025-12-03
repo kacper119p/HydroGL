@@ -217,6 +217,7 @@ namespace Core
 
     private:
         OceanGrid _oceanGrid;
+        SprayManager _sprayManager;
 
         Shader _waterShader;
         Shader _fftHorizontalShader;
@@ -388,7 +389,7 @@ namespace Core
             return _cascadeSettingsSsbo;
         }
 
-        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera,
+        void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     uint32_t DynamicWavesSampleSsboId) const;
 
     private:

@@ -213,7 +213,9 @@ namespace Core
         return id;
     }
 
-    void WaterSystem::Render(const TransformComponent& CameraTransform, const CameraComponent& Camera,
+    void WaterSystem::Render(const float DeltaTime,
+                             const TransformComponent& CameraTransform,
+                             const CameraComponent& Camera,
                              const uint32_t DynamicWavesSampleSsboId) const
     {
         UpdateSpectrumTexture();
@@ -226,18 +228,27 @@ namespace Core
         UpdateFoamMask();
 
         glGenerateTextureMipmap(_slopeTextures);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
+        const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
+
+        _sprayManager.Update(DeltaTime,
+                             _displacementTextures,
+                             _slopeTextures,
+                             _cascadeSettingsSsbo,
+                             cameraPosition,
+                             viewMatrix,
+                             Camera.ProjectionMatrix);
+
         const float quadSize = _oceanGrid.GetQuadSize();
         const glm::vec2 gridOrigin =
                 glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
 
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         _waterShader.Use();
-        _waterShader.SetUniform(_waterShaderUniformLocations.ViewMatrix,
-                                glm::inverse(CameraTransform.GetLocalToWorldMatrix()));
+        _waterShader.SetUniform(_waterShaderUniformLocations.ViewMatrix, viewMatrix);
         _waterShader.SetUniform(_waterShaderUniformLocations.ProjectionMatrix, Camera.ProjectionMatrix);
         _waterShader.SetUniform(_waterShaderUniformLocations.CameraPosition, cameraPosition);
         _waterShader.SetUniform(_waterShaderUniformLocations.Time, Platform::TimeManager::GetTime());
@@ -254,6 +265,8 @@ namespace Core
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDisable(GL_BLEND);
+
+        _sprayManager.Render();
     }
 
     void WaterSystem::UpdateSpectrumTexture() const
