@@ -23,6 +23,7 @@ namespace Core
 
         GlFramebufferUnique _resolvedBuffer;
         GlTextureUnique _resolvedColorBuffer;
+        GlRenderbufferUnique _resolvedDepthBuffer;
 
     public:
         explicit SceneFrameBuffer(const glm::ivec2& Resolution);
@@ -70,16 +71,27 @@ namespace Core
         }
 
         /**
-         * @brief Returns color texture attached to this buffer.
+         * @brief Returns color texture attached to multisampled buffer.
          */
         [[nodiscard]] uint32_t GetMultiSampledColorBuffer() const
         {
             return _colorBuffer;
         }
 
+        /**
+        * @brief Returns color texture attached to resolved buffer.
+        */
         [[nodiscard]] uint32_t GetResolvedColorBuffer() const
         {
             return _resolvedColorBuffer;
+        }
+
+        /**
+        * @brief Returns depth render buffer attached to resolved buffer.
+        */
+        [[nodiscard]] uint32_t GetResolvedDepthBuffer() const
+        {
+            return _resolvedDepthBuffer;
         }
 
         /**

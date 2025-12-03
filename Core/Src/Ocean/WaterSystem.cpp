@@ -231,14 +231,6 @@ namespace Core
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
-        _sprayManager.Update(DeltaTime,
-                             _displacementTextures,
-                             _slopeTextures,
-                             _cascadeSettingsSsbo,
-                             cameraPosition,
-                             viewMatrix,
-                             Camera.ProjectionMatrix);
-
         const float quadSize = _oceanGrid.GetQuadSize();
         const glm::vec2 gridOrigin =
                 glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
@@ -266,6 +258,17 @@ namespace Core
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDisable(GL_BLEND);
 
+        _sprayManager.Update(DeltaTime,
+                             _displacementTextures,
+                             _slopeTextures,
+                             _cascadeSettingsSsbo,
+                             cameraPosition,
+                             viewMatrix,
+                             Camera.ProjectionMatrix);
+    }
+
+    void WaterSystem::RenderSpray()
+    {
         _sprayManager.Render();
     }
 

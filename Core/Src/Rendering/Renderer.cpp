@@ -159,6 +159,10 @@ namespace Core
                                         Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
 
         _frameBuffer.ResolveMultisampling();
+        _frameBuffer.BindResolved();
+
+        Engine.GetWaterSystem()->RenderSpray();
+
         _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());
     }
 

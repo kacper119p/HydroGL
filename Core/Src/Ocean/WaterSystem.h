@@ -392,6 +392,8 @@ namespace Core
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     uint32_t DynamicWavesSampleSsboId) const;
 
+        void RenderSpray();
+
     private:
         void UpdateInitialSpectrum() const;
 

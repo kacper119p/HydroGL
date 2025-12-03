@@ -9,6 +9,7 @@ namespace Core
         _colorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D_MULTISAMPLE);
         _resolvedColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         _depthStencilBuffer = GlRenderbufferUnique::Create();
+        _resolvedDepthBuffer = GlRenderbufferUnique::Create();
         UpdateBuffers();
     }
 
@@ -18,8 +19,14 @@ namespace Core
     {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, _multiSampledBuffer);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _resolvedBuffer);
+
+        // Blit Color (Linear allows for better quality downsampling if supported)
         glBlitFramebuffer(0, 0, _resolution.x, _resolution.y, 0, 0, _resolution.x, _resolution.y,
                           GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+        // Blit Depth and Stencil (MUST be GL_NEAREST)
+        glBlitFramebuffer(0, 0, _resolution.x, _resolution.y, 0, 0, _resolution.x, _resolution.y,
+                          GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
 
     void SceneFrameBuffer::UpdateBuffers() const
@@ -41,7 +48,11 @@ namespace Core
         glTextureParameteri(_resolvedColorBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteri(_resolvedColorBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+        glNamedRenderbufferStorage(_resolvedDepthBuffer, GL_DEPTH24_STENCIL8, _resolution.x, _resolution.y);
+
         glNamedFramebufferTexture(_resolvedBuffer, GL_COLOR_ATTACHMENT0, _resolvedColorBuffer, 0);
+        glNamedFramebufferRenderbuffer(_resolvedBuffer, GL_DEPTH_STENCIL_ATTACHMENT,
+                                       GL_RENDERBUFFER, _resolvedDepthBuffer);
         glNamedFramebufferDrawBuffers(_resolvedBuffer, 1, attachments);
     }
 }
