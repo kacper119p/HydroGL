@@ -31,7 +31,7 @@ struct drawElementsIndirectCommand
 #define DEFINE_PARTICLE_ALIVE_LIST_BUFFER(binding_point, access) \
     layout(std430, binding = binding_point) access restrict buffer aliveListBuffer \
     { \
-        particle Particles[];\
+        uint Indices[];\
  } AliveListBuffer;
 
 #define DEFINE_INDIRECT_DRAW_BUFFER(binding_point, access) \
@@ -48,7 +48,9 @@ layout (std140, binding = 0) uniform sprayParameters
     mat4 ProjectionMatrix;
     vec3 CameraPosition;
     uint TotalParticleCount;
+    vec3 SceneColor;
     uint ParticlesSpawnedThisFrame;
+    vec2 WindVelocity;
     uint Seed;
     float SpawnRange;
     float LifeTime;

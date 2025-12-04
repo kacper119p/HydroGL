@@ -18,11 +18,13 @@ namespace Core
     private:
         struct alignas(16) SprayParameters
         {
-            alignas(16)glm::mat4 ViewMatrix;
-            alignas(16)glm::mat4 ProjectionMatrix;
-            alignas(16)glm::vec3 CameraPosition;
+            alignas(16) glm::mat4 ViewMatrix;
+            alignas(16) glm::mat4 ProjectionMatrix;
+            alignas(16) glm::vec3 CameraPosition;
             alignas(4) uint32_t TotalParticleCount;
+            alignas(16) glm::vec3 SceneColor;
             alignas(4) uint32_t ParticlesSpawnedThisFrame;
+            alignas(16) const glm::vec2 WindVelocity;
             alignas(4) uint32_t Seed;
             alignas(4) float SpawnRange;
             alignas(4) float Lifetime;
@@ -30,8 +32,8 @@ namespace Core
         };
 
     private:
-        static constexpr float MaxLifetime = 10.0f;
-        static constexpr int32_t MaxParticleCount = 2048;
+        static constexpr float MaxLifetime = 1.0f;
+        static constexpr int32_t MaxParticleCount = 1048576;
         static constexpr float SpawnRate = MaxParticleCount / MaxLifetime;
 
     private:
@@ -62,14 +64,30 @@ namespace Core
     public:
         ~SprayManager();
 
+    public:
         void Update(float DeltaTime,
                     uint32_t DisplacementMaps,
                     uint32_t SlopeMaps,
                     uint32_t CascadeSettingsSsbo,
+                    uint32_t FoamSettingsUbo,
+                    const glm::vec2& WindVelocity,
+                    const glm::vec3& SceneColor,
                     const glm::vec3& CameraPosition,
                     const glm::mat4& ViewMatrix,
                     const glm::mat4& ProjectionMatrix) const;
 
         void Render() const;
+
+    private:
+        void PrepareNextFrame(const glm::mat4& ViewMatrix,
+                              const glm::mat4& ProjectionMatrix,
+                              const glm::vec3& CameraPosition,
+                              const glm::vec3& SceneColor,
+                              const glm::vec2& WindVelocity,
+                              uint32_t ParticlesToSpawn,
+                              float DeltaTime) const;
+
+        void BindData(uint32_t CascadeSettingsSsbo, uint32_t FoamSettingsUbo,
+                      uint32_t DisplacementMaps, uint32_t SlopeMaps) const;
     };
 }

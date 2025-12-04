@@ -10,7 +10,7 @@ DEFINE_PARTICLE_FREE_LIST_BUFFER(2, writeonly);
 DEFINE_INDIRECT_DRAW_BUFFER(3, coherent);
 DEFINE_PARTICLE_ALIVE_LIST_BUFFER(4, writeonly);
 
-void UpdateParticle(inout particle Particle, uint index)
+void UpdateParticle(inout particle Particle, const uint index)
 {
     if (Particle.LifeTime > 0.0)
     {
@@ -21,8 +21,7 @@ void UpdateParticle(inout particle Particle, uint index)
             return;
         }
         uint particleDrawIndex = atomicAdd(IndirectDrawBuffer.Command.InstanceCount, 1);
-        AliveListBuffer.Particles[particleDrawIndex] = Particle;
-
+        AliveListBuffer.Indices[particleDrawIndex] = index;
        //Update behaviour
     }
 }

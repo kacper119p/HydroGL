@@ -216,6 +216,7 @@ namespace Core
     void WaterSystem::Render(const float DeltaTime,
                              const TransformComponent& CameraTransform,
                              const CameraComponent& Camera,
+                             const glm::vec3& SceneColor,
                              const uint32_t DynamicWavesSampleSsboId) const
     {
         UpdateSpectrumTexture();
@@ -262,6 +263,9 @@ namespace Core
                              _displacementTextures,
                              _slopeTextures,
                              _cascadeSettingsSsbo,
+                             _foamMaskSettingsUbo,
+                             -_initialSpectrumSettingsBufferData.WindVelocity,
+                             SceneColor,
                              cameraPosition,
                              viewMatrix,
                              Camera.ProjectionMatrix);

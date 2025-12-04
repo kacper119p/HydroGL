@@ -156,6 +156,7 @@ namespace Core
         Engine.GetWaterSystem()->Render(DeltaTime,
                                         cameraTransform,
                                         camera,
+                                        scene.GetSkybox().GetEnvironmentColor(),
                                         Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
 
         _frameBuffer.ResolveMultisampling();

@@ -6,6 +6,7 @@
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 layout (binding = 4) uniform sampler2DArray SlopeMaps;
 
+DEFINE_FOAM_PARAMETERS_BUFFER(1)
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
 DEFINE_PARTICLE_DATA_BUFFER(1, writeonly);
 DEFINE_PARTICLE_FREE_LIST_BUFFER(2, coherent);
@@ -22,17 +23,41 @@ vec3 GetSpawnPosition(vec2 basePosition)
     return vec3(basePosition.x , 0.0, basePosition.y) + tessendorfDisplacement;
 }
 
-void MakeParticle(out particle Particle)
+bool MakeParticle(out particle Particle)
 {
-    uint seed = uint(gl_GlobalInvocationID.x) + Seed;
+    uint seed = uint(gl_GlobalInvocationID.x) * Seed;
     seed = pcg_hash(seed);
 
     const vec2 randomOffset = rng(vec2(-SpawnRange), vec2(SpawnRange), seed);
     const vec2 basePosition = CameraPosition.xz + randomOffset;
+
+    const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[0].Length;
+    vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
+    float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
+
+    for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
+    {
+        const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[i].Length;
+        slopeDfdxxDfdzz += texture(SlopeMaps, vec3(texCoord, i));
+        dfdzx += texture(DisplacementMaps, vec3(texCoord, i)).w;
+    }
+
+    const vec2 slope = slopeDfdxxDfdzz.xy;
+    const float jacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
+
+    float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
+    float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
+
+    if(foamMask < 0.25)
+    {
+        return false;
+    }
+
     Particle.Position = GetSpawnPosition(basePosition);
     Particle.Rotation = rng(0.0, 6.28318530718, seed);
     Particle.Velocity = vec3(0.0);
     Particle.LifeTime = LifeTime;
+    return true;
 }
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
@@ -41,14 +66,23 @@ void main()
     const uint index = gl_GlobalInvocationID.x;
 
     if (index >= ParticlesSpawnedThisFrame)
-    return;
+    {
+        return;
+    }
+
+    particle particle;
+    if (!MakeParticle(particle))
+    {
+        return;
+    }
 
     const int freeListIndex = atomicAdd(FreeListBuffer.Count, -1) - 1;
-    if (freeListIndex < 0) {
+    if (freeListIndex < 0)
+    {
         atomicAdd(FreeListBuffer.Count, 1);
         return;
     }
 
     const uint particleIndex = FreeListBuffer.Indices[freeListIndex];
-    MakeParticle(ParticleDataBuffer.Particles[particleIndex]);
+    ParticleDataBuffer.Particles[particleIndex] = particle;
 }

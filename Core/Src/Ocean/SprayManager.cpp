@@ -1,5 +1,7 @@
 #include "SprayManager.h"
 
+#include <spdlog/spdlog.h>
+
 #include "TimeManager.h"
 #include "Rendering/RendererHelpers/DrawElementsIndirectCommand.h"
 #include "Rendering/RendererHelpers/SpriteQuad.h"
@@ -9,46 +11,46 @@ namespace Core
 {
     GlBufferUnique SprayManager::CreateParticleDataSsbo()
     {
-        void* InitialData = calloc(MaxParticleCount, sizeof(ParticleData));
+        void* initialData = calloc(MaxParticleCount, sizeof(ParticleData));
         GlBufferUnique buffer = GlBufferUnique::Create();
-        glNamedBufferStorage(buffer, MaxParticleCount * sizeof(ParticleData), InitialData, GL_DYNAMIC_STORAGE_BIT);
-        free(InitialData);
+        glNamedBufferStorage(buffer, MaxParticleCount * sizeof(ParticleData), initialData, GL_DYNAMIC_STORAGE_BIT);
+        free(initialData);
         return buffer;
     }
 
     GlBufferUnique SprayManager::CreateFreeListSsbo()
     {
-        uint32_t* const InitialData
+        uint32_t* const initialData
                 = static_cast<uint32_t*>(malloc(sizeof(int32_t) + MaxParticleCount * sizeof(uint32_t)));
-        int32_t* freeCount = reinterpret_cast<int32_t*>(InitialData);
+        int32_t* freeCount = reinterpret_cast<int32_t*>(initialData);
         *freeCount = MaxParticleCount;
-        uint32_t* const indices = InitialData + 1;
+        uint32_t* const indices = initialData + 1;
         for (uint32_t i = 0; i < MaxParticleCount; ++i)
         {
             indices[i] = i;
         }
         GlBufferUnique buffer = GlBufferUnique::Create();
-        glNamedBufferStorage(buffer, sizeof(int32_t) + MaxParticleCount * sizeof(uint32_t), InitialData,
+        glNamedBufferStorage(buffer, sizeof(int32_t) + MaxParticleCount * sizeof(uint32_t), initialData,
                              GL_DYNAMIC_STORAGE_BIT);
-        free(InitialData);
+        free(initialData);
         return buffer;
     }
 
     GlBufferUnique SprayManager::CreateIndirectDrawSsbo()
     {
-        DrawElementsIndirectCommand* InitialData = new DrawElementsIndirectCommand{6, 0, 0, 0, 0};
+        DrawElementsIndirectCommand* initialData = new DrawElementsIndirectCommand{6, 0, 0, 0, 0};
         GlBufferUnique buffer = GlBufferUnique::Create();
-        glNamedBufferStorage(buffer, sizeof(DrawElementsIndirectCommand), InitialData, GL_DYNAMIC_STORAGE_BIT);
-        free(InitialData);
+        glNamedBufferStorage(buffer, sizeof(DrawElementsIndirectCommand), initialData, GL_DYNAMIC_STORAGE_BIT);
+        free(initialData);
         return buffer;
     }
 
     GlBufferUnique SprayManager::CreateAliveListSsbo()
     {
-        void* InitialData = calloc(MaxParticleCount, sizeof(ParticleData));
+        void* initialData = calloc(MaxParticleCount, sizeof(ParticleData));
         GlBufferUnique buffer = GlBufferUnique::Create();
-        glNamedBufferStorage(buffer, MaxParticleCount * sizeof(ParticleData), InitialData, GL_DYNAMIC_STORAGE_BIT);
-        free(InitialData);
+        glNamedBufferStorage(buffer, MaxParticleCount * sizeof(uint32_t), initialData, GL_DYNAMIC_STORAGE_BIT);
+        free(initialData);
         return buffer;
     }
 
@@ -83,52 +85,23 @@ namespace Core
                               const uint32_t DisplacementMaps,
                               const uint32_t SlopeMaps,
                               const uint32_t CascadeSettingsSsbo,
+                              const uint32_t FoamSettingsUbo,
+                              const glm::vec2& WindVelocity,
+                              const glm::vec3& SceneColor,
                               const glm::vec3& CameraPosition,
                               const glm::mat4& ViewMatrix,
                               const glm::mat4& ProjectionMatrix) const
     {
-        const uint32_t ParticlesToSpawn = static_cast<uint32_t>(SpawnRate * DeltaTime);
-        const float currentTime = Platform::TimeManager::GetTime();
-        const SprayParameters sprayParameters
-        {
-            ViewMatrix,
-            ProjectionMatrix,
-            CameraPosition,
-            MaxParticleCount,
-            ParticlesToSpawn,
-            *reinterpret_cast<const uint32_t*>(&currentTime),
-            150.0f,
-            10.0f,
-            DeltaTime
-        };
+        const uint32_t particlesToSpawn = static_cast<uint32_t>(SpawnRate * DeltaTime);
+        PrepareNextFrame(ViewMatrix, ProjectionMatrix, CameraPosition, SceneColor,
+                         WindVelocity, particlesToSpawn, DeltaTime);
+        BindData(CascadeSettingsSsbo, FoamSettingsUbo, DisplacementMaps, SlopeMaps);
 
-        glNamedBufferSubData(_sprayParametersUbo, 0, sizeof(SprayParameters), &sprayParameters);
-        // --- 1. Reset & Clear ---
-        static constexpr uint32_t zero = 0;
-        glNamedBufferSubData(_indirectDrawBuffer,
-                             offsetof(DrawElementsIndirectCommand, DrawElementsIndirectCommand::InstanceCount),
-                             sizeof(uint32_t),
-                             &zero);
-
-        // --- 2. Spawn ---
         _spawnShader.Use();
+        Shader::DispatchCompute((particlesToSpawn + 63) / 64, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
 
-
-        glBindBufferBase(GL_UNIFORM_BUFFER, 0, _sprayParametersUbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadeSettingsSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _particleDataSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _freeListSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _indirectDrawBuffer);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, _aliveListSsbo);
-
-        glBindTextureUnit(3, DisplacementMaps);
-        glBindTextureUnit(4, SlopeMaps);
-        Shader::DispatchCompute((ParticlesToSpawn + 63) / 64, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
-
-        // --- 3. Update & Compact ---
         _updateShader.Use();
-
         Shader::DispatchCompute((MaxParticleCount + 63) / 64, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_COMMAND_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT);
     }
@@ -144,10 +117,56 @@ namespace Core
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, _indirectDrawBuffer);
 
         glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr);
 
         glDisable(GL_BLEND);
+    }
+
+    void SprayManager::PrepareNextFrame(const glm::mat4& ViewMatrix, const glm::mat4& ProjectionMatrix,
+                                        const glm::vec3& CameraPosition, const glm::vec3& SceneColor,
+                                        const glm::vec2& WindVelocity, const uint32_t ParticlesToSpawn,
+                                        const float DeltaTime) const
+    {
+        const float currentTime = Platform::TimeManager::GetTime();
+        spdlog::info("{},{},{}", SceneColor.x, SceneColor.y, SceneColor.z);
+        const SprayParameters sprayParameters
+        {
+            ViewMatrix,
+            ProjectionMatrix,
+            CameraPosition,
+            MaxParticleCount,
+            SceneColor,
+            ParticlesToSpawn,
+            WindVelocity,
+            *reinterpret_cast<const uint32_t*>(&currentTime),
+            75.0f,
+            MaxLifetime,
+            DeltaTime
+        };
+
+        glNamedBufferSubData(_sprayParametersUbo, 0, sizeof(SprayParameters), &sprayParameters);
+
+        static constexpr uint32_t Zero = 0;
+        glNamedBufferSubData(_indirectDrawBuffer,
+                             offsetof(DrawElementsIndirectCommand, DrawElementsIndirectCommand::InstanceCount),
+                             sizeof(uint32_t),
+                             &Zero);
+    }
+
+    void SprayManager::BindData(const uint32_t CascadeSettingsSsbo, const uint32_t FoamSettingsUbo,
+                                const uint32_t DisplacementMaps, const uint32_t SlopeMaps) const
+    {
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, _sprayParametersUbo);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, FoamSettingsUbo);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadeSettingsSsbo);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _particleDataSsbo);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _freeListSsbo);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _indirectDrawBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, _aliveListSsbo);
+
+        glBindTextureUnit(3, DisplacementMaps);
+        glBindTextureUnit(4, SlopeMaps);
     }
 }
