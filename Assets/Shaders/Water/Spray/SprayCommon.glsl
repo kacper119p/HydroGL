@@ -55,4 +55,5 @@ layout (std140, binding = 0) uniform sprayParameters
     float SpawnRange;
     float LifeTime;
     float DeltaTime;
+    float Time;
 };

@@ -1,5 +1,6 @@
 #version 460
 #include "Constants.glsl"
+#include "Simplex.glsl"
 #include "Water/WaterCommon.glsl"
 #include "Water/Spray/SprayCommon.glsl"
 
@@ -22,7 +23,9 @@ void UpdateParticle(inout particle Particle, const uint index)
         }
         uint particleDrawIndex = atomicAdd(IndirectDrawBuffer.Command.InstanceCount, 1);
         AliveListBuffer.Indices[particleDrawIndex] = index;
-       //Update behaviour
+
+        Particle.Position += Particle.Velocity * DeltaTime;
+        Particle.Rotation += DeltaTime;
     }
 }
 

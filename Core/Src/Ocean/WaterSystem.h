@@ -253,7 +253,7 @@ namespace Core
         GlBufferUnique _cascadeSettingsSsbo;
 
     public:
-        WaterSystem();
+        WaterSystem(const glm::ivec2& WindowSize, uint32_t MainDepthBuffer);
 
     private:
         static uint32_t CreateTextureArray(int32_t Layers);
@@ -392,7 +392,7 @@ namespace Core
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     const glm::vec3& SceneColor, uint32_t DynamicWavesSampleSsboId) const;
 
-        void RenderSpray();
+        void RenderSpray(uint32_t TargetFrameBuffer) const;
 
     private:
         void UpdateInitialSpectrum() const;

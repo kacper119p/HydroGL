@@ -5,6 +5,7 @@
 
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 layout (binding = 4) uniform sampler2DArray SlopeMaps;
+layout (binding = 6) uniform sampler2DArray VelocityMaps;
 
 DEFINE_FOAM_PARAMETERS_BUFFER(1)
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
@@ -20,7 +21,7 @@ vec3 GetSpawnPosition(vec2 basePosition)
         const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[i].Length;
         tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
     }
-    return vec3(basePosition.x , 0.0, basePosition.y) + tessendorfDisplacement;
+    return vec3(basePosition.x, 0.0, basePosition.y) + tessendorfDisplacement;
 }
 
 bool MakeParticle(out particle Particle)
@@ -34,12 +35,14 @@ bool MakeParticle(out particle Particle)
     const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[0].Length;
     vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
     float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
+    vec3 waterVelocity = texture(VelocityMaps, vec3(texCoord, CascadeSettingsBuffer.VelocityLayers - 1)).xyz;
 
     for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
     {
         const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[i].Length;
         slopeDfdxxDfdzz += texture(SlopeMaps, vec3(texCoord, i));
         dfdzx += texture(DisplacementMaps, vec3(texCoord, i)).w;
+        waterVelocity += texture(VelocityMaps, vec3(texCoord, i * (CascadeSettingsBuffer.VelocityLayers - 1))).xyz;
     }
 
     const vec2 slope = slopeDfdxxDfdzz.xy;
@@ -48,14 +51,14 @@ bool MakeParticle(out particle Particle)
     float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
     float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
 
-    if(foamMask < 0.25)
+    if (foamMask < 0.25)
     {
         return false;
     }
 
     Particle.Position = GetSpawnPosition(basePosition);
     Particle.Rotation = rng(0.0, 6.28318530718, seed);
-    Particle.Velocity = vec3(0.0);
+    Particle.Velocity = waterVelocity;
     Particle.LifeTime = LifeTime;
     return true;
 }

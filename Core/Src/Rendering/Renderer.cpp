@@ -162,7 +162,7 @@ namespace Core
         _frameBuffer.ResolveMultisampling();
         _frameBuffer.BindResolved();
 
-        Engine.GetWaterSystem()->RenderSpray();
+        Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetFrameBufferId());
 
         _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());
     }

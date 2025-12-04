@@ -32,11 +32,19 @@ namespace Core
 
     public:
         /**
-         * @brief Returns id of the underlying FrameBuffer.
+         * @brief Returns id of the underlying multisampled FrameBuffer.
          */
         [[nodiscard]] unsigned int GetMultiSampledId() const
         {
             return _multiSampledBuffer;
+        }
+
+        /**
+        * @brief Returns id of the underlying resolved FrameBuffer.
+        */
+        [[nodiscard]] unsigned int GetFrameBufferId() const
+        {
+            return _resolvedBuffer;
         }
 
         /**

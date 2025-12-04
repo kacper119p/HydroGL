@@ -46,8 +46,9 @@ namespace Core
     {
     }
 
-    WaterSystem::WaterSystem()
+    WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
         : _oceanGrid(1000.0f, 100, 10),
+          _sprayManager(WindowSize, MainDepthBuffer),
           _waterShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
               SetStage("Assets/Shaders/Water/Water.tesc", ShaderStage::TesselationControlShader).
@@ -262,6 +263,7 @@ namespace Core
         _sprayManager.Update(DeltaTime,
                              _displacementTextures,
                              _slopeTextures,
+                             _velocityTextures,
                              _cascadeSettingsSsbo,
                              _foamMaskSettingsUbo,
                              -_initialSpectrumSettingsBufferData.WindVelocity,
@@ -271,9 +273,9 @@ namespace Core
                              Camera.ProjectionMatrix);
     }
 
-    void WaterSystem::RenderSpray()
+    void WaterSystem::RenderSpray(const uint32_t TargetFrameBuffer) const
     {
-        _sprayManager.Render();
+        _sprayManager.Render(TargetFrameBuffer);
     }
 
     void WaterSystem::UpdateSpectrumTexture() const

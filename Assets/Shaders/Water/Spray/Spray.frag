@@ -1,10 +1,18 @@
 #version 460
 #include "Water/Spray/SprayCommon.glsl"
 
-layout (location = 0) out vec4 FragColor;
+layout (binding = 5) uniform sampler2D Texture;
+
+in vec2 TexCoord;
+in float NormalizedLife;
+in vec3 WorldPosition;
+
+layout (location = 0) out float FragColor;
 
 layout (early_fragment_tests) in;
 void main()
 {
-    FragColor = vec4(SceneColor, 0.5);
+    float alpha = texture(Texture, TexCoord).a;
+    float distanceBlend = 1.0 - min(length(CameraPosition - WorldPosition) / SpawnRange, 1.0);
+    FragColor = alpha * (1.0 - NormalizedLife) * 0.2 * distanceBlend * distanceBlend;
 }
