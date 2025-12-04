@@ -31,6 +31,9 @@ namespace Core
             alignas(4) float Lifetime;
             alignas(4) float DeltaTime;
             alignas(4) float Time;
+            alignas(4) float SprayOpacity;
+            alignas(4) float SpraySize;
+            alignas(4) float SpawnThreshold;
         };
 
     private:

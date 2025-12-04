@@ -51,7 +51,7 @@ bool MakeParticle(out particle Particle)
     float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
     float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
 
-    if (foamMask < 0.25)
+    if (foamMask < SpawnThreshold)
     {
         return false;
     }

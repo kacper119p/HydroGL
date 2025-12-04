@@ -169,7 +169,10 @@ namespace Core
             150.0f,
             MaxLifetime,
             DeltaTime,
-            currentTime
+            currentTime,
+            0.2f,
+            3.0f,
+            0.25f
         };
 
         glNamedBufferSubData(_sprayParametersUbo, 0, sizeof(SprayParameters), &sprayParameters);

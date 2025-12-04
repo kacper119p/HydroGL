@@ -14,5 +14,5 @@ void main()
 {
     float alpha = texture(Texture, TexCoord).a;
     float distanceBlend = 1.0 - min(length(CameraPosition - WorldPosition) / SpawnRange, 1.0);
-    FragColor = alpha * (1.0 - NormalizedLife) * 0.2 * distanceBlend * distanceBlend;
+    FragColor = alpha * (1.0 - NormalizedLife) * SprayOpacity * distanceBlend * distanceBlend;
 }

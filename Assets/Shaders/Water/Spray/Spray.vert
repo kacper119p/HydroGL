@@ -30,7 +30,7 @@ void main()
     rotatedOffset.y = offset.x * rotationSin + offset.y * rotationCos;
 
     float normalizedLife = 1.0 - particle.LifeTime / LifeTime;
-    float size = normalizedLife * 3.0;
+    float size = normalizedLife * SpraySize;
 
     const vec3 billboardOffset = (rotatedOffset.x * cameraRight + (rotatedOffset.y) * cameraUp) * size ;
 
