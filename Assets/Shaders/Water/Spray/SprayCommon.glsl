@@ -59,4 +59,6 @@ layout (std140, binding = 0) uniform sprayParameters
     float SprayOpacity;
     float SpraySize;
     float SpawnThreshold;
+    float WaterVelocityInfluence;
+    float WindInfluence;
 };

@@ -68,6 +68,12 @@ namespace Application
                 {
                     sprayManager.SetSpawnThreshold(glm::clamp(spawnThreshold, 0.0f, 1.0f));
                 }
+
+                float windInfluence = sprayManager.GetWindInfluence();
+                if (ImGui::SliderFloat("Wind Influence", &windInfluence, 0.0f, 1.0f))
+                {
+                    sprayManager.SetWindInfluence(glm::clamp(windInfluence, 0.0f, 1.0f));
+                }
             }
         }
         ImGui::End();

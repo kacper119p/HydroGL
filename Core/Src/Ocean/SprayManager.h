@@ -34,6 +34,8 @@ namespace Core
             alignas(4) float SprayOpacity;
             alignas(4) float SpraySize;
             alignas(4) float SpawnThreshold;
+            alignas(4) float WaterVelocityInfluence;
+            alignas(4) float WindInfluence;
         };
 
     private:
@@ -61,6 +63,8 @@ namespace Core
         float _sprayOpacity = 0.2f;
         float _spraySize = 3.0f;
         float _spawnThreshold = 0.25f;
+        float _waterVelocityInfluence = 0.75f;
+        float _windInfluence = 0.1f;
         float _spawnRate = MaxParticleCount / _lifetime;
 
     private:
@@ -124,6 +128,16 @@ namespace Core
         void SetSpawnThreshold(const float SpawnThreshold)
         {
             _spawnThreshold = SpawnThreshold;
+        }
+
+        [[nodiscard]] float GetWindInfluence() const
+        {
+            return _windInfluence;
+        }
+
+        void SetWindInfluence(const float WindInfluence)
+        {
+            _windInfluence = WindInfluence;
         }
 
     public:

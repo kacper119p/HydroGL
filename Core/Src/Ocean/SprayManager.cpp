@@ -172,7 +172,9 @@ namespace Core
             currentTime,
             _sprayOpacity,
             _spraySize,
-            _spawnThreshold
+            _spawnThreshold,
+            _waterVelocityInfluence,
+            _windInfluence
         };
 
         glNamedBufferSubData(_sprayParametersUbo, 0, sizeof(SprayParameters), &sprayParameters);
