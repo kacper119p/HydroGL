@@ -226,7 +226,6 @@ namespace Core
         Shader _orientationComputeShader;
         Shader _initialSpectrumComputeShader;
         Shader _spectrumComputeShader;
-        Shader _foamMaskComputeShader;
 
         WaterShaderUniformLocations _waterShaderUniformLocations;
         FftShaderUniformLocations _fftHorizontalShaderUniformLocations;
@@ -242,7 +241,6 @@ namespace Core
         GlTextureUnique _velocityTextures;
         GlTextureUnique _tmpTextures;
         GlTextureUnique _gaussianNoiseTexture;
-        GlTextureUnique _foamMaskTextures;
 
         FoamMaskShaderUniforms _foamUniformBufferData;
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
@@ -405,8 +403,6 @@ namespace Core
         void UpdateSpectrumTexture() const;
 
         void AssembleTextures() const;
-
-        void UpdateFoamMask() const;
 
         void RunFft(uint32_t Texture, int32_t Layers) const;
 

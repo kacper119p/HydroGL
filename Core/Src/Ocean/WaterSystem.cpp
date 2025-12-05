@@ -70,8 +70,6 @@ namespace Core
           _spectrumComputeShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Spectrum.comp", ShaderStage::ComputeShader)
               .Build()),
-          _foamMaskComputeShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/FoamMask.comp", ShaderStage::ComputeShader).Build()),
           _waterShaderUniformLocations(_waterShader),
           _fftHorizontalShaderUniformLocations(_fftHorizontalShader),
           _fftVerticalShaderUniformLocations(_fftVerticalShader),
@@ -85,7 +83,6 @@ namespace Core
           _velocityTextures(CreateTextureArray(VelocityLayers * CascadeCount)),
           _tmpTextures(CreateTextureArray(VelocityPackedTexturesCount * CascadeCount)),
           _gaussianNoiseTexture(CreateGaussianNoise()),
-          _foamMaskTextures(CreateFoamTextureArray()),
           _foamUniformBufferData(DefaultFoamThreshold, DefaultFoamExponent, DefaultFoamIntensity),
           _initialSpectrumSettingsBufferData(DefaultWindVelocity, DefaultFetch, DefaultDelta, DefaultSwell,
                                              CalculateInitialSpectrumAlpha(
@@ -227,7 +224,6 @@ namespace Core
         RunFft(_velocityPackedTextures, VelocityPackedTexturesCount * CascadeCount);
 
         AssembleTextures();
-        UpdateFoamMask();
 
         glGenerateTextureMipmap(_slopeTextures);
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
@@ -304,23 +300,6 @@ namespace Core
         glBindImageTexture(3, _slopeTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(4, _displacementTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         glBindImageTexture(5, _velocityTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
-        Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-    }
-
-    void WaterSystem::UpdateFoamMask() const
-    {
-        _foamMaskComputeShader.Use();
-
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
-        glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
-
-        glBindTextureUnit(0, _velocityTextures);
-        glBindTextureUnit(1, _slopeTextures);
-        glBindTextureUnit(2, _displacementTextures);
-
-        glBindImageTexture(3, _foamMaskTextures, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
 
         Shader::DispatchCompute(TextureResolution / WorkGroupDim2D, TextureResolution / WorkGroupDim2D, CascadeCount);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
