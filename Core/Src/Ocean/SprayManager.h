@@ -130,6 +130,16 @@ namespace Core
             _spawnThreshold = SpawnThreshold;
         }
 
+        [[nodiscard]] float GetWaterVelocityInfluence() const
+        {
+            return _waterVelocityInfluence;
+        }
+
+        void SetWaterVelocityInfluence(const float WaterVelocityInfluence)
+        {
+            _waterVelocityInfluence = WaterVelocityInfluence;
+        }
+
         [[nodiscard]] float GetWindInfluence() const
         {
             return _windInfluence;

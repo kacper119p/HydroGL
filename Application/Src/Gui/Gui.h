@@ -14,8 +14,7 @@ namespace Application
         uint32_t _windowHeight;
         Platform::Input::CallbackId _showGuiCallbackId = 0;
         bool _showGui = true;
-        bool _showSpectrumSettings = false;
-        bool _showFoamSettings = false;
+        bool _showWaterSettings = false;
         bool _showSystemInfo = false;
         bool _showTextureViewer = false;
 
