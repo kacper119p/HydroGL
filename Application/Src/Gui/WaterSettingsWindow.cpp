@@ -9,7 +9,7 @@ namespace Application
         constexpr ImGuiWindowFlags windowFlags =
                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize |
                 ImGuiWindowFlags_NoResize;
-        if (ImGui::Begin("Foam Settings", &ShowWaterSettings, windowFlags))
+        if (ImGui::Begin("Water Settings", &ShowWaterSettings, windowFlags))
         {
             if (ImGui::CollapsingHeader("Wind Settings", ImGuiTreeNodeFlags_DefaultOpen))
             {
