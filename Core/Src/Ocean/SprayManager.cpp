@@ -100,7 +100,7 @@ namespace Core
                               const glm::mat4& ViewMatrix,
                               const glm::mat4& ProjectionMatrix) const
     {
-        const uint32_t particlesToSpawn = static_cast<uint32_t>(SpawnRate * DeltaTime);
+        const uint32_t particlesToSpawn = static_cast<uint32_t>(_spawnRate * DeltaTime);
         PrepareNextFrame(ViewMatrix, ProjectionMatrix, CameraPosition, SceneColor,
                          WindVelocity, particlesToSpawn, DeltaTime);
         BindData(CascadeSettingsSsbo, FoamSettingsUbo, DisplacementMaps, SlopeMaps, VelocityMaps);
@@ -166,13 +166,13 @@ namespace Core
             ParticlesToSpawn,
             WindVelocity,
             *reinterpret_cast<const uint32_t*>(&currentTime),
-            150.0f,
-            MaxLifetime,
+            _spawnRange,
+            _lifetime,
             DeltaTime,
             currentTime,
-            0.2f,
-            3.0f,
-            0.25f
+            _sprayOpacity,
+            _spraySize,
+            _spawnThreshold
         };
 
         glNamedBufferSubData(_sprayParametersUbo, 0, sizeof(SprayParameters), &sprayParameters);

@@ -285,6 +285,11 @@ namespace Core
         }
 
     public:
+        [[nodiscard]] SprayManager& GetSprayManager()
+        {
+            return _sprayManager;
+        }
+
         void SetFoamThreshold(const float FoamThreshold)
         {
             _foamUniformBufferData.FoamThreshold = FoamThreshold;

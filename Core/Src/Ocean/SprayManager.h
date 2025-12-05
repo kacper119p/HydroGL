@@ -37,9 +37,7 @@ namespace Core
         };
 
     private:
-        static constexpr float MaxLifetime = 1.0f;
         static constexpr int32_t MaxParticleCount = 524288; // 2^19
-        static constexpr float SpawnRate = MaxParticleCount / MaxLifetime;
 
     private:
         Shader _spawnShader;
@@ -58,6 +56,13 @@ namespace Core
 
         Texture _sprayTexture;
 
+        float _spawnRange = 150.0f;
+        float _lifetime = 1.0;
+        float _sprayOpacity = 0.2f;
+        float _spraySize = 3.0f;
+        float _spawnThreshold = 0.25f;
+        float _spawnRate = MaxParticleCount / _lifetime;
+
     private:
         static GlBufferUnique CreateParticleDataSsbo();
 
@@ -68,6 +73,58 @@ namespace Core
         static GlBufferUnique CreateAliveListSsbo();
 
         static GlBufferUnique CreateSprayParametersUbo();
+
+    public:
+        [[nodiscard]] float GetSpawnRange() const
+        {
+            return _spawnRange;
+        }
+
+        void SetSpawnRange(const float SpawnRange)
+        {
+            _spawnRange = SpawnRange;
+        }
+
+        [[nodiscard]] float GetLifetime() const
+        {
+            return _lifetime;
+        }
+
+        void SetLifetime(const float Lifetime)
+        {
+            _lifetime = Lifetime;
+            _spawnRate = MaxParticleCount / _lifetime;
+        }
+
+        [[nodiscard]] float GetSprayOpacity() const
+        {
+            return _sprayOpacity;
+        }
+
+        void SetSprayOpacity(const float SprayOpacity)
+        {
+            _sprayOpacity = SprayOpacity;
+        }
+
+        [[nodiscard]] float GetSpraySize() const
+        {
+            return _spraySize;
+        }
+
+        void SetSpraySize(const float SpraySize)
+        {
+            _spraySize = SpraySize;
+        }
+
+        [[nodiscard]] float GetSpawnThreshold() const
+        {
+            return _spawnThreshold;
+        }
+
+        void SetSpawnThreshold(const float SpawnThreshold)
+        {
+            _spawnThreshold = SpawnThreshold;
+        }
 
     public:
         SprayManager(const glm::ivec2& WindowSize, uint32_t MainDepthBuffer);
