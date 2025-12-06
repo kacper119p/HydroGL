@@ -24,11 +24,11 @@ namespace Core::Detail
 
         /**
          * @brief Deletes an OpenGL Buffer.
-         * @param id The ID of the buffer to delete.
+         * @param Id The ID of the buffer to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteBuffers(1, &id);
+            glDeleteBuffers(1, &Id);
         }
     };
 
@@ -51,11 +51,11 @@ namespace Core::Detail
 
         /**
          * @brief Deletes an OpenGL Texture.
-         * @param id The ID of the texture to delete.
+         * @param Id The ID of the texture to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteTextures(1, &id);
+            glDeleteTextures(1, &Id);
         }
     };
 
@@ -77,11 +77,11 @@ namespace Core::Detail
 
         /**
          * @brief Deletes a Vertex Array Object.
-         * @param id The ID of the VAO to delete.
+         * @param Id The ID of the VAO to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteVertexArrays(1, &id);
+            glDeleteVertexArrays(1, &Id);
         }
     };
 
@@ -103,11 +103,11 @@ namespace Core::Detail
 
         /**
          * @brief Deletes a Framebuffer Object.
-         * @param id The ID of the FBO to delete.
+         * @param Id The ID of the FBO to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteFramebuffers(1, &id);
+            glDeleteFramebuffers(1, &Id);
         }
     };
 
@@ -129,11 +129,11 @@ namespace Core::Detail
 
         /**
          * @brief Deletes a Renderbuffer Object.
-         * @param id The ID of the Renderbuffer to delete.
+         * @param Id The ID of the Renderbuffer to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteRenderbuffers(1, &id);
+            glDeleteRenderbuffers(1, &Id);
         }
     };
 
@@ -155,11 +155,11 @@ namespace Core::Detail
 
         /**
          * @brief Deletes a Sampler Object.
-         * @param id The ID of the Sampler to delete.
+         * @param Id The ID of the Sampler to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteSamplers(1, &id);
+            glDeleteSamplers(1, &Id);
         }
     };
 
@@ -170,23 +170,23 @@ namespace Core::Detail
     {
         /**
          * @brief Creates a new Query Object using Direct State Access (DSA).
-         * @param target The query target (e.g., GL_TIME_ELAPSED).
+         * @param Target The query target (e.g., GL_TIME_ELAPSED).
          * @return The ID of the created Query.
          */
-        static uint32_t Create(const GLenum target)
+        static uint32_t Create(const GLenum Target)
         {
             uint32_t id;
-            glCreateQueries(target, 1, &id);
+            glCreateQueries(Target, 1, &id);
             return id;
         }
 
         /**
          * @brief Deletes a Query Object.
-         * @param id The ID of the Query to delete.
+         * @param Id The ID of the Query to delete.
          */
-        static void Delete(const uint32_t id)
+        static void Delete(const uint32_t Id)
         {
-            glDeleteQueries(1, &id);
+            glDeleteQueries(1, &Id);
         }
     };
 
@@ -202,14 +202,14 @@ namespace Core::Detail
          *
          * Forwards arguments to the underlying Traits::Create method.
          *
-         * @tparam Args Argument types required by the specific resource creation (e.g., GLenum Target).
-         * @param args Arguments forwarded to Traits::Create.
+         * @tparam ArgTypes Argument types required by the specific resource creation (e.g., GLenum Target).
+         * @param Args Arguments forwarded to Traits::Create.
          * @return A new instance of GlResourceUnique managing the created resource.
          */
-        template<typename... Args>
-        [[nodiscard]] static GlResourceUnique Create(Args&&... args)
+        template<typename... ArgTypes>
+        [[nodiscard]] static GlResourceUnique Create(ArgTypes&&... Args)
         {
-            return GlResourceUnique(Traits::Create(std::forward<Args>(args)...));
+            return GlResourceUnique(Traits::Create(std::forward<Args>(Args)...));
         }
 
     public:
