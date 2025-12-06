@@ -209,7 +209,7 @@ namespace Core::Detail
         template<typename... ArgTypes>
         [[nodiscard]] static GlResourceUnique Create(ArgTypes&&... Args)
         {
-            return GlResourceUnique(Traits::Create(std::forward<Args>(Args)...));
+            return GlResourceUnique(Traits::Create(std::forward<ArgTypes>(Args)...));
         }
 
     public:
