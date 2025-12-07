@@ -214,8 +214,10 @@ namespace Core
     void WaterSystem::Render(const float DeltaTime,
                              const TransformComponent& CameraTransform,
                              const CameraComponent& Camera,
-                             const glm::vec3& SceneColor,
-                             const uint32_t DynamicWavesSampleSsboId) const
+                             const glm::vec3& AmbientLightColor,
+                             const uint32_t DynamicWavesSampleSsboId,
+                             const uint32_t SceneColor,
+                             const uint32_t SceneDepth) const
     {
         UpdateSpectrumTexture();
 
@@ -250,6 +252,8 @@ namespace Core
 
         glBindTextureUnit(3, _displacementTextures);
         glBindTextureUnit(4, _slopeTextures);
+        glBindTextureUnit(5, SceneColor);
+        glBindTextureUnit(6, SceneDepth);
 
         _oceanGrid.Draw();
 
@@ -263,7 +267,7 @@ namespace Core
                              _cascadeSettingsSsbo,
                              _foamMaskSettingsUbo,
                              -_initialSpectrumSettingsBufferData.WindVelocity,
-                             SceneColor,
+                             AmbientLightColor,
                              cameraPosition,
                              viewMatrix,
                              Camera.ProjectionMatrix);

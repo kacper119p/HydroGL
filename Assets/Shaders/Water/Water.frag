@@ -7,10 +7,11 @@
 
 uniform vec3 CameraPosition;
 
-in vec2 TexCoord;
 in vec3 OriginalPosition;
 in vec3 DisplacedPosition;
+in vec4 ClipSpacePosition;
 
+uniform mat4 ViewMatrix;
 uniform vec2 WindVelocity = vec2(16.0, 16.0);
 uniform float Fetch = 10000.0;
 uniform float Delta = 1.0;
@@ -36,14 +37,14 @@ layout(std430, binding = 1) readonly restrict buffer dynamicWavesBuffer
 
 layout (binding = 3) uniform sampler2DArray DisplacementMaps;
 layout (binding = 4) uniform sampler2DArray SlopeMaps;
+layout (binding = 5) uniform sampler2D SceneColor;
+layout (binding = 6) uniform sampler2D SceneDepth;
 
 layout (location = 0) out vec4 FragColor;
 
 layout (early_fragment_tests) in;
 void main()
 {
-    vec3 geometryNormal = normalize(cross(dFdy(DisplacedPosition), dFdx(DisplacedPosition)));
-
     const vec2 texCoord = vec2(OriginalPosition.x, OriginalPosition.z) / CascadeSettingsBuffer.CascadeSettings[0].Length;
     vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
     float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
@@ -58,42 +59,43 @@ void main()
     const vec2 slope = slopeDfdxxDfdzz.xy;
     const float jacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
 
-    float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
-    float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
-    vec3 surfaceColor = mix(vec3(0.005, 0.1, 0.2), vec3(1.0, 1.0, 1.0), foamMask);
-    float metallic = mix(0.05, 0.0, foamMask);
-    float roughness = mix(0.5, 1.0, foamMask);
+    const float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
+    const float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
+    const vec3 surfaceColor = mix(vec3(0.005, 0.1, 0.2), vec3(1.0, 1.0, 1.0), foamMask);
+    const float metallic = mix(0.05, 0.0, foamMask);
+    const float roughness = mix(0.5, 1.0, foamMask);
 
     vec2 dynamicSlope = vec2(0.0);
-    float hC;
     for (int i = 0; i < DynamicWavesBuffer.DynamicWavesCount; ++i)
     {
         const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
-        float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
+        const float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
 
-        //float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
-        hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
-        float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
-        float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
+        const float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
+        const float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
+        const float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
 
-        vec2 dh = vec2((hX - hC) / texel, (hY - hC) / texel);
+        const vec2 dh = vec2((hX - hC) / texel, (hY - hC) / texel);
         dynamicSlope += dh;
     }
     const vec3 normal = NormalFromSlope(slope + dynamicSlope);
+    const vec3 viewSpaceNormal = mat3(ViewMatrix) * normal;
 
-    vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
-    //vec3 color = CalculateLight(vec3(1.0, 1.0, 1.0), 0.0, 1.0, geometryNormal, DisplacedPosition, ViewDirection, 1.0);
-    //vec3 color = CalculateLight(vec3(1.0, 1.0, 1.0), 1.0, 0.0, normal, DisplacedPosition, ViewDirection, 1.0);
+    const vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
     vec3 color = CalculateLight(surfaceColor, metallic, roughness, normal, DisplacedPosition, ViewDirection, 1.0);
-    //vec3 color = CalculateLight(vec3(0.0, 0.1, 0.25), 0.05, 0.5, geometryNormal, DisplacedPosition, ViewDirection, 1.0);
+
+    const vec2 ndcCoordinates = ClipSpacePosition.xy / ClipSpacePosition.w;
+    const vec2 screenCoordinates = ndcCoordinates * 0.5 + 0.5;
+
+    const vec2 distortedScreenUV = screenCoordinates + viewSpaceNormal.xy * 0.01;
+
+    float waterSurfaceDepth = gl_FragCoord.z;
+    const float backgroundDepth = texture(SceneDepth, distortedScreenUV).r;
+
+    const vec2 screenUV =  backgroundDepth < waterSurfaceDepth ? screenCoordinates : distortedScreenUV;
+
+    color = mix(texture(SceneColor, screenUV).rgb, color, 0.5);
 
     FragColor = vec4(color, 1.0);
-    //FragColor = vec4(hC, 0.0, 0.0, 1.0);
-    // FragColor = vec4(vec3((1.0 - clamp(0.0, 1.0, abs(dot(normal, geometryNormal))))) * 100000.0, 1.0);
-    //FragColor = vec4(normal, 1.0);
-    //FragColor = vec4(texture(DisplacementMap, TexCoord).rgb + 0.1, 1.0);
-    //FragColor = vec4(1.0, 0.0, 1.0, 1.0);
-    //FragColor = vec4(geometryNormal, 1.0);
-    //FragColor = vec4(abs(normal - geometryNormal), 1.0);
 }

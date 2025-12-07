@@ -6,8 +6,10 @@
 layout (quads, equal_spacing, ccw) in;
 
 in vec3 tcPosition[];
+
 out vec3 OriginalPosition;
 out vec3 DisplacedPosition;
+out vec4 ClipSpacePosition;
 
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
@@ -59,5 +61,6 @@ void main()
     OriginalPosition = position;
     DisplacedPosition = tessendorfPosition;
 
-    gl_Position = ProjectionMatrix * ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
+    ClipSpacePosition = ProjectionMatrix * ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
+    gl_Position = ClipSpacePosition;
 }

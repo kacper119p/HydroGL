@@ -78,7 +78,7 @@ namespace Core
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glCullFace(GL_BACK);
-        _frameBuffer.BindMultiSampled();
+        _frameBuffer.BindMultiSampledFramebuffer();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -143,6 +143,9 @@ namespace Core
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
+        _frameBuffer.ResolveMultisampling();
+        _frameBuffer.BindOpaqueFramebuffer();
+
         // ------------------------ SKYBOX ------------------------
 
         _skyboxShader.Use();
@@ -153,18 +156,20 @@ namespace Core
 
         CubeRenderer::Draw();
 
+        _frameBuffer.BlitOpaqueToTransparent();
+        _frameBuffer.BindTransparentFramebuffer();
+
         Engine.GetWaterSystem()->Render(DeltaTime,
                                         cameraTransform,
                                         camera,
                                         scene.GetSkybox().GetEnvironmentColor(),
-                                        Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
+                                        Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId(),
+                                        _frameBuffer.GetOpaqueColorBuffer(),
+                                        _frameBuffer.GetResolvedDepthBuffer());
 
-        _frameBuffer.ResolveMultisampling();
-        _frameBuffer.BindResolved();
+        Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetTransparentFrameBuffer());
 
-        Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetFrameBufferId());
-
-        _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());
+        _bloomPostprocessingEffect.Render(_frameBuffer.GetTransparentColorBuffer());
     }
 
     void Renderer::BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,

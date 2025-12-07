@@ -203,7 +203,7 @@ namespace Core
         glBindTextureUnit(6, VelocityMaps);
     }
 
-    void SprayManager::CreateParticleFbo(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
+    void SprayManager::CreateParticleFbo(const glm::ivec2& WindowSize, const uint32_t MainDepthTexture)
     {
         _particleFbo = GlFramebufferUnique::Create();
         _particleOpacityTexture = GlTextureUnique::Create(GL_TEXTURE_2D);
@@ -215,7 +215,7 @@ namespace Core
         glTextureParameteri(_particleOpacityTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glNamedFramebufferTexture(_particleFbo, GL_COLOR_ATTACHMENT0, _particleOpacityTexture, 0);
-        glNamedFramebufferRenderbuffer(_particleFbo,GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, MainDepthBuffer);
+        glNamedFramebufferTexture(_particleFbo, GL_DEPTH_STENCIL_ATTACHMENT, MainDepthTexture, 0);
 
         constexpr GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
         glNamedFramebufferDrawBuffers(_particleFbo, 1, drawBuffers);

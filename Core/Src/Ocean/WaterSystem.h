@@ -393,7 +393,8 @@ namespace Core
         }
 
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
-                    const glm::vec3& SceneColor, uint32_t DynamicWavesSampleSsboId) const;
+                    const glm::vec3& AmbientLightColor, uint32_t DynamicWavesSampleSsboId, uint32_t SceneColor,
+                    uint32_t SceneDepth) const;
 
         void RenderSpray(uint32_t TargetFrameBuffer) const;
 

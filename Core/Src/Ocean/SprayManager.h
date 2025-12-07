@@ -183,6 +183,6 @@ namespace Core
         void BindData(uint32_t CascadeSettingsSsbo, uint32_t FoamSettingsUbo,
                       uint32_t DisplacementMaps, uint32_t SlopeMaps, uint32_t VelocityMaps) const;
 
-        void CreateParticleFbo(const glm::ivec2& WindowSize, uint32_t MainDepthBuffer);
+        void CreateParticleFbo(const glm::ivec2& WindowSize, uint32_t MainDepthTexture);
     };
 }
