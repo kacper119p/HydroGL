@@ -1,11 +1,8 @@
 #pragma once
-#include <cstdio>
 #include <imgui.h>
 #include <glad/glad.h>
 
-#include "Rendering/RendererHelpers/ScreenQuad.h"
 #include "Rendering/Shaders/Shader.h"
-#include "Rendering/Shaders/ShaderBuilder.h"
 
 namespace Application
 {
