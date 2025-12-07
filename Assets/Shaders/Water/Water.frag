@@ -104,7 +104,10 @@ void main()
     const bool isAboveWater = backgroundDepth < waterSurfaceDepth;
     const vec2 screenUV =  isAboveWater ? screenCoordinates : distortedScreenUV;
 
-    const float depthDifference = isAboveWater ? (POSITIVE_INFINITY) : max(linearBackgroundDepth - linearWaterSurfaceDepth, 0.0);
+    const float depthDifference = isAboveWater
+    ? max(LinearizeDepth(texture(SceneDepth, screenUV).r) - linearWaterSurfaceDepth, 0.0)
+    : max(linearBackgroundDepth - linearWaterSurfaceDepth, 0.0);
+
     const vec3 transmittance = exp(-Absorption * depthDifference);
     const vec3 backgroundColor = texture(SceneColor, screenUV).rgb;
     const vec3 refractedColor = backgroundColor * transmittance;
