@@ -29,6 +29,24 @@ namespace Platform
 
         switch (Msg)
         {
+            case WM_NCCALCSIZE:
+            {
+                if (WParam == TRUE)
+                {
+                    NCCALCSIZE_PARAMS* params = reinterpret_cast<NCCALCSIZE_PARAMS*>(LParam);
+
+                    if (HMONITOR monitor = MonitorFromWindow(Hwnd, MONITOR_DEFAULTTOPRIMARY))
+                    {
+                        MONITORINFO monitorInfo = {sizeof(monitorInfo)};
+                        if (GetMonitorInfo(monitor, &monitorInfo))
+                        {
+                            params->rgrc[0] = monitorInfo.rcMonitor;
+                        }
+                    }
+                    return 0;
+                }
+                break;
+            }
             case WM_CREATE:
             {
                 CREATESTRUCT* cs = reinterpret_cast<CREATESTRUCT*>(LParam);
@@ -123,8 +141,12 @@ namespace Platform
                 }
                 break;
             case WM_KILLFOCUS:
-                ShowCursor(TRUE);
-                isDragging = false;
+                if (isDragging)
+                {
+                    ShowCursor(TRUE);
+                    isDragging = false;
+                    Input::DispatchCameraDragEvent(false);
+                }
                 Input::StopMovement();
                 break;
             default:
@@ -166,6 +188,7 @@ namespace Platform
         windowClass.lpfnWndProc = WndProc;
         windowClass.hInstance = HInstance;
         windowClass.lpszClassName = className;
+        windowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
         RegisterClass(&windowClass);
 
         MONITORINFO monitorInfo = {sizeof(monitorInfo)};
@@ -175,10 +198,10 @@ namespace Platform
         const int32_t windowWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
         const int32_t windowHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
 
-        HWND hwnd = CreateWindowEx(WS_EX_TOPMOST,
+        HWND hwnd = CreateWindowEx(WS_EX_APPWINDOW,
                                    className,
                                    "HydroGL",
-                                   WS_POPUP,
+                                   WS_VISIBLE,
                                    monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
                                    windowWidth,
                                    windowHeight,
@@ -189,7 +212,7 @@ namespace Platform
         }
 
         ShowWindow(hwnd, SW_SHOW);
-        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
 
         HDC deviceContext = GetDC(hwnd);
         if (!deviceContext)
