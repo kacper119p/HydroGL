@@ -13,7 +13,7 @@ namespace Core
     class SceneFrameBuffer final
     {
     public:
-        static constexpr uint8_t Samples = 1;
+        static constexpr uint8_t Samples = 16;
 
     private:
         glm::ivec2 _resolution;
@@ -22,13 +22,13 @@ namespace Core
         GlTextureUnique _multisampledColorBuffer;
         GlRenderbufferUnique _multisampledDepthStencilBuffer;
 
-        GlTextureUnique _resolvedDepthBuffer;
-
         GlFramebufferUnique _opaqueFramebuffer;
         GlTextureUnique _opaqueColorBuffer;
+        GlTextureUnique _opaqueDepthBuffer;
 
         GlFramebufferUnique _transparentFramebuffer;
         GlTextureUnique _transparentColorBuffer;
+        GlTextureUnique _transparentDepthBuffer;
 
     public:
         explicit SceneFrameBuffer(const glm::ivec2& Resolution);
@@ -79,14 +79,6 @@ namespace Core
         }
 
         /**
-        * @brief Returns depth render buffer attached to opaque and transparent buffers.
-        */
-        [[nodiscard]] uint32_t GetResolvedDepthBuffer() const
-        {
-            return _resolvedDepthBuffer;
-        }
-
-        /**
         * @brief Returns id of the underlying opaque FrameBuffer.
         */
         [[nodiscard]] unsigned int GetOpaqueFrameBuffer() const
@@ -100,6 +92,14 @@ namespace Core
         [[nodiscard]] uint32_t GetOpaqueColorBuffer() const
         {
             return _opaqueColorBuffer;
+        }
+
+        /**
+        * @brief Returns depth render buffer attached to opaque frameBuffer.
+        */
+        [[nodiscard]] uint32_t GetOpaqueDepthBuffer() const
+        {
+            return _opaqueDepthBuffer;
         }
 
         /**
@@ -117,6 +117,15 @@ namespace Core
         {
             return _transparentColorBuffer;
         }
+
+        /**
+        * @brief Returns depth render buffer attached to transparent frameBuffer.
+        */
+        [[nodiscard]] uint32_t GetTransparentDepthBuffer() const
+        {
+            return _opaqueDepthBuffer;
+        }
+
 
         /**
          * @brief Binds underlying multisampled FrameBuffer for rendering.

@@ -31,7 +31,11 @@ namespace Core
           ProjectionMatrix(WaterShader.GetUniformLocation("ProjectionMatrix")),
           CameraPosition(WaterShader.GetUniformLocation("CameraPosition")),
           Time(WaterShader.GetUniformLocation("Time")),
-          GridOrigin(WaterShader.GetUniformLocation("GridOrigin"))
+          GridOrigin(WaterShader.GetUniformLocation("GridOrigin")),
+          SurfaceColor(WaterShader.GetUniformLocation("SurfaceColor")),
+          Absorption(WaterShader.GetUniformLocation("Absorption")),
+          CameraNearPlane(WaterShader.GetUniformLocation("CameraNearPlane")),
+          CameraFarPlane(WaterShader.GetUniformLocation("CameraFarPlane"))
     {
     }
 
@@ -241,10 +245,14 @@ namespace Core
 
         _waterShader.Use();
         _waterShader.SetUniform(_waterShaderUniformLocations.ViewMatrix, viewMatrix);
-        _waterShader.SetUniform(_waterShaderUniformLocations.ProjectionMatrix, Camera.ProjectionMatrix);
+        _waterShader.SetUniform(_waterShaderUniformLocations.ProjectionMatrix, Camera.GetProjectionMatrix());
         _waterShader.SetUniform(_waterShaderUniformLocations.CameraPosition, cameraPosition);
         _waterShader.SetUniform(_waterShaderUniformLocations.Time, Platform::TimeManager::GetTime());
         _waterShader.SetUniform(_waterShaderUniformLocations.GridOrigin, gridOrigin);
+        _waterShader.SetUniform(_waterShaderUniformLocations.SurfaceColor, glm::vec3(0.005f, 0.1f, 0.2f));
+        _waterShader.SetUniform(_waterShaderUniformLocations.Absorption, glm::vec3(0.5f, 0.2f, 0.05f));
+        _waterShader.SetUniform(_waterShaderUniformLocations.CameraNearPlane, Camera.GetNearPlane());
+        _waterShader.SetUniform(_waterShaderUniformLocations.CameraFarPlane, Camera.GetFarPlane());
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
@@ -270,7 +278,7 @@ namespace Core
                              AmbientLightColor,
                              cameraPosition,
                              viewMatrix,
-                             Camera.ProjectionMatrix);
+                             Camera.GetProjectionMatrix());
     }
 
     void WaterSystem::RenderSpray(const uint32_t TargetFrameBuffer) const

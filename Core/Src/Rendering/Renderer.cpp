@@ -126,7 +126,7 @@ namespace Core
         materialManager.BindMaterialBuffer();
         _pbrShader.Use();
         _pbrShader.SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.ProjectionMatrix);
+        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.GetProjectionMatrix());
         _pbrShader.SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
@@ -150,7 +150,7 @@ namespace Core
 
         _skyboxShader.Use();
         _skyboxShader.SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
+        _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.GetProjectionMatrix());
 
         glBindTextureUnit(3, scene.GetSkybox().GetCubeMap());
 
@@ -165,7 +165,7 @@ namespace Core
                                         scene.GetSkybox().GetEnvironmentColor(),
                                         Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId(),
                                         _frameBuffer.GetOpaqueColorBuffer(),
-                                        _frameBuffer.GetResolvedDepthBuffer());
+                                        _frameBuffer.GetOpaqueDepthBuffer());
 
         Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetTransparentFrameBuffer());
 

@@ -187,6 +187,10 @@ namespace Core
             int32_t CameraPosition;
             int32_t Time;
             int32_t GridOrigin;
+            int32_t SurfaceColor;
+            int32_t Absorption;
+            int32_t CameraNearPlane;
+            int32_t CameraFarPlane;
 
             explicit WaterShaderUniformLocations(Shader WaterShader);
         };

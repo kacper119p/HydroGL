@@ -12,10 +12,10 @@ in vec3 DisplacedPosition;
 in vec4 ClipSpacePosition;
 
 uniform mat4 ViewMatrix;
-uniform vec2 WindVelocity = vec2(16.0, 16.0);
-uniform float Fetch = 10000.0;
-uniform float Delta = 1.0;
-uniform float Swell = 0.5;
+uniform vec3 SurfaceColor;
+uniform vec3 Absorption;
+uniform float CameraNearPlane;
+uniform float CameraFarPlane;
 
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
@@ -42,6 +42,13 @@ layout (binding = 6) uniform sampler2D SceneDepth;
 
 layout (location = 0) out vec4 FragColor;
 
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0;
+
+    return (2.0 * CameraNearPlane * CameraFarPlane) / (CameraFarPlane + CameraNearPlane - z * (CameraFarPlane - CameraNearPlane));
+}
+
 layout (early_fragment_tests) in;
 void main()
 {
@@ -61,7 +68,7 @@ void main()
 
     const float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
     const float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
-    const vec3 surfaceColor = mix(vec3(0.005, 0.1, 0.2), vec3(1.0, 1.0, 1.0), foamMask);
+    const vec3 baseSurfaceColor = mix(SurfaceColor, vec3(1.0, 1.0, 1.0), foamMask);
     const float metallic = mix(0.05, 0.0, foamMask);
     const float roughness = mix(0.5, 1.0, foamMask);
 
@@ -83,19 +90,26 @@ void main()
     const vec3 viewSpaceNormal = mat3(ViewMatrix) * normal;
 
     const vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
-    vec3 color = CalculateLight(surfaceColor, metallic, roughness, normal, DisplacedPosition, ViewDirection, 1.0);
+    const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, DisplacedPosition, ViewDirection, 1.0);
 
     const vec2 ndcCoordinates = ClipSpacePosition.xy / ClipSpacePosition.w;
     const vec2 screenCoordinates = ndcCoordinates * 0.5 + 0.5;
 
     const vec2 distortedScreenUV = screenCoordinates + viewSpaceNormal.xy * 0.01;
 
-    float waterSurfaceDepth = gl_FragCoord.z;
+    const float waterSurfaceDepth = gl_FragCoord.z;
+    const float linearWaterSurfaceDepth = LinearizeDepth(waterSurfaceDepth);
     const float backgroundDepth = texture(SceneDepth, distortedScreenUV).r;
+    const float linearBackgroundDepth = LinearizeDepth(backgroundDepth);
+    const bool isAboveWater = backgroundDepth < waterSurfaceDepth;
+    const vec2 screenUV =  isAboveWater ? screenCoordinates : distortedScreenUV;
 
-    const vec2 screenUV =  backgroundDepth < waterSurfaceDepth ? screenCoordinates : distortedScreenUV;
+    const float depthDifference = isAboveWater ? (POSITIVE_INFINITY) : max(linearBackgroundDepth - linearWaterSurfaceDepth, 0.0);
+    const vec3 transmittance = exp(-Absorption * depthDifference);
+    const vec3 backgroundColor = texture(SceneColor, screenUV).rgb;
+    const vec3 refractedColor = backgroundColor * transmittance;
 
-    color = mix(texture(SceneColor, screenUV).rgb, color, 0.5);
+    const  vec3 color = refractedColor + surfaceColor;
 
     FragColor = vec4(color, 1.0);
 }

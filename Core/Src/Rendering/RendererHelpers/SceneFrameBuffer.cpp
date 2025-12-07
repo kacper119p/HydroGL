@@ -15,9 +15,10 @@ namespace Core
         _multisampledColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D_MULTISAMPLE);
         _opaqueColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         _multisampledDepthStencilBuffer = GlRenderbufferUnique::Create();
-        _resolvedDepthBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
+        _opaqueDepthBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         _transparentFramebuffer = GlFramebufferUnique::Create();
-        _transparentColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
+        _transparentColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);\
+        _transparentDepthBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         UpdateBuffers();
     }
 
@@ -41,7 +42,7 @@ namespace Core
         glBlitNamedFramebuffer(_opaqueFramebuffer, _transparentFramebuffer,
                                0, 0, _resolution.x, _resolution.y,
                                0, 0, _resolution.x, _resolution.y,
-                               GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                               GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
     }
 
     void SceneFrameBuffer::UpdateBuffers() const
@@ -66,14 +67,14 @@ namespace Core
         glTextureParameteri(_opaqueColorBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteri(_opaqueColorBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        glTextureStorage2D(_resolvedDepthBuffer, 1, DepthBufferFormat, _resolution.x, _resolution.y);
-        glTextureParameteri(_resolvedDepthBuffer, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(_resolvedDepthBuffer, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureParameteri(_resolvedDepthBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(_resolvedDepthBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureStorage2D(_opaqueDepthBuffer, 1, DepthBufferFormat, _resolution.x, _resolution.y);
+        glTextureParameteri(_opaqueDepthBuffer, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(_opaqueDepthBuffer, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(_opaqueDepthBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(_opaqueDepthBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glNamedFramebufferTexture(_opaqueFramebuffer, GL_COLOR_ATTACHMENT0, _opaqueColorBuffer, 0);
-        glNamedFramebufferTexture(_opaqueFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, _resolvedDepthBuffer, 0);
+        glNamedFramebufferTexture(_opaqueFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, _opaqueDepthBuffer, 0);
         glNamedFramebufferDrawBuffers(_opaqueFramebuffer, 1, attachments);
 
         glTextureStorage2D(_transparentColorBuffer, 1, ColorBufferFormat, _resolution.x, _resolution.y);
@@ -82,8 +83,14 @@ namespace Core
         glTextureParameteri(_transparentColorBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteri(_transparentColorBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+        glTextureStorage2D(_transparentDepthBuffer, 1, DepthBufferFormat, _resolution.x, _resolution.y);
+        glTextureParameteri(_transparentDepthBuffer, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(_transparentDepthBuffer, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(_transparentDepthBuffer, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(_transparentDepthBuffer, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
         glNamedFramebufferTexture(_transparentFramebuffer, GL_COLOR_ATTACHMENT0, _transparentColorBuffer, 0);
-        glNamedFramebufferTexture(_transparentFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, _resolvedDepthBuffer, 0);
+        glNamedFramebufferTexture(_transparentFramebuffer, GL_DEPTH_STENCIL_ATTACHMENT, _transparentDepthBuffer, 0);
         glNamedFramebufferDrawBuffers(_transparentFramebuffer, 1, attachments);
     }
 }

@@ -15,7 +15,7 @@ namespace Core
                                                _waterSystem(std::make_unique<WaterSystem>(
                                                    glm::ivec2(Window->GetWindowWidth(),
                                                               Window->GetWindowHeight()),
-                                                   _renderer->GetFrameBuffer().GetResolvedDepthBuffer())),
+                                                   _renderer->GetFrameBuffer().GetTransparentDepthBuffer())),
                                                _waterInteractionSystem(std::make_unique<WaterInteractionSystem>()),
                                                _physicsSystem(std::make_unique<PhysicsSystem>())
     {

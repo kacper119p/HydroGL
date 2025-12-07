@@ -38,13 +38,12 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     const entt::entity cameraEntity = entityRegistry->create();
 
-    Core::TransformComponent& cameraTransform = entityRegistry->emplace<Core::TransformComponent>(cameraEntity);
-    Core::CameraComponent& cameraComponent = entityRegistry->emplace<Core::CameraComponent>(cameraEntity);
-
-    cameraComponent.ProjectionMatrix = glm::perspective(glm::radians(70.0f),
-                                                        static_cast<float>(Window->GetWindowWidth())
-                                                        / static_cast<float>(Window->GetWindowHeight()),
-                                                        0.1f, 1000.0f);
+    const Core::TransformComponent& cameraTransform = entityRegistry->emplace<Core::TransformComponent>(cameraEntity);
+    const Core::CameraComponent& cameraComponent = entityRegistry->emplace<Core::CameraComponent>(
+        cameraEntity, 70.0f,
+        static_cast<float>(Window->GetWindowWidth())
+        / static_cast<float>(Window->GetWindowHeight()),
+        0.1f, 1000.0f);
 
     const Core::Mesh cubeMesh = Core::MeshManager::GetMesh("Assets/Meshes/Cube.fbx");
     const float cubeVolume = Core::MeshUtility::CalculateMeshVolume(cubeMesh);
