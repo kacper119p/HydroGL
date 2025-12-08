@@ -240,9 +240,6 @@ namespace Core
                 glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         _waterShader.Use();
         _waterShader.SetUniform(_waterShaderUniformLocations.ViewMatrix, viewMatrix);
         _waterShader.SetUniform(_waterShaderUniformLocations.ProjectionMatrix, Camera.GetProjectionMatrix());
@@ -266,7 +263,6 @@ namespace Core
         _oceanGrid.Draw();
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDisable(GL_BLEND);
 
         _sprayManager.Update(DeltaTime,
                              _displacementTextures,
