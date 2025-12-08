@@ -262,8 +262,6 @@ namespace Core
 
         static uint32_t CreateSlopeTextureArray();
 
-        static uint32_t CreateFoamTextureArray();
-
         static uint32_t CreateGaussianNoise();
 
         static uint32_t CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData);

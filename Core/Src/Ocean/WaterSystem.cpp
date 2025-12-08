@@ -132,23 +132,6 @@ namespace Core
         return textureId;
     }
 
-    uint32_t WaterSystem::CreateFoamTextureArray()
-    {
-        void* initialData = calloc(TextureResolution * TextureResolution * CascadeCount, sizeof(float));
-        uint32_t textureId;
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &textureId);
-        glTextureStorage3D(textureId, 1, GL_R32F, TextureResolution, TextureResolution, CascadeCount);
-        glTextureSubImage3D(textureId, 0, 0, 0, 0, TextureResolution, TextureResolution, CascadeCount, GL_RED, GL_FLOAT,
-                            initialData);
-        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        free(initialData);
-        return textureId;
-    }
-
     void WaterSystem::UpdateInitialSpectrum() const
     {
         _initialSpectrumComputeShader.Use();
