@@ -45,8 +45,6 @@ if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX)
 
     target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Windows/resources.rc")
-    set(ICON_RC "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Windows/resources.rc")
-    target_sources(${PROJECT_NAME} PRIVATE ${ICON_RC})
 endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
