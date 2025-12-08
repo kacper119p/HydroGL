@@ -2,11 +2,14 @@
 
 #include <windows.h>
 
+namespace
+{
+    LARGE_INTEGER Frequency;
+    LARGE_INTEGER Start;
+}
+
 namespace Platform
 {
-    static LARGE_INTEGER Frequency;
-    static LARGE_INTEGER Start;
-
     void TimeManager::Initialize()
     {
         QueryPerformanceFrequency(&Frequency);
