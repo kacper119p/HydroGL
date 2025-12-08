@@ -7,6 +7,7 @@
 #include "Meshes/MeshFacesData.h"
 #include "Meshes/MeshVerticesData.h"
 #include "glad/glad.h"
+#include "Utility/GlResourceUnique.h"
 
 
 namespace Core
@@ -24,19 +25,19 @@ namespace Core
 
         static std::unordered_map<std::string, Mesh> _meshCache;
 
-        static uint32_t _glVertexArray;
-        static uint32_t _glElementBuffer;
-        static uint32_t _glVertexBuffer;
+        static GlVertexArrayUnique _glVertexArray;
+        static GlBufferUnique _glElementBuffer;
+        static GlBufferUnique _glVertexBuffer;
 
     public:
         [[nodiscard]] static uint32_t GetVertexBufferId()
         {
-            return _glVertexBuffer;
+            return _glVertexBuffer.Get();
         }
 
         [[nodiscard]] static uint32_t GetElementBufferId()
         {
-            return _glElementBuffer;
+            return _glElementBuffer.Get();
         }
 
         [[nodiscard]] static glm::vec3* GetPositionsBufferData(const uint32_t VertexIndex)
@@ -86,7 +87,7 @@ namespace Core
 
         static void BindVao()
         {
-            glBindVertexArray(_glVertexArray);
+            glBindVertexArray(_glVertexArray.Get());
         }
 
     private:

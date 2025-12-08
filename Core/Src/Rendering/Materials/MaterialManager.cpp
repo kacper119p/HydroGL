@@ -4,7 +4,7 @@ namespace Core
 {
     MaterialManager::MaterialManager()
     {
-        glGenBuffers(1, &_materialSsbo);
+        _materialSsbo = GlBufferUnique::Create();
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, _materialSsbo);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Material) * MaxMaterials, nullptr, GL_STATIC_COPY);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _materialSsbo);
@@ -12,7 +12,6 @@ namespace Core
 
     MaterialManager::~MaterialManager()
     {
-        glDeleteBuffers(1, &_materialSsbo);
     }
 
     MaterialId MaterialManager::CreateMaterial()

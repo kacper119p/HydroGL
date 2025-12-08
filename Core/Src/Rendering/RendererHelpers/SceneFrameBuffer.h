@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include "Utility/GlResourceUnique.h"
+
 namespace Core
 {
     /**
@@ -14,13 +16,19 @@ namespace Core
         static constexpr uint8_t Samples = 16;
 
     private:
-        uint32_t _multiSampledId = 0;
         glm::ivec2 _resolution;
-        uint32_t _colorBuffer = 0;
-        uint32_t _depthStencilBuffer = 0;
 
-        uint32_t _resolvedId = 0;
-        uint32_t _resolvedColorBuffer = 0;
+        GlFramebufferUnique _multiSampledFramebuffer;
+        GlTextureUnique _multisampledColorBuffer;
+        GlRenderbufferUnique _multisampledDepthStencilBuffer;
+
+        GlFramebufferUnique _opaqueFramebuffer;
+        GlTextureUnique _opaqueColorBuffer;
+        GlTextureUnique _opaqueDepthBuffer;
+
+        GlFramebufferUnique _transparentFramebuffer;
+        GlTextureUnique _transparentColorBuffer;
+        GlTextureUnique _transparentDepthBuffer;
 
     public:
         explicit SceneFrameBuffer(const glm::ivec2& Resolution);
@@ -28,14 +36,6 @@ namespace Core
         ~SceneFrameBuffer();
 
     public:
-        /**
-         * @brief Returns id of the underlying FrameBuffer.
-         */
-        [[nodiscard]] unsigned int GetMultiSampledId() const
-        {
-            return _multiSampledId;
-        }
-
         /**
          * @brief Returns resolution of this buffer.
          */
@@ -55,43 +55,112 @@ namespace Core
         }
 
         /**
-         * @brief Binds underlying FrameBuffer for rendering.
+         * @brief Returns id of the underlying multisampled FrameBuffer.
          */
-        void BindMultiSampled() const
+        [[nodiscard]] unsigned int GetMultiSampledFrameBuffer() const
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, _multiSampledId);
-        }
-
-        void BindResolved() const
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, _resolvedId);
+            return _multiSampledFramebuffer;
         }
 
         /**
-         * @brief Returns color texture attached to this buffer.
-         */
+        * @brief Returns color texture attached to multisampled buffer.
+        */
         [[nodiscard]] uint32_t GetMultiSampledColorBuffer() const
         {
-            return _colorBuffer;
-        }
-
-        [[nodiscard]] uint32_t GetResolvedColorBuffer() const
-        {
-            return _resolvedColorBuffer;
+            return _multisampledColorBuffer;
         }
 
         /**
-         * @brief Returns depth and stencil buffer attached to this buffer.
+        * @brief Returns depth and stencil buffer attached multisampled buffer.
+        */
+        [[nodiscard]] uint32_t GetMultisampledDepthBuffer() const
+        {
+            return _multisampledDepthStencilBuffer;
+        }
+
+        /**
+        * @brief Returns id of the underlying opaque FrameBuffer.
+        */
+        [[nodiscard]] unsigned int GetOpaqueFrameBuffer() const
+        {
+            return _opaqueFramebuffer;
+        }
+
+        /**
+        * @brief Returns color texture attached to opaque buffer.
+        */
+        [[nodiscard]] uint32_t GetOpaqueColorBuffer() const
+        {
+            return _opaqueColorBuffer;
+        }
+
+        /**
+        * @brief Returns depth render buffer attached to opaque frameBuffer.
+        */
+        [[nodiscard]] uint32_t GetOpaqueDepthBuffer() const
+        {
+            return _opaqueDepthBuffer;
+        }
+
+        /**
+       * @brief Returns id of the underlying transparent FrameBuffer.
+       */
+        [[nodiscard]] uint32_t GetTransparentFrameBuffer() const
+        {
+            return _transparentFramebuffer;
+        }
+
+        /**
+        * @brief Returns color texture attached to transparent buffer.
+        */
+        [[nodiscard]] uint32_t GetTransparentColorBuffer() const
+        {
+            return _transparentColorBuffer;
+        }
+
+        /**
+        * @brief Returns depth render buffer attached to transparent frameBuffer.
+        */
+        [[nodiscard]] uint32_t GetTransparentDepthBuffer() const
+        {
+            return _transparentDepthBuffer;
+        }
+
+
+        /**
+         * @brief Binds underlying multisampled FrameBuffer for rendering.
          */
-        [[nodiscard]] uint32_t GetDepthStencilBuffer() const
+        void BindMultiSampledFramebuffer() const
         {
-            return _depthStencilBuffer;
+            glBindFramebuffer(GL_FRAMEBUFFER, _multiSampledFramebuffer);
         }
 
         /**
-         * @brief Resolves multisampling and writes result to Resolved color buffer.
+         * @brief Binds underlying opaque FrameBuffer for rendering.
+         */
+        void BindOpaqueFramebuffer() const
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, _opaqueFramebuffer);
+        }
+
+        /**
+         * @brief Binds underlying transparent FrameBuffer for rendering.
+         */
+        void BindTransparentFramebuffer() const
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, _transparentFramebuffer);
+        }
+
+    public:
+        /**
+         * @brief Resolves multisampling and writes result to opaque buffer.
          */
         void ResolveMultisampling() const;
+
+        /**
+         * @brief Writes opaque buffer content to transparent buffer.
+         */
+        void BlitOpaqueToTransparent() const;
 
     private:
         void UpdateBuffers() const;

@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "WaterCommon.glsl"
+#include "Water/WaterCommon.glsl"
 
 layout (binding = 0, rgba32f) readonly uniform image2DArray HDzDxDfhx;
 layout (binding = 1, rgba32f) readonly uniform image2DArray DfhzDfdxxDfdzxDfdzz;
@@ -9,16 +9,7 @@ layout (binding = 3, rgba32f) writeonly uniform image2DArray SlopeTextures;
 layout (binding = 4, rgba32f) writeonly uniform image2DArray DisplacementTexture;
 layout (binding = 5, rgba32f) writeonly uniform image2DArray Velocity;
 
-layout(std430, binding = 0) readonly restrict buffer CascadeSettingsBuffer
-{
-    int TextureResolution;
-    int CascadeCount;
-    int VelocityLayers;
-    float VelocityMinHeight;
-    float VelocityMaxHeight;
-    float Padding[3];
-    cascadeSettings CascadeSettings[];
-};
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
@@ -43,18 +34,18 @@ void main()
 
     const vec3 displacement = vec3(dx, dy, dz);
     const vec2 slope = vec2(-dfhx, -dfhz);
-    const vec3 JacobianDerivatives = vec3(dfdxx, dfdzz, dfdzx);
+    const vec3 JacobianDerivatives = vec3(-dfdxx, -dfdzz, -dfdzx);
 
     imageStore(SlopeTextures, sampleCoords, vec4(slope, JacobianDerivatives.xy));
     imageStore(DisplacementTexture, sampleCoords, vec4(displacement, JacobianDerivatives.z));
 
-    const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
+    const int velocityPackedTextureCount = CascadeSettingsBuffer.VelocityLayers * 3 / 4;
 
 
     const int velocityPackedBaseIndex = cascadeIndex * velocityPackedTextureCount;
 
 
-    const int velocityBaseIndex = cascadeIndex * VelocityLayers;
+    const int velocityBaseIndex = cascadeIndex * CascadeSettingsBuffer.VelocityLayers;
 
     for (int i = 0; i < velocityPackedTextureCount; i += 3)
     {

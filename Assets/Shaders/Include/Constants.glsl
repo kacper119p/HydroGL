@@ -8,3 +8,5 @@ const float EULER = 2.718281828459045;
 const float EPSILON = 0.00005;
 const float INV_SQRT2 = 1.0 / SQRT2;
 const float INV_SQRT3 = 1.0 / SQRT3;
+const float POSITIVE_INFINITY = 1.0 / 0.0;// Well defined since OpenGL 4.1
+const float NEGATIVE_INFINITY = -1.0 / 0.0;// Well defined since OpenGL 4.1

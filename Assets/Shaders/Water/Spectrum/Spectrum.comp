@@ -1,6 +1,6 @@
 #version 460 core
 
-#include "WaterCommon.glsl"
+#include "Water/WaterCommon.glsl"
 #include "Complex.glsl"
 
 layout (binding = 0, rgba32f) writeonly restrict uniform image2DArray HDzDxDfhx;
@@ -8,16 +8,7 @@ layout (binding = 1, rgba32f) writeonly restrict uniform image2DArray DfhzDfdxxD
 layout (binding = 2, rgba32f) writeonly restrict uniform image2DArray VelocityPacked;
 layout (binding = 3, rgba32f) readonly restrict uniform image2DArray InitialSpectrum;
 
-layout(std430, binding = 0) readonly buffer CascadeSettingsBuffer
-{
-    int TextureResolution;
-    int CascadeCount;
-    int VelocityLayers;
-    float VelocityMinHeight;
-    float VelocityMaxHeight;
-    float Padding[3];
-    cascadeSettings CascadeSettings[];
-};
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 uniform float Time;
 
@@ -45,9 +36,9 @@ void main()
     const int cascadeIndex = int(gl_GlobalInvocationID.z);
     const ivec3 sampleCoords = ivec3(pixelCoords, cascadeIndex);
 
-    const ivec2 textureCenter = ivec2(TextureResolution >> 1);
+    const ivec2 textureCenter = ivec2(CascadeSettingsBuffer.TextureResolution >> 1);
     const ivec2 waveCoords = pixelCoords - textureCenter;
-    const vec2 waveVector = (2.f * PI * waveCoords) / CascadeSettings[cascadeIndex].Length;
+    const vec2 waveVector = (2.f * PI * waveCoords) / CascadeSettingsBuffer.CascadeSettings[cascadeIndex].Length;
 
     float k = length(waveVector);
 
@@ -81,20 +72,20 @@ void main()
     imageStore(HDzDxDfhx, sampleCoords, vec4(hDz, dxDfhx));
     imageStore(DfhzDfdxxDfdzxDfdzz, sampleCoords, vec4(dfhzDfdxx, dfdzxDfdzz));
 
-    const int velocityPackedTextureCount = VelocityLayers * 3 / 4;
+    const int velocityPackedTextureCount = CascadeSettingsBuffer.VelocityLayers * 3 / 4;
     const int velocityBaseIndex = cascadeIndex * velocityPackedTextureCount;
 
     const vec2 hv = ha - hb;
 
     dispersion = max(dispersion, EPSILON);
-    for (int i = 0; i < VelocityLayers; i += 4)
+    for (int i = 0; i < CascadeSettingsBuffer.VelocityLayers; i += 4)
     {
         vec2 vx[4];
         vec2 vy[4];
         vec2 vz[4];
         for (int j = 0; j < 4; ++j)
         {
-            const float height = mix(VelocityMinHeight, VelocityMaxHeight, float(i + j) / float(VelocityLayers - 1));
+            const float height = mix(CascadeSettingsBuffer.VelocityMinHeight, CascadeSettingsBuffer.VelocityMaxHeight, float(i + j) / float(CascadeSettingsBuffer.VelocityLayers - 1));
             GetVelocityVector(vx[j], vy[j], vz[j], hv, k, dispersion, waveVector, height);
         }
 

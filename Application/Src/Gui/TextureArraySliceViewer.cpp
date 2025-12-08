@@ -1,5 +1,8 @@
 # include "TextureArraySliceViewer.h"
 
+#include "Rendering/RendererHelpers/ScreenQuad.h"
+#include "Rendering/Shaders/ShaderBuilder.h"
+
 Application::TextureArraySliceViewer::TextureArraySliceViewer()
     : _shaderProgram(
           Core::ShaderBuilder()

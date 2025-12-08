@@ -1,26 +1,32 @@
 #pragma once
 #include "Camera/CameraComponent.h"
 #include "Ocean/OceanGrid.h"
+#include "Ocean/SprayManager.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
     class WaterSystem
     {
     public:
-        struct alignas(4 * sizeof(float)) CascadeSettings
+        struct alignas(16) CascadeSettings
         {
+        public:
             float WaveLengthLowerBound;
-            float WaveLengthUpperBound;
-            int32_t Length;
-            float Padding{};
+            alignas(4) float WaveLengthUpperBound;
+            alignas(4) float Length;
 
+        private:
+            alignas(4) float Padding{};
+
+        public:
             CascadeSettings() : WaveLengthLowerBound(0.0f), WaveLengthUpperBound(0.0f), Length(0)
             {
             }
 
-            CascadeSettings(const float WaveLengthLowerBound, const float WaveLengthUpperBound, const int32_t Length)
+            CascadeSettings(const float WaveLengthLowerBound, const float WaveLengthUpperBound, const float Length)
                 : WaveLengthLowerBound(WaveLengthLowerBound),
                   WaveLengthUpperBound(WaveLengthUpperBound),
                   Length(Length)
@@ -29,18 +35,40 @@ namespace Core
         };
 
     private:
-        struct alignas(sizeof(glm::vec2)) InitialSpectrumSettingsBuffer
+        struct alignas(16) FoamMaskShaderUniforms
         {
+        public:
+            alignas(4) float FoamThreshold;
+            alignas(4) float FoamExponent;
+            alignas(4) float FoamIntensity;
+
+        private:
+            alignas(4) float Padding{};
+
+        public:
+            FoamMaskShaderUniforms(const float FoamThreshold,
+                                   const float FoamExponent, const float FoamIntensity)
+                : FoamThreshold(FoamThreshold),
+                  FoamExponent(FoamExponent),
+                  FoamIntensity(FoamIntensity)
+            {
+            }
+        };
+
+        struct alignas(8) InitialSpectrumSettingsBuffer
+        {
+        public:
             glm::vec2 WindVelocity;
-            float Fetch;
-            float Delta;
-            float Swell;
-            float Alpha;
-            float PeakWaveFrequency;
-            float Padding;
+            alignas(8) float Fetch;
+            alignas(4) float Delta;
+            alignas(4) float Swell;
+            alignas(4) float Alpha;
+            alignas(4) float PeakWaveFrequency;
 
-            InitialSpectrumSettingsBuffer() = default;
+        private:
+            alignas(4) float Padding{};
 
+        public:
             InitialSpectrumSettingsBuffer(const glm::vec2& WindVelocity, const float Fetch, const float Delta,
                                           const float Swell, const float Alpha, const float PeakWaveFrequency)
                 : WindVelocity(WindVelocity),
@@ -48,8 +76,7 @@ namespace Core
                   Delta(Delta),
                   Swell(Swell),
                   Alpha(Alpha),
-                  PeakWaveFrequency(PeakWaveFrequency),
-                  Padding(0.0f)
+                  PeakWaveFrequency(PeakWaveFrequency)
             {
             }
         };
@@ -153,6 +180,36 @@ namespace Core
             }
         };
 
+        struct WaterShaderUniformLocations
+        {
+            int32_t ViewMatrix;
+            int32_t ProjectionMatrix;
+            int32_t CameraPosition;
+            int32_t Time;
+            int32_t GridOrigin;
+            int32_t SurfaceColor;
+            int32_t Absorption;
+            int32_t CameraNearPlane;
+            int32_t CameraFarPlane;
+
+            explicit WaterShaderUniformLocations(Shader WaterShader);
+        };
+
+        struct FftShaderUniformLocations
+        {
+            int32_t TotalCount;
+            int32_t Subcount;
+
+            explicit FftShaderUniformLocations(Shader FftShader);
+        };
+
+        struct SpectrumShaderUniformLocations
+        {
+            int32_t Time;
+
+            explicit SpectrumShaderUniformLocations(Shader SpectrumShader);
+        };
+
     private:
         static constexpr float Gravity = 9.80665f;
         static constexpr int32_t CascadeCount = 3;
@@ -164,14 +221,9 @@ namespace Core
 
     private:
         OceanGrid _oceanGrid;
+        SprayManager _sprayManager;
 
         Shader _waterShader;
-        int32_t _viewMatrixLocation;
-        int32_t _projectionMatrixLocation;
-        int32_t _cameraPositionLocation;
-        int32_t _timeLocation;
-        int32_t _gridOriginLocation;
-
         Shader _fftHorizontalShader;
         Shader _fftVerticalShader;
         Shader _assembleComputeShader;
@@ -179,32 +231,42 @@ namespace Core
         Shader _initialSpectrumComputeShader;
         Shader _spectrumComputeShader;
 
-        uint32_t _initialSpectrumTextures;
-        uint32_t _hDzDxDfhxTextures;
-        uint32_t _dfhzDfdxxDfdzxDfdzz;
-        uint32_t _velocityPackedTextures;
-        uint32_t _slopeTextures;
-        uint32_t _displacementTextures;
-        uint32_t _velocityTextures;
-        uint32_t _tmpTextures;
-        uint32_t _gaussianNoiseTexture;
+        WaterShaderUniformLocations _waterShaderUniformLocations;
+        FftShaderUniformLocations _fftHorizontalShaderUniformLocations;
+        FftShaderUniformLocations _fftVerticalShaderUniformLocations;
+        SpectrumShaderUniformLocations _spectrumShaderUniformLocations;
 
+        GlTextureUnique _initialSpectrumTextures;
+        GlTextureUnique _hDzDxDfhxTextures;
+        GlTextureUnique _dfhzDfdxxDfdzxDfdzz;
+        GlTextureUnique _velocityPackedTextures;
+        GlTextureUnique _slopeTextures;
+        GlTextureUnique _displacementTextures;
+        GlTextureUnique _velocityTextures;
+        GlTextureUnique _tmpTextures;
+        GlTextureUnique _gaussianNoiseTexture;
+
+        FoamMaskShaderUniforms _foamUniformBufferData;
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
         CascadeSettingsBuffer _cascadeSettings;
 
-        uint32_t _initialSpectrumSettingsUbo = 0;
-        uint32_t _cascadeSettingsSsbo = 0;
+        GlBufferUnique _initialSpectrumSettingsUbo;
+        GlBufferUnique _foamMaskSettingsUbo;
+        GlBufferUnique _cascadeSettingsSsbo;
 
     public:
-        WaterSystem();
+        WaterSystem(const glm::ivec2& WindowSize, uint32_t MainDepthBuffer);
 
     private:
-        static uint32_t CreateTextureArray(int32_t Resolution, int32_t Layers, int32_t InternalFormat, int32_t Filter,
-                                           int32_t Wrap);
+        static uint32_t CreateTextureArray(int32_t Layers);
 
-        static uint32_t CreateGaussianNoise(int32_t Resolution);
+        static uint32_t CreateSlopeTextureArray();
+
+        static uint32_t CreateGaussianNoise();
 
         static uint32_t CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData);
+
+        static uint32_t CreateFoamMaskSettingsUbo(const FoamMaskShaderUniforms& InitialData);
 
         static uint32_t CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData);
 
@@ -223,6 +285,44 @@ namespace Core
         }
 
     public:
+        [[nodiscard]] SprayManager& GetSprayManager()
+        {
+            return _sprayManager;
+        }
+
+        void SetFoamThreshold(const float FoamThreshold)
+        {
+            _foamUniformBufferData.FoamThreshold = FoamThreshold;
+            SentFoamMaskSettingsToGpu();
+        }
+
+        [[nodiscard]] float GetFoamThreshold() const
+        {
+            return _foamUniformBufferData.FoamThreshold;
+        }
+
+        void SetFoamExponent(const float FoamExponent)
+        {
+            _foamUniformBufferData.FoamExponent = FoamExponent;
+            SentFoamMaskSettingsToGpu();
+        }
+
+        [[nodiscard]] float GetFoamExponent() const
+        {
+            return _foamUniformBufferData.FoamExponent;
+        }
+
+        void SetFoamIntensity(const float FoamIntensity)
+        {
+            _foamUniformBufferData.FoamIntensity = FoamIntensity;
+            SentFoamMaskSettingsToGpu();
+        }
+
+        [[nodiscard]] float GetFoamIntensity() const
+        {
+            return _foamUniformBufferData.FoamIntensity;
+        }
+
         void SetWindVelocity(const glm::vec2 WindVelocity)
         {
             _initialSpectrumSettingsBufferData.WindVelocity = WindVelocity;
@@ -294,8 +394,11 @@ namespace Core
             return _cascadeSettingsSsbo;
         }
 
-        void Render(const TransformComponent& CameraTransform, const CameraComponent& Camera,
-                    uint32_t DynamicWavesSampleSsboId) const;
+        void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
+                    const glm::vec3& AmbientLightColor, uint32_t DynamicWavesSampleSsboId, uint32_t SceneColor,
+                    uint32_t SceneDepth) const;
+
+        void RenderSpray(uint32_t TargetFrameBuffer) const;
 
     private:
         void UpdateInitialSpectrum() const;
@@ -307,6 +410,8 @@ namespace Core
         void RunFft(uint32_t Texture, int32_t Layers) const;
 
         void SendInitialSpectrumSettingsToGpu() const;
+
+        void SentFoamMaskSettingsToGpu() const;
 
         void SendCascadeSettingsToGpu() const;
     };

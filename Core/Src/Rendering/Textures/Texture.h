@@ -7,6 +7,11 @@
 
 namespace Core
 {
+    /**
+     * @brief Represents a texture resource.
+     * Manages the lifecycle, binding, and access to OpenGL texture objects loaded from files.
+     * Includes static utilities for resource management and caching.
+     */
     class Texture
     {
     private:
@@ -16,22 +21,35 @@ namespace Core
         uint32_t _textureId;
 
     public:
-        Texture() :
-            _textureId(0)
+        /**
+         * @brief Constructs an invalid texture object.
+         */
+        Texture() : _textureId(0)
         {
         }
 
-        explicit Texture(const uint32_t TextureId) :
-            _textureId(TextureId)
+        /**
+         * @brief Wraps an existing texture identifier.
+         * @param TextureId The texture identifier to wrap.
+         */
+        explicit Texture(const uint32_t TextureId) : _textureId(TextureId)
         {
         }
 
     public:
+        /**
+         * @brief Gets the underlying texture identifier.
+         * @return The texture ID.
+         */
         [[nodiscard]] uint32_t GetId() const
         {
             return _textureId;
         }
 
+        /**
+         * @brief Gets a GPU handle for bindless access.
+         * @return A 64-bit handle representing the texture, or 0 if invalid.
+         */
         [[nodiscard]] uint64_t GetHandleReadonly() const
         {
             if (_textureId == 0)
@@ -40,6 +58,15 @@ namespace Core
             }
             const uint64_t handle = glGetTextureHandleARB(_textureId);
             return handle;
+        }
+
+        /**
+         * @brief Binds this texture to a specific texture unit.
+         * @param TextureUnit The index of the texture unit.
+         */
+        void BindTextureUnit(const uint32_t TextureUnit) const
+        {
+            glBindTextureUnit(TextureUnit, _textureId);
         }
 
     public:

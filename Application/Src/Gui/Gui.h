@@ -13,8 +13,10 @@ namespace Application
         uint32_t _windowWidth;
         uint32_t _windowHeight;
         Platform::Input::CallbackId _showGuiCallbackId = 0;
+        int32_t _textureSliceViewerSelectedTexture = 0;
+        int32_t _textureSliceViewerLayerIndex = 0;
         bool _showGui = true;
-        bool _showSpectrumSettings = false;
+        bool _showWaterSettings = false;
         bool _showSystemInfo = false;
         bool _showTextureViewer = false;
 
@@ -25,5 +27,14 @@ namespace Application
         ~Gui();
 
         void Render();
+
+    private:
+        void RenderTopBar();
+
+        void RenderWaterSettings();
+
+        void RenderSystemInfoWindow();
+
+        void RenderTextureViewer();
     };
 }

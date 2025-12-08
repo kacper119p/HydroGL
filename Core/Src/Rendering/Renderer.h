@@ -11,6 +11,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Skybox.h"
 #include "Scene/Scene.h"
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
@@ -26,13 +27,12 @@ namespace Core
     private:
         struct alignas(16) LightDataBuffer
         {
-            uint32_t DirectionalLightCount = 0;
-            uint32_t PointLightCount = 0;
-            uint32_t SpotlightCount = 0;
-            float _padding0{};
-            DirectionalLightComponent::ShaderData DirectionalLight;
-            PointLightComponent::ShaderData PointLights[MaxPointLights];
-            SpotlightComponent::ShaderData SpotLights[MaxPointLights];
+            alignas(4) uint32_t DirectionalLightCount = 0;
+            alignas(4) uint32_t PointLightCount = 0;
+            alignas(4) uint32_t SpotlightCount = 0;
+            alignas(16) DirectionalLightComponent::ShaderData DirectionalLight;
+            alignas(16) PointLightComponent::ShaderData PointLights[MaxPointLights];
+            alignas(16) SpotlightComponent::ShaderData SpotLights[MaxPointLights];
         };
 
     private:
@@ -47,14 +47,14 @@ namespace Core
         int32_t _pbrProjectionMatrixLocation;
         int32_t _cameraPositionLocation;
 
-        uint32_t IndirectDrawCommandsSsbo = 0;
-        uint32_t TransformsSsbo = 0;
+        GlBufferUnique IndirectDrawCommandsSsbo;
+        GlBufferUnique TransformsSsbo;
 
         std::vector<DrawElementsIndirectCommand> _indirectDrawCommands;
         std::vector<glm::mat4> _transformMatrices;
 
-        uint32_t _lightsSsbo = 0;
-        uint32_t _brdfLut = 0;
+        GlBufferUnique _lightsSsbo;
+        GlTextureUnique _brdfLut;
         LightDataBuffer _lightDataBuffer;
 
         glm::mat4 DirectionalLightProjectionMatrix;
@@ -63,6 +63,16 @@ namespace Core
         BloomPostprocessingEffect _bloomPostprocessingEffect;
 
     public:
+        [[nodiscard]] glm::uvec2 GetResolution() const
+        {
+            return _resolution;
+        }
+
+        [[nodiscard]] const SceneFrameBuffer& GetFrameBuffer() const
+        {
+            return _frameBuffer;
+        }
+
         explicit Renderer(const glm::uvec2& Resolution);
 
     public:

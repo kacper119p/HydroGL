@@ -1,16 +1,19 @@
 #pragma once
-#include <array>
 #include <string_view>
 #include <glm/fwd.hpp>
+#include <glm/vec3.hpp>
+
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
     struct Skybox
     {
     private:
-        uint32_t _cubeMap = 0;
-        uint32_t _irradianceMap = 0;
-        uint32_t _prefilterMap = 0;
+        uint32_t _cubeMap{};
+        uint32_t _irradianceMap{};
+        uint32_t _prefilterMap{};
+        glm::vec3 _environmentColor{};
 
     public:
         [[nodiscard]] static Skybox CreateSkybox(const std::string_view& FilePath);
@@ -31,6 +34,11 @@ namespace Core
         [[nodiscard]] uint32_t GetPrefilterMap() const
         {
             return _prefilterMap;
+        }
+
+        [[nodiscard]] const glm::vec3& GetEnvironmentColor() const
+        {
+            return _environmentColor;
         }
     };
 }

@@ -1,0 +1,38 @@
+#version 460
+#include "Constants.glsl"
+#include "Simplex.glsl"
+#include "Water/WaterCommon.glsl"
+#include "Water/Spray/SprayCommon.glsl"
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+DEFINE_PARTICLE_DATA_BUFFER(1, restrict);
+DEFINE_PARTICLE_FREE_LIST_BUFFER(2, writeonly);
+DEFINE_INDIRECT_DRAW_BUFFER(3, coherent);
+DEFINE_PARTICLE_ALIVE_LIST_BUFFER(4, writeonly);
+
+void UpdateParticle(inout particle Particle, const uint index)
+{
+    if (Particle.LifeTime > 0.0)
+    {
+        Particle.LifeTime -= DeltaTime;
+        if (Particle.LifeTime <= 0.0)
+        {
+            FreeListBuffer.Indices[atomicAdd(FreeListBuffer.Count, 1)] = index;
+            return;
+        }
+        uint particleDrawIndex = atomicAdd(IndirectDrawBuffer.Command.InstanceCount, 1);
+        AliveListBuffer.Indices[particleDrawIndex] = index;
+
+        Particle.Position += Particle.Velocity * DeltaTime;
+        Particle.Rotation += DeltaTime;
+    }
+}
+
+layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+    uint gid = gl_GlobalInvocationID.x;
+    if (gid >= TotalParticleCount) return;
+    UpdateParticle(ParticleDataBuffer.Particles[gid], gid);
+}

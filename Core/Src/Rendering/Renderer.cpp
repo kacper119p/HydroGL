@@ -42,9 +42,9 @@ namespace Core
                                                        _bloomPostprocessingEffect(Resolution)
     {
         constexpr int32_t defaultBufferSize = 1024;
-        glCreateBuffers(1, &IndirectDrawCommandsSsbo);
-        glCreateBuffers(1, &TransformsSsbo);
-        glCreateBuffers(1, &_lightsSsbo);
+        IndirectDrawCommandsSsbo = GlBufferUnique::Create();
+        TransformsSsbo = GlBufferUnique::Create();
+        _lightsSsbo = GlBufferUnique::Create();
         _indirectDrawCommands.resize(defaultBufferSize);
         _transformMatrices.resize(defaultBufferSize);
         glNamedBufferData(IndirectDrawCommandsSsbo,
@@ -54,12 +54,7 @@ namespace Core
                           _transformMatrices.data(), GL_DYNAMIC_DRAW);
     }
 
-    Renderer::~Renderer()
-    {
-        glDeleteBuffers(1, &IndirectDrawCommandsSsbo);
-        glDeleteBuffers(1, &TransformsSsbo);
-        glDeleteBuffers(1, &_lightsSsbo);
-    }
+    Renderer::~Renderer() = default;
 
     void Renderer::RenderFrame(const Engine& Engine, const float DeltaTime)
     {
@@ -83,7 +78,7 @@ namespace Core
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glCullFace(GL_BACK);
-        _frameBuffer.BindMultiSampled();
+        _frameBuffer.BindMultiSampledFramebuffer();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -122,7 +117,7 @@ namespace Core
                 renderedMesh.Mesh.GetIndicesCount(),
                 1,
                 renderedMesh.Mesh.GetIndicesIndex(),
-                renderedMesh.Mesh.GetVerticesIndex(),
+                static_cast<int32_t>(renderedMesh.Mesh.GetVerticesIndex()),
                 renderedMesh.Material
             };
         }
@@ -131,7 +126,7 @@ namespace Core
         materialManager.BindMaterialBuffer();
         _pbrShader.Use();
         _pbrShader.SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.ProjectionMatrix);
+        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.GetProjectionMatrix());
         _pbrShader.SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
@@ -148,22 +143,33 @@ namespace Core
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
+        _frameBuffer.ResolveMultisampling();
+        _frameBuffer.BindOpaqueFramebuffer();
+
         // ------------------------ SKYBOX ------------------------
 
         _skyboxShader.Use();
         _skyboxShader.SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.ProjectionMatrix);
+        _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.GetProjectionMatrix());
 
         glBindTextureUnit(3, scene.GetSkybox().GetCubeMap());
 
         CubeRenderer::Draw();
 
-        Engine.GetWaterSystem()->Render(cameraTransform,
-                                        camera,
-                                        Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId());
+        _frameBuffer.BlitOpaqueToTransparent();
+        _frameBuffer.BindTransparentFramebuffer();
 
-        _frameBuffer.ResolveMultisampling();
-        _bloomPostprocessingEffect.Render(_frameBuffer.GetResolvedColorBuffer());
+        Engine.GetWaterSystem()->Render(DeltaTime,
+                                        cameraTransform,
+                                        camera,
+                                        scene.GetSkybox().GetEnvironmentColor(),
+                                        Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId(),
+                                        _frameBuffer.GetOpaqueColorBuffer(),
+                                        _frameBuffer.GetOpaqueDepthBuffer());
+
+        Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetTransparentFrameBuffer());
+
+        _bloomPostprocessingEffect.Render(_frameBuffer.GetTransparentColorBuffer());
     }
 
     void Renderer::BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,

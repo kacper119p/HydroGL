@@ -1,0 +1,90 @@
+#version 460
+#include "Random.glsl"
+#include "Water/WaterCommon.glsl"
+#include "Water/Spray/SprayCommon.glsl"
+
+layout (binding = 3) uniform sampler2DArray DisplacementMaps;
+layout (binding = 4) uniform sampler2DArray SlopeMaps;
+layout (binding = 6) uniform sampler2DArray VelocityMaps;
+
+DEFINE_FOAM_PARAMETERS_BUFFER(1)
+DEFINE_CASCADE_SETTINGS_BUFFER(0);
+DEFINE_PARTICLE_DATA_BUFFER(1, writeonly);
+DEFINE_PARTICLE_FREE_LIST_BUFFER(2, coherent);
+
+vec3 GetSpawnPosition(vec2 basePosition)
+{
+    vec3 tessendorfDisplacement = vec3(0.0);
+    for (int i = 0; i < CascadeSettingsBuffer.CascadeCount; ++i)
+    {
+        const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[i].Length;
+        tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
+    }
+    return vec3(basePosition.x, 0.0, basePosition.y) + tessendorfDisplacement;
+}
+
+bool MakeParticle(out particle Particle)
+{
+    uint seed = uint(gl_GlobalInvocationID.x) * Seed;
+    seed = pcg_hash(seed);
+
+    const vec2 randomOffset = rng(vec2(-SpawnRange), vec2(SpawnRange), seed);
+    const vec2 basePosition = CameraPosition.xz + randomOffset;
+
+    const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[0].Length;
+    vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
+    float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
+    vec3 waterVelocity = texture(VelocityMaps, vec3(texCoord, CascadeSettingsBuffer.VelocityLayers - 1)).xyz;
+
+    for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
+    {
+        const vec2 texCoord = vec2(basePosition.x, basePosition.y) / CascadeSettingsBuffer.CascadeSettings[i].Length;
+        slopeDfdxxDfdzz += texture(SlopeMaps, vec3(texCoord, i));
+        dfdzx += texture(DisplacementMaps, vec3(texCoord, i)).w;
+        waterVelocity += texture(VelocityMaps, vec3(texCoord, i * (CascadeSettingsBuffer.VelocityLayers - 1))).xyz;
+    }
+
+    const vec2 slope = slopeDfdxxDfdzz.xy;
+    const float jacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
+
+    const float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
+    const float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
+
+    if (foamMask < SpawnThreshold)
+    {
+        return false;
+    }
+
+    Particle.Position = GetSpawnPosition(basePosition);
+    Particle.Rotation = rng(0.0, 6.28318530718, seed);
+    Particle.Velocity = waterVelocity * WaterVelocityInfluence + vec3(WindVelocity.x, 0.0, WindVelocity.y) * WindInfluence;
+    Particle.LifeTime = LifeTime;
+    return true;
+}
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+    const uint index = gl_GlobalInvocationID.x;
+
+    if (index >= ParticlesSpawnedThisFrame)
+    {
+        return;
+    }
+
+    particle particle;
+    if (!MakeParticle(particle))
+    {
+        return;
+    }
+
+    const int freeListIndex = atomicAdd(FreeListBuffer.Count, -1) - 1;
+    if (freeListIndex < 0)
+    {
+        atomicAdd(FreeListBuffer.Count, 1);
+        return;
+    }
+
+    const uint particleIndex = FreeListBuffer.Indices[freeListIndex];
+    ParticleDataBuffer.Particles[particleIndex] = particle;
+}

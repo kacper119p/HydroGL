@@ -1,12 +1,8 @@
 #pragma once
 
-namespace Platform
+namespace Platform::TimeManager
 {
-    class TimeManager
-    {
-    public:
-        static void Initialize();
+        void Initialize();
 
-        static float GetTime();
-    };
+        float GetTime();
 }

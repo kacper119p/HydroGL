@@ -22,6 +22,8 @@ namespace Core
         result._irradianceMap = CubeMapGenerator::IrradianceMapFromSkybox(result._cubeMap);
         result._prefilterMap = CubeMapGenerator::PrefilterMapFromSkybox(result._cubeMap, width);
 
+        result._environmentColor = CubeMapGenerator::GetEnvironmentColorFromIrradianceMap(result._irradianceMap);
+
         return result;
     }
 

@@ -3,6 +3,7 @@
 
 #include "Rendering/Materials/Material.h"
 #include "Rendering/Textures/Texture.h"
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
@@ -34,7 +35,7 @@ namespace Core
         uint32_t _buffers[MaxMaterials]{};
         FreeBuffer _freeBuffer{};
 
-        uint32_t _materialSsbo = 0;
+        GlBufferUnique _materialSsbo;
 
     public:
         MaterialManager();

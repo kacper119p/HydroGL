@@ -8,6 +8,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Std140/Mat2.h"
 #include "Scene/Scene.h"
+#include "Utility/GlResourceUnique.h"
 
 namespace Core
 {
@@ -29,10 +30,10 @@ namespace Core
 
         struct TriangleBuffer
         {
-            uint32_t MainBufferId;
-            uint32_t PartialSumsBufferId;
-            uint32_t OutputBufferId;
-            uint32_t IntersectionPolygonsId;
+            GlBufferUnique MainBuffer;
+            GlBufferUnique PartialSumsBuffer;
+            GlBufferUnique OutputBuffer;
+            GlBufferUnique IntersectionPolygons;
             uint32_t Capacity;
             TriangleProperties* MappedOutputBuffer;
         };
@@ -109,7 +110,7 @@ namespace Core
 
         struct DynamicWavesSampleBuffer
         {
-            uint32_t GpuBufferId;
+            GlBufferUnique GpuBuffer;
             int32_t Capacity;
             DynamicWavesSampleSsbo* DynamicWavesBuffer;
         };
@@ -128,9 +129,9 @@ namespace Core
         Shader _outputComputeShader;
         Shader _intersectionMaskComputeShader;
         Shader _interactiveWavesComputeShader;
-        uint32_t _meshDataUbo;
-        uint32_t _intersectionMaskUbo;
-        uint32_t _interactiveWavesUbo;
+        GlBufferUnique _meshDataUbo;
+        GlBufferUnique _intersectionMaskUbo;
+        GlBufferUnique _interactiveWavesUbo;
         float _dragCoefficient = 2.02f;
 
         int32_t _windVelocityLocation;
@@ -146,7 +147,7 @@ namespace Core
     public:
         [[nodiscard]] uint32_t GetDynamicWavesSampleBufferId() const
         {
-            return _dynamicWavesSampleBuffer.GpuBufferId;
+            return _dynamicWavesSampleBuffer.GpuBuffer;
         }
 
         [[nodiscard]] int32_t GetDynamicWavesSampleCount() const
