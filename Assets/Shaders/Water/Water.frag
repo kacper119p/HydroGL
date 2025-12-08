@@ -92,10 +92,14 @@ void main()
     const vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
     const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, DisplacedPosition, ViewDirection, 1.0);
 
+    const ivec2 screenSize = textureSize(SceneColor, 0);
+    const float aspectRatio = float(screenSize.x) / float(screenSize.y);
+    const vec2 distortion = vec2(normal.x, normal.y * aspectRatio) * 0.01;
+
     const vec2 ndcCoordinates = ClipSpacePosition.xy / ClipSpacePosition.w;
     const vec2 screenCoordinates = ndcCoordinates * 0.5 + 0.5;
 
-    const vec2 distortedScreenUV = screenCoordinates + viewSpaceNormal.xy * 0.01;
+    const vec2 distortedScreenUV = screenCoordinates + distortion;
 
     const float waterSurfaceDepth = gl_FragCoord.z;
     const float linearWaterSurfaceDepth = LinearizeDepth(waterSurfaceDepth);
