@@ -202,7 +202,7 @@ namespace Core
     {
         uint32_t id;
         glCreateBuffers(1, &id);
-        glNamedBufferStorage(id, sizeof(InitialSpectrumSettingsBuffer), &InitialData, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(id, sizeof(FoamMaskShaderUniforms), &InitialData, GL_DYNAMIC_STORAGE_BIT);
         return id;
     }
 
