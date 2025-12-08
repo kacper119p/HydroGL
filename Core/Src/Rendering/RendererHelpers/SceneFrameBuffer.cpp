@@ -17,7 +17,7 @@ namespace Core
         _multisampledDepthStencilBuffer = GlRenderbufferUnique::Create();
         _opaqueDepthBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         _transparentFramebuffer = GlFramebufferUnique::Create();
-        _transparentColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);\
+        _transparentColorBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         _transparentDepthBuffer = GlTextureUnique::Create(GL_TEXTURE_2D);
         UpdateBuffers();
     }

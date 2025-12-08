@@ -19,9 +19,9 @@ void main()
     const vec3 cameraRight = vec3(ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
     const vec3 cameraUp = vec3(ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
 
-    float rotation = particle.Rotation;
-    float rotationCos = cos(rotation);
-    float rotationSin = sin(rotation);
+    float roation = particle.Rotation;
+    float rotationCos = cos(roation);
+    float rotationSin = sin(roation);
 
     vec2 offset = inputTexCoord - 0.5;
 

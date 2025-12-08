@@ -123,7 +123,7 @@ namespace Core
         */
         [[nodiscard]] uint32_t GetTransparentDepthBuffer() const
         {
-            return _opaqueDepthBuffer;
+            return _transparentDepthBuffer;
         }
 
 
