@@ -365,14 +365,14 @@ namespace Core
 
     void WaterSystem::SendInitialSpectrumSettingsToGpu() const
     {
-        glNamedBufferSubData(_initialSpectrumSettingsUbo, 0, sizeof(_initialSpectrumSettingsBufferData),
+        glNamedBufferSubData(_initialSpectrumSettingsUbo, 0, sizeof(InitialSpectrumSettingsBuffer),
                              &_initialSpectrumSettingsBufferData);
     }
 
     void WaterSystem::SentFoamMaskSettingsToGpu() const
     {
         glNamedBufferSubData(_foamMaskSettingsUbo, 0,
-                             static_cast<int64_t>(sizeof(_initialSpectrumSettingsBufferData)),
+                             static_cast<int64_t>(sizeof(FoamMaskShaderUniforms)),
                              &_foamUniformBufferData);
     }
 

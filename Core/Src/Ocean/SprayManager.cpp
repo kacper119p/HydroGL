@@ -37,10 +37,10 @@ namespace Core
 
     GlBufferUnique SprayManager::CreateIndirectDrawSsbo()
     {
-        DrawElementsIndirectCommand* initialData = new DrawElementsIndirectCommand{6, 0, 0, 0, 0};
+        const DrawElementsIndirectCommand* const initialData = new DrawElementsIndirectCommand{6, 0, 0, 0, 0};
         GlBufferUnique buffer = GlBufferUnique::Create();
         glNamedBufferStorage(buffer, sizeof(DrawElementsIndirectCommand), initialData, GL_DYNAMIC_STORAGE_BIT);
-        free(initialData);
+        delete initialData;
         return buffer;
     }
 
