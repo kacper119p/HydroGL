@@ -9,7 +9,7 @@ namespace Core
 {
     /**
      * @brief Represents a texture resource.
-     * * Manages the lifecycle, binding, and access to OpenGL texture objects loaded from files.
+     * Manages the lifecycle, binding, and access to OpenGL texture objects loaded from files.
      * Includes static utilities for resource management and caching.
      */
     class Texture
