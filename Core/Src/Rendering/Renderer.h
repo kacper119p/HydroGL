@@ -47,8 +47,12 @@ namespace Core
         int32_t _pbrProjectionMatrixLocation;
         int32_t _cameraPositionLocation;
 
-        GlBufferUnique IndirectDrawCommandsSsbo;
-        GlBufferUnique TransformsSsbo;
+        Shader _depthPassShader;
+        int32_t _depthPassViewMatrixLocation;
+        int32_t _depthPassProjectionMatrixLocation;
+
+        GlBufferUnique _indirectDrawCommandsSsbo;
+        GlBufferUnique _transformsSsbo;
 
         std::vector<DrawElementsIndirectCommand> _indirectDrawCommands;
         std::vector<glm::mat4> _transformMatrices;
@@ -57,7 +61,7 @@ namespace Core
         GlTextureUnique _brdfLut;
         LightDataBuffer _lightDataBuffer;
 
-        glm::mat4 DirectionalLightProjectionMatrix;
+        glm::mat4 _directionalLightProjectionMatrix;
 
         SceneFrameBuffer _frameBuffer;
         BloomPostprocessingEffect _bloomPostprocessingEffect;

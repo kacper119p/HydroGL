@@ -13,44 +13,42 @@
 
 namespace Core
 {
-    Renderer::Renderer(const glm::uvec2& Resolution) : _resolution(Resolution), _skyboxShader(ShaderBuilder().
-                                                           SetStage("Assets/Shaders/Skybox/Skybox.vert",
-                                                                    ShaderStage::VertexShader)
-                                                           .SetStage("Assets/Shaders/Skybox/Skybox.frag",
-                                                                     ShaderStage::FragmentShader)
-                                                           .Build()),
-                                                       _skyboxViewMatrixLocation(
-                                                           _skyboxShader.GetUniformLocation("ViewMatrix")),
-                                                       _skyboxProjectionMatrixLocation(
-                                                           _skyboxShader.GetUniformLocation("ProjectionMatrix")),
-                                                       _pbrShader(ShaderBuilder().SetStage(
-                                                               "Assets/Shaders/PBR/PBR.vert",
-                                                               Core::ShaderStage::VertexShader)
-                                                           .SetStage("Assets/Shaders/PBR/PBR.frag",
-                                                                     Core::ShaderStage::FragmentShader)
-                                                           .Build()),
-                                                       _pbrViewMatrixLocation(
-                                                           _pbrShader.GetUniformLocation("ViewMatrix")),
-                                                       _pbrProjectionMatrixLocation(
-                                                           _pbrShader.GetUniformLocation("ProjectionMatrix")),
-                                                       _cameraPositionLocation(
-                                                           _pbrShader.GetUniformLocation("CameraPosition")),
-                                                       _brdfLut(CubeMapGenerator::CreateBrdfLut()),
-                                                       DirectionalLightProjectionMatrix(
-                                                           glm::ortho(-150.0f, 150.0f, -150.0f, 150.0f, 0.1f, 300.0f)),
-                                                       _frameBuffer(Resolution),
-                                                       _bloomPostprocessingEffect(Resolution)
+    Renderer::Renderer(const glm::uvec2& Resolution)
+        : _resolution(Resolution), _skyboxShader(ShaderBuilder().
+              SetStage("Assets/Shaders/Skybox/Skybox.vert", ShaderStage::VertexShader)
+              .SetStage("Assets/Shaders/Skybox/Skybox.frag", ShaderStage::FragmentShader)
+              .Build()),
+          _skyboxViewMatrixLocation(_skyboxShader.GetUniformLocation("ViewMatrix")),
+          _skyboxProjectionMatrixLocation(_skyboxShader.GetUniformLocation("ProjectionMatrix")),
+          _pbrShader(ShaderBuilder()
+              .SetStage("Assets/Shaders/PBR/PBR.vert", ShaderStage::VertexShader)
+              .SetStage("Assets/Shaders/PBR/PBR.frag", ShaderStage::FragmentShader)
+              .Build()),
+          _pbrViewMatrixLocation(_pbrShader.GetUniformLocation("ViewMatrix")),
+          _pbrProjectionMatrixLocation(_pbrShader.GetUniformLocation("ProjectionMatrix")),
+          _cameraPositionLocation(_pbrShader.GetUniformLocation("CameraPosition")),
+          _depthPassShader(
+              ShaderBuilder()
+              .SetStage("Assets/Shaders/DefaultDepth/DefaultDepth.vert", ShaderStage::VertexShader)
+              .SetStage("Assets/Shaders/DefaultDepth/DefaultDepth.frag", ShaderStage::FragmentShader).
+              Build()),
+          _depthPassViewMatrixLocation(_depthPassShader.GetUniformLocation("ViewMatrix")),
+          _depthPassProjectionMatrixLocation(_depthPassShader.GetUniformLocation("ProjectionMatrix")),
+          _brdfLut(CubeMapGenerator::CreateBrdfLut()),
+          _directionalLightProjectionMatrix(glm::ortho(-150.0f, 150.0f, -150.0f, 150.0f, 0.1f, 300.0f)),
+          _frameBuffer(Resolution),
+          _bloomPostprocessingEffect(Resolution)
     {
         constexpr int32_t defaultBufferSize = 1024;
-        IndirectDrawCommandsSsbo = GlBufferUnique::Create();
-        TransformsSsbo = GlBufferUnique::Create();
+        _indirectDrawCommandsSsbo = GlBufferUnique::Create();
+        _transformsSsbo = GlBufferUnique::Create();
         _lightsSsbo = GlBufferUnique::Create();
         _indirectDrawCommands.resize(defaultBufferSize);
         _transformMatrices.resize(defaultBufferSize);
-        glNamedBufferData(IndirectDrawCommandsSsbo,
+        glNamedBufferData(_indirectDrawCommandsSsbo,
                           static_cast<GLsizeiptr>(defaultBufferSize * sizeof(DrawElementsIndirectCommand)),
                           _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
-        glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(defaultBufferSize * sizeof(glm::mat4)),
+        glNamedBufferData(_transformsSsbo, static_cast<GLsizeiptr>(defaultBufferSize * sizeof(glm::mat4)),
                           _transformMatrices.data(), GL_DYNAMIC_DRAW);
     }
 
@@ -96,10 +94,10 @@ namespace Core
         {
             _indirectDrawCommands.resize(countHint);
             _transformMatrices.resize(countHint);
-            glNamedBufferData(IndirectDrawCommandsSsbo,
+            glNamedBufferData(_indirectDrawCommandsSsbo,
                               static_cast<GLsizeiptr>(countHint * sizeof(DrawElementsIndirectCommand)),
                               _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
-            glNamedBufferData(TransformsSsbo, static_cast<GLsizeiptr>(countHint * sizeof(glm::mat4)),
+            glNamedBufferData(_transformsSsbo, static_cast<GLsizeiptr>(countHint * sizeof(glm::mat4)),
                               _transformMatrices.data(), GL_DYNAMIC_DRAW);
         }
 
@@ -122,25 +120,35 @@ namespace Core
             };
         }
 
+        glNamedBufferSubData(_indirectDrawCommandsSsbo, 0,
+                             static_cast<GLsizeiptr>(trueCount * sizeof(DrawElementsIndirectCommand)),
+                             _indirectDrawCommands.data());
+        glNamedBufferSubData(_transformsSsbo, 0, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
+                             _transformMatrices.data());
+
         MeshManager::BindVao();
         materialManager.BindMaterialBuffer();
-        _pbrShader.Use();
-        _pbrShader.SetUniform(_pbrViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
-        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.GetProjectionMatrix());
-        _pbrShader.SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
+
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _transformsSsbo);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _indirectDrawCommandsSsbo);
+
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, _indirectDrawCommandsSsbo);
 
         BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
 
-        glNamedBufferSubData(IndirectDrawCommandsSsbo, 0,
-                             static_cast<GLsizeiptr>(trueCount * sizeof(DrawElementsIndirectCommand)),
-                             _indirectDrawCommands.data());
-        glNamedBufferSubData(TransformsSsbo, 0, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
-                             _transformMatrices.data());
+        const glm::mat4 viewMatrix = glm::inverse(cameraTransform.GetLocalToWorldMatrix());
 
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, TransformsSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, IndirectDrawCommandsSsbo);
+        _depthPassShader.Use();
+        _depthPassShader.SetUniform(_depthPassViewMatrixLocation, viewMatrix);
+        _depthPassShader.SetUniform(_depthPassProjectionMatrixLocation, camera.GetProjectionMatrix());
 
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsSsbo);
+        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
+
+        _pbrShader.Use();
+        _pbrShader.SetUniform(_pbrViewMatrixLocation, viewMatrix);
+        _pbrShader.SetUniform(_pbrProjectionMatrixLocation, camera.GetProjectionMatrix());
+        _pbrShader.SetUniform(_cameraPositionLocation, cameraTransform.GetWorldPosition());
+
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
         _frameBuffer.ResolveMultisampling();
@@ -189,7 +197,7 @@ namespace Core
                                               cameraPosition,
                                               glm::vec3(0.0f, 1.0f, 0.0f));
 
-            glm::mat4 lightSpaceTransform = DirectionalLightProjectionMatrix * lightView;
+            glm::mat4 lightSpaceTransform = _directionalLightProjectionMatrix * lightView;
 
             const DirectionalLightComponent& light = directionalLightView.get<DirectionalLightComponent>(entity);
 

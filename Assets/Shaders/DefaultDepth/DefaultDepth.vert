@@ -1,19 +1,27 @@
 #version 460 core
 
-layout (location = 0) in vec3 inputPosition;
-layout (location = 1) in vec2 inputTexCoord;
-layout (location = 2) in vec3 inputNormal;
-layout (location = 3) in vec3 inputTangent;
+struct DrawElementsIndirectCommand
+{
+    uint Count;
+    uint InstanceCount;
+    uint FirstIndex;
+    uint BaseVertex;
+    uint BaseInstance;
+};
 
-uniform mat4 ObjectToWorldMatrix;
+layout (location = 0) in vec3 inputPosition;
+
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
-out vec4 NormalDepth;
+layout(std430, binding = 1) readonly restrict buffer TransformBuffer
+{
+    mat4 ObjectToWorldMatrices[];
+};
 
 void main()
 {
+    uint drawID = gl_DrawID;
+    mat4 ObjectToWorldMatrix = ObjectToWorldMatrices[drawID];
     gl_Position = ProjectionMatrix * ViewMatrix * ObjectToWorldMatrix * vec4(inputPosition, 1.0);
-    NormalDepth.xyz = (ViewMatrix * ObjectToWorldMatrix * vec4(inputNormal, 0.0)).xyz;
-    NormalDepth.w = -(ViewMatrix * ObjectToWorldMatrix * vec4(inputPosition, 1.0)).z;
 }
