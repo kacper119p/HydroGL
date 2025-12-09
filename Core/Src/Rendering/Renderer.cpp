@@ -30,8 +30,8 @@ namespace Core
           _depthPassShader(
               ShaderBuilder()
               .SetStage("Assets/Shaders/DefaultDepth/DefaultDepth.vert", ShaderStage::VertexShader)
-              .SetStage("Assets/Shaders/DefaultDepth/DefaultDepth.frag", ShaderStage::FragmentShader).
-              Build()),
+              .SetStage("Assets/Shaders/DefaultDepth/DefaultDepth.frag", ShaderStage::FragmentShader)
+              .Build()),
           _depthPassViewMatrixLocation(_depthPassShader.GetUniformLocation("ViewMatrix")),
           _depthPassProjectionMatrixLocation(_depthPassShader.GetUniformLocation("ProjectionMatrix")),
           _brdfLut(CubeMapGenerator::CreateBrdfLut()),

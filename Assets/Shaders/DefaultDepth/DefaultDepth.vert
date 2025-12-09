@@ -1,14 +1,5 @@
 #version 460 core
 
-struct DrawElementsIndirectCommand
-{
-    uint Count;
-    uint InstanceCount;
-    uint FirstIndex;
-    uint BaseVertex;
-    uint BaseInstance;
-};
-
 layout (location = 0) in vec3 inputPosition;
 
 uniform mat4 ViewMatrix;
