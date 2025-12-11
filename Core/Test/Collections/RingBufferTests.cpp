@@ -58,7 +58,7 @@ protected:
 
 TEST_F(RingBufferTests, DefaultState)
 {
-    Core::RingBuffer<int32_t, 5> buffer;
+    const Core::RingBuffer<int32_t, 5> buffer;
 
     EXPECT_TRUE(buffer.Empty());
     EXPECT_FALSE(buffer.Full());
