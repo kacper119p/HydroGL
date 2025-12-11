@@ -162,12 +162,12 @@ namespace Core
          * Moves elements from the other buffer and resets the source buffer to empty.
          * @param Other The buffer to move from.
          */
-        RingBuffer(RingBuffer&& Other) noexcept
+        RingBuffer(RingBuffer&& Other) noexcept(std::is_nothrow_move_constructible_v<T>)
             : _head(Other._head), _tail(Other._tail), _full(Other._full)
         {
             if (Other.Empty()) return;
 
-            size_t count = Other.Size();
+            const size_t count = Other.Size();
             size_t current = _tail;
 
             for (size_t i = 0; i < count; ++i)
@@ -416,11 +416,11 @@ namespace Core
         }
 
         /**
-        * @brief Copy assignment operator.
-        * Destroys current elements and copies from the other buffer.
-        * @param Other The buffer to copy from.
-        * @return Reference to this buffer.
-        */
+         * @brief Copy assignment operator.
+         * Destroys current elements and copies from the other buffer.
+         * @param Other The buffer to copy from.
+         * @return Reference to this buffer.
+         */
         RingBuffer& operator=(const RingBuffer& Other)
         {
             if (this == &Other) return *this;
@@ -451,7 +451,8 @@ namespace Core
          * @param Other The buffer to move from.
          * @return Reference to this buffer.
          */
-        RingBuffer& operator=(RingBuffer&& Other) noexcept
+        RingBuffer& operator=(RingBuffer&& Other)
+            noexcept(std::is_nothrow_move_constructible_v<T> && std::is_nothrow_destructible_v<T>)
         {
             if (this == &Other) return *this;
 
