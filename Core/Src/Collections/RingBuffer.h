@@ -290,7 +290,7 @@ namespace Core
          * @brief Returns a reference to the oldest element without removing it.
          * @return Constant reference to the oldest element.
          */
-        [[nodiscard]] const T& Peek() const noexcept
+        [[nodiscard]] const T& Peek() const
         {
             CHECK(!Empty(), "Cannot peek from an empty RingBuffer!");
             return *GetPtr(_tail);
@@ -300,7 +300,7 @@ namespace Core
          * @brief Returns a reference to the oldest element without removing it.
          * @return Reference to the oldest element.
          */
-        [[nodiscard]] T& Peek() noexcept
+        [[nodiscard]] T& Peek()
         {
             CHECK(!Empty(), "Cannot peek from an empty RingBuffer!");
             return *GetPtr(_tail);
