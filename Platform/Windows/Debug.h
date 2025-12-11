@@ -1,9 +1,8 @@
 #pragma once
 
-#ifdef DEBUG
+#if DEBUG
 #include <cstdio>
 #include <cstdlib>
-#include <intrin.h>
 #include <glad/glad.h>
 
 #define CHECK_EXPAND(x) x
@@ -15,17 +14,18 @@
         { \
             fprintf(stderr, "%s %d: Assertion failed: %s\n", \
             __FILE__, __LINE__, #EXPRESSION); \
-            __debugbreak(); \
+            abort(); \
         } \
     } while (0)
 
 #define CHECK_INTERNAL_MESSAGE(EXPRESSION, FORMAT, ...) \
     do\
     { \
-        if (!(!!(EXPRESSION))) { \
+        if (!(!!(EXPRESSION)))\
+        { \
         fprintf(stderr, "%s %d: Assertion failed: %s\nMessage: " FORMAT "\n", \
         __FILE__, __LINE__, #EXPRESSION, ##__VA_ARGS__); \
-        __debugbreak(); \
+        abort(); \
         } \
     } while (0)
 
