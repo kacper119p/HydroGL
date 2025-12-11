@@ -367,3 +367,123 @@ TEST_F(RingBufferTests, EmplaceForceOverwritesAndAvoidsCopies)
     EXPECT_EQ(buffer.Pop().Id, 30);
     EXPECT_EQ(buffer.Pop().Id, 40);
 }
+
+TEST_F(RingBufferTests, CopyConstructor)
+{
+    LifecycleStats stats;
+    Core::RingBuffer<LifecycleObject, 5> buffer1;
+
+    buffer1.Push(LifecycleObject(&stats, 1));
+    buffer1.Push(LifecycleObject(&stats, 2));
+
+    // Initial state: 2 items active
+    EXPECT_EQ(stats.Active(), 2);
+
+    // Copy Constructor
+    Core::RingBuffer<LifecycleObject, 5> buffer2(buffer1);
+
+    // Should have 2 more items (copies)
+    EXPECT_EQ(stats.Active(), 4);
+    EXPECT_EQ(buffer2.Size(), 2);
+    EXPECT_FALSE(buffer2.Empty());
+
+    // Verify contents are independent
+    EXPECT_EQ(buffer2.Pop().Id, 1);
+    EXPECT_EQ(buffer2.Pop().Id, 2);
+
+    // Buffer1 should be untouched
+    EXPECT_EQ(buffer1.Size(), 2);
+    EXPECT_EQ(buffer1.Peek().Id, 1);
+}
+
+TEST_F(RingBufferTests, MoveConstructor)
+{
+    LifecycleStats stats; {
+        Core::RingBuffer<LifecycleObject, 5> buffer1;
+
+        buffer1.Push(LifecycleObject(&stats, 10));
+        buffer1.Push(LifecycleObject(&stats, 20));
+
+        EXPECT_EQ(stats.Active(), 2);
+
+        // Move Constructor
+        Core::RingBuffer<LifecycleObject, 5> buffer2(std::move(buffer1));
+
+        // Buffer2 receives items
+        EXPECT_EQ(buffer2.Size(), 2);
+        EXPECT_EQ(buffer2.Peek().Id, 10);
+
+        // Buffer1 should be empty
+        EXPECT_TRUE(buffer1.Empty());
+        EXPECT_EQ(buffer1.Size(), 0);
+    }
+    // Both buffers out of scope -> All items destroyed
+    EXPECT_EQ(stats.Active(), 0);
+}
+
+TEST_F(RingBufferTests, CopyAssignment)
+{
+    LifecycleStats stats;
+    Core::RingBuffer<LifecycleObject, 5> b1;
+    b1.Push(LifecycleObject(&stats, 1));
+
+    Core::RingBuffer<LifecycleObject, 5> b2;
+    b2.Push(LifecycleObject(&stats, 100));
+    b2.Push(LifecycleObject(&stats, 200));
+
+    EXPECT_EQ(stats.Active(), 3); // 1 in b1, 2 in b2
+
+    // Copy Assignment: b2 = b1
+    b2 = b1;
+
+    // Expected:
+    // - b2's original items (100, 200) destroyed (-2 active)
+    // - b1's item (1) copied into b2 (+1 active)
+    // Total active: 2 (b1 has 1, b2 has 1)
+    EXPECT_EQ(stats.Active(), 2);
+
+    EXPECT_EQ(b2.Size(), 1);
+    EXPECT_EQ(b2.Peek().Id, 1);
+}
+
+TEST_F(RingBufferTests, MoveAssignment)
+{
+    LifecycleStats stats; {
+        Core::RingBuffer<LifecycleObject, 5> b1;
+        b1.Push(LifecycleObject(&stats, 1)); // Active: 1
+
+        Core::RingBuffer<LifecycleObject, 5> b2;
+        b2.Push(LifecycleObject(&stats, 99)); // Active: 2
+
+        // Move Assignment
+        b2 = std::move(b1);
+
+        // Expected:
+        // - b2's original item (99) is destroyed.
+        // - b1's item (1) is moved to b2.
+        // - b1 becomes empty.
+
+        EXPECT_EQ(b2.Size(), 1);
+        EXPECT_EQ(b2.Peek().Id, 1);
+        EXPECT_TRUE(b1.Empty());
+    }
+    // Clean up verification
+    EXPECT_EQ(stats.Active(), 0);
+}
+
+TEST_F(RingBufferTests, ClearMethodDestroysItems)
+{
+    LifecycleStats stats;
+    Core::RingBuffer<LifecycleObject, 5> buffer;
+
+    buffer.Push(LifecycleObject(&stats, 1));
+    buffer.Push(LifecycleObject(&stats, 2));
+    buffer.Push(LifecycleObject(&stats, 3));
+
+    EXPECT_EQ(stats.Active(), 3);
+
+    buffer.Clear();
+
+    EXPECT_TRUE(buffer.Empty());
+    EXPECT_EQ(stats.Active(), 0); // All items should be destroyed
+}

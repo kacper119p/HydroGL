@@ -137,18 +137,59 @@ namespace Core
         {
         }
 
+        /**
+         * @brief Copy constructor.
+         * Creates a deep copy of the elements from the other buffer.
+         * @param Other The buffer to copy from.
+         */
+        RingBuffer(const RingBuffer& Other)
+            : _head(Other._head), _tail(Other._tail), _full(Other._full)
+        {
+            if (Other.Empty()) return;
+
+            const size_t count = Other.Size();
+            size_t current = _tail;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                std::construct_at(GetPtr(current), *Other.GetPtr(current));
+                current = (current + 1) % Capacity;
+            }
+        }
+
+        /**
+         * @brief Move constructor.
+         * Moves elements from the other buffer and resets the source buffer to empty.
+         * @param Other The buffer to move from.
+         */
+        RingBuffer(RingBuffer&& Other) noexcept
+            : _head(Other._head), _tail(Other._tail), _full(Other._full)
+        {
+            if (Other.Empty()) return;
+
+            size_t count = Other.Size();
+            size_t current = _tail;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                T* src = Other.GetPtr(current);
+                std::construct_at(GetPtr(current), std::move(*src));
+                std::destroy_at(src);
+                current = (current + 1) % Capacity;
+            }
+
+            Other._head = 0;
+            Other._tail = 0;
+            Other._full = false;
+        }
+
     public:
         /**
          * @brief Destructor. Destroys all elements currently in the buffer.
          */
         ~RingBuffer()
         {
-            while (!Empty())
-            {
-                std::destroy_at(GetPtr(_tail));
-                _tail = (_tail + 1) % Capacity;
-                if (_head == _tail) _full = false;
-            }
+            Clear();
         }
 
     public:
@@ -276,7 +317,8 @@ namespace Core
                 _tail = (_tail + 1) % Capacity;
                 if (_head == _tail) _full = false;
             }
-            _head = _tail;
+            _head = 0;
+            _tail = 0;
             _full = false;
         }
 
@@ -371,6 +413,72 @@ namespace Core
         [[nodiscard]] ConstIterator cend() const
         {
             return ConstIterator(_data, _tail, Size());
+        }
+
+        /**
+        * @brief Copy assignment operator.
+        * Destroys current elements and copies from the other buffer.
+        * @param Other The buffer to copy from.
+        * @return Reference to this buffer.
+        */
+        RingBuffer& operator=(const RingBuffer& Other)
+        {
+            if (this == &Other) return *this;
+
+            Clear();
+
+            _head = Other._head;
+            _tail = Other._tail;
+            _full = Other._full;
+
+            if (Other.Empty()) return *this;
+
+            size_t count = Other.Size();
+            size_t current = _tail;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                std::construct_at(GetPtr(current), *Other.GetPtr(current));
+                current = (current + 1) % Capacity;
+            }
+
+            return *this;
+        }
+
+        /**
+         * @brief Move assignment operator.
+         * Destroys current elements, moves from the other buffer, and resets the source.
+         * @param Other The buffer to move from.
+         * @return Reference to this buffer.
+         */
+        RingBuffer& operator=(RingBuffer&& Other) noexcept
+        {
+            if (this == &Other) return *this;
+
+            Clear();
+
+            _head = Other._head;
+            _tail = Other._tail;
+            _full = Other._full;
+
+            if (Other.Empty()) return *this;
+
+            const size_t count = Other.Size();
+            size_t current = _tail;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                T* src = Other.GetPtr(current);
+                std::construct_at(GetPtr(current), std::move(*src));
+                std::destroy_at(src);
+                current = (current + 1) % Capacity;
+            }
+
+            Other._head = 0;
+            Other._tail = 0;
+            Other._full = false;
+
+            return *this;
         }
     };
 }
