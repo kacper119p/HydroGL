@@ -44,7 +44,7 @@ namespace Core
                 if (!IncludedFiles.contains(filename))
                 {
                     std::string filePath = FindFile(filename, Path);
-                    CHECK_MESSAGE(!filePath.empty(), "Couldn't find file to include");
+                    CHECK(!filePath.empty(), "Couldn't find file to include");
                     if (filePath.empty())
                     {
                         return std::string();

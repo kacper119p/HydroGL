@@ -1,49 +1,51 @@
 #pragma once
 
-#if DEBUG
-#include <glad/glad.h>
-#include <cstdlib>
+#ifdef DEBUG
 #include <cstdio>
-#endif
+#include <cstdlib>
+#include <intrin.h>
+#include <glad/glad.h>
 
-#if DEBUG
+#define CHECK_EXPAND(x) x
+
+#define CHECK_INTERNAL_NO_MESSAGE(EXPRESSION) \
+    do\
+    { \
+        if (!(!!(EXPRESSION)))\
+        { \
+            fprintf(stderr, "%s %d: Assertion failed: %s\n", \
+            __FILE__, __LINE__, #EXPRESSION); \
+            __debugbreak(); \
+        } \
+    } while (0)
+
+#define CHECK_INTERNAL_MESSAGE(EXPRESSION, FORMAT, ...) \
+    do\
+    { \
+        if (!(!!(EXPRESSION))) { \
+        fprintf(stderr, "%s %d: Assertion failed: %s\nMessage: " FORMAT "\n", \
+        __FILE__, __LINE__, #EXPRESSION, ##__VA_ARGS__); \
+        __debugbreak(); \
+        } \
+    } while (0)
+
+#define GET_CHECK_MACRO(_1, _2, NAME, ...) NAME
+
 /**
- * @brief Halts application's execution if expression is false and prints message.
- * @param __EXPRESSION__ expression to be evaluated.
- * @param __MESSAGE__ Message to be printed on fail
+ * @brief Halts application's execution if expression is false. Expression is not evaluated in release builds.\n
+ * Usage:\n
+ * CHECK(x > 0); - Checks expression\n
+ * CHECK(x > 0, "X is too low"); - Checks expression with message\n
+ * CHECK(x > 0, "Value: %d", x); - Checks expression with formatted message\n
  */
-#define CHECK_MESSAGE(__EXPRESSION__,__MESSAGE__)\
-if(!(!!(__EXPRESSION__)))\
-{\
-fprintf(stderr, "%s %d: Assertion failed on expression: %s: %s", __FILE__, __LINE__, #__EXPRESSION__,  __MESSAGE__);\
-abort();\
-}
+#define CHECK(...) CHECK_EXPAND(GET_CHECK_MACRO(__VA_ARGS__, CHECK_INTERNAL_MESSAGE, CHECK_INTERNAL_NO_MESSAGE)(__VA_ARGS__))
+
 #else
 /**
- * @brief Check is disabled in non debug builds.
- * @param __EXPRESSION__ Not used.
- * @param __MESSAGE__ Not used.
+ * @brief Check is disabled in release builds.
  */
-#define CHECK_MESSAGE(__EXPRESSION__, __MESSAGE__)
-#endif
+#define CHECK(...) ((void)0)
 
-#if DEBUG
-/**
- * @brief Halts application's execution if expression is false.
- * @param __EXPRESSION__ expression to be evaluated.
- */
-#define CHECK(__EXPRESSION__)\
-if(!(!!(__EXPRESSION__)))\
-{\
-fprintf(stderr, "%s %d: Assertion failed on expression: %s", __FILE__, __LINE__, #__EXPRESSION__);\
-abort();\
-}
-#else
-/**
- * @brief Check is disabled in non debug builds.
- * @param __EXPRESSION__ Not used.
- */
-#define CHECK(__EXPRESSION__)
 #endif
 
 #if DEBUG

@@ -10,23 +10,25 @@
 
 namespace Application
 {
-    CameraManager::CameraManager(const Core::Engine* Engine) :
-        _movementCallbackId(Platform::Input::SubscribeToMovementEvent(
-                [this](const float X, const float Y)
-                {
-                    HandleMovement(X, Y);
-                })),
-        _rotationCallbackId(Platform::Input::SubscribeToCameraRotationEvent(
-                [this](const float DeltaX, const float DeltaY)
-                {
-                    HandleRotation(DeltaX, DeltaY);
-                })),
-        _dragCallbackId(Platform::Input::SubscribeToCameraDragEvent(
-                [this](const bool IsDragging)
-                {
-                    HandleDrag(IsDragging);
-                })),
-        _scene(Engine->GetScene())
+    CameraManager::CameraManager(const Core::Engine* Engine) : _movementCallbackId(
+                                                                   Platform::Input::SubscribeToMovementEvent(
+                                                                       [this](const float X, const float Y)
+                                                                       {
+                                                                           HandleMovement(X, Y);
+                                                                       })),
+                                                               _rotationCallbackId(
+                                                                   Platform::Input::SubscribeToCameraRotationEvent(
+                                                                       [this](const float DeltaX, const float DeltaY)
+                                                                       {
+                                                                           HandleRotation(DeltaX, DeltaY);
+                                                                       })),
+                                                               _dragCallbackId(
+                                                                   Platform::Input::SubscribeToCameraDragEvent(
+                                                                       [this](const bool IsDragging)
+                                                                       {
+                                                                           HandleDrag(IsDragging);
+                                                                       })),
+                                                               _scene(Engine->GetScene())
     {
     }
 
@@ -50,7 +52,7 @@ namespace Application
         const auto cameraView = entityRegistry->view<Core::CameraComponent, Core::TransformComponent>();
         const entt::entity cameraEntity = cameraView.front();
 
-        CHECK_MESSAGE(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
+        CHECK(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
 
         Core::TransformComponent& cameraTransform = entityRegistry->get<Core::TransformComponent>(cameraEntity);
 
@@ -89,7 +91,7 @@ namespace Application
         const auto cameraView = entityRegistry->view<Core::CameraComponent, Core::TransformComponent>();
         const entt::entity cameraEntity = cameraView.front();
 
-        CHECK_MESSAGE(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
+        CHECK(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
 
         Core::TransformComponent& cameraTransform = entityRegistry->get<Core::TransformComponent>(cameraEntity);
         if (_movementX == 0.0f && _movementY == 0.0f)
