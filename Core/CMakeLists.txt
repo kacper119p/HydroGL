@@ -81,6 +81,8 @@ target_link_libraries(${TESTS_NAME} PRIVATE spdlog::spdlog)
 target_link_libraries(${TESTS_NAME} PRIVATE EnTT::EnTT)
 target_link_libraries(${TESTS_NAME} PRIVATE boost)
 
+target_link_libraries(${TESTS_NAME} PRIVATE Platform)
+
 if (MSVC)
     target_compile_definitions(${TESTS_NAME} PRIVATE NOMINMAX)
 endif ()
