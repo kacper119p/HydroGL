@@ -63,7 +63,7 @@ namespace Core
         const auto cameraView = entityRegistry->view<CameraComponent, TransformComponent>();
         const entt::entity cameraEntity = cameraView.front();
 
-        CHECK_MESSAGE(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
+        CHECK(entityRegistry->valid(cameraEntity), "Camera entity doesn't exist!");
 
         const CameraComponent& camera = cameraView.get<CameraComponent>(cameraEntity);
         const TransformComponent& cameraTransform = cameraView.get<TransformComponent>(cameraEntity);

@@ -180,7 +180,7 @@ namespace Core
             for (uint32_t i = 0; i < mesh->mNumFaces; ++i)
             {
                 const aiFace& face = mesh->mFaces[i];
-                CHECK_MESSAGE(face.mNumIndices == 3, "Mesh is not triangulated!");
+                CHECK(face.mNumIndices == 3, "Mesh is not triangulated!");
                 for (unsigned int j = 0; j < 3; j++)
                 {
                     _faceBuffer.Indices[offset] = face.mIndices[j];
@@ -248,12 +248,13 @@ namespace Core
             const uint32_t areaUpperBound = TakenMemoryChunks[i + 1].x;
             if (areaUpperBound - areaLowerBound > VertexCount)
             {
-                TakenMemoryChunks.emplace(TakenMemoryChunks.begin() + i + 1, areaLowerBound + 1, areaUpperBound - 1);
+                TakenMemoryChunks.emplace(TakenMemoryChunks.begin() + i + 1, areaLowerBound + 1,
+                                          areaUpperBound - 1);
                 return areaLowerBound + 1;
             }
         }
 
-        CHECK_MESSAGE(false, "Program ran out of allocated vertex memory!")
+        CHECK(false, "Program ran out of allocated vertex memory!");
         return std::numeric_limits<uint32_t>::max();
     }
 

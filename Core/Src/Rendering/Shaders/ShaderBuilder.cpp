@@ -19,7 +19,7 @@ namespace Core
         {
             for (uint8_t i = 0; i < static_cast<uint8_t>(ShaderStage::ComputeShader); ++i)
             {
-                CHECK_MESSAGE(_shaderStages[i].Stage == ShaderStage::None, "Incompatible shader stages declared");
+                CHECK(_shaderStages[i].Stage == ShaderStage::None, "Incompatible shader stages declared");
             }
         }
 #endif

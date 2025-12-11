@@ -17,7 +17,7 @@ namespace Core
         uint32_t height;
         result._cubeMap = DdsLoader::LoadDds(FilePath, width, height);
 
-        CHECK_MESSAGE(width == height, "Skybox requires square faces!")
+        CHECK(width == height, "Skybox requires square faces!");
 
         result._irradianceMap = CubeMapGenerator::IrradianceMapFromSkybox(result._cubeMap);
         result._prefilterMap = CubeMapGenerator::PrefilterMapFromSkybox(result._cubeMap, width);
