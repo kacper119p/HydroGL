@@ -92,7 +92,7 @@ float GetSpreadValue(const float theta, const  float ROmega, const float Beta)
 float CalculateNormalizationFactor(const float ROmega, const  float Beta)
 {
     // Uses Composite Simpson's 1/3 rule to approximate the integral
-    const uint steps = 64;
+    const uint steps = 64u;
     const float start = -PI;
     const float end = PI;
 
@@ -100,12 +100,12 @@ float CalculateNormalizationFactor(const float ROmega, const  float Beta)
 
     float sum = GetSpreadValue(start, ROmega, Beta) + GetSpreadValue(end, ROmega, Beta);
 
-    for (uint i = 1; i < steps; i += 2)
+    for (uint i = 1; i < steps; i += 2u)
     {
         const float theta = start + float(i) * stepSize;
         sum += 4.0 * GetSpreadValue(theta, ROmega, Beta);
     }
-    for (uint i = 2; i < steps; i += 2)
+    for (uint i = 2; i < steps; i += 2u)
     {
         const float theta = start + float(i) * stepSize;
         sum += 2.0 * GetSpreadValue(theta, ROmega, Beta);
