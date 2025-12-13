@@ -84,21 +84,35 @@ float Jonswap(const float omega)
     return SpectrumParams.Alpha * G2 / omega5 * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
 }
 
-float CalculateNormalizationFactor(const float ROmega, const float Beta)
+float GetSpreadValue(const float theta, const  float ROmega, const float Beta)
 {
-    const float interval = 0.001;
-    float sampleCount = 0.0;
-    float result = 0.0;
-    for (float theta = -PI + interval * 0.5; theta <= PI; theta += interval)
-    {
-        sampleCount += 1.0;
-        const float swellSpread = CalculateSwellDirectionalSpread(theta, ROmega);
-        const float donelanBannerSpread = DonelanBannerDirectionalSpread(Beta, theta);
+    return CalculateSwellDirectionalSpread(theta, ROmega) * DonelanBannerDirectionalSpread(Beta, theta);
+}
 
-        result += donelanBannerSpread * swellSpread;
+float CalculateNormalizationFactor(const float ROmega, const  float Beta)
+{
+    // Uses Composite Simpson's 1/3 rule to approximate the integral
+    const uint steps = 64;
+    const float start = -PI;
+    const float end = PI;
+
+    const float stepSize = (end - start) / float(steps);
+
+    float sum = GetSpreadValue(start, ROmega, Beta) + GetSpreadValue(end, ROmega, Beta);
+
+    for (uint i = 1; i < steps; i += 2)
+    {
+        const float theta = start + float(i) * stepSize;
+        sum += 4.0 * GetSpreadValue(theta, ROmega, Beta);
+    }
+    for (uint i = 2; i < steps; i += 2)
+    {
+        const float theta = start + float(i) * stepSize;
+        sum += 2.0 * GetSpreadValue(theta, ROmega, Beta);
     }
 
-    return sampleCount / (result * 2.0 * PI);
+    const float integral = max((stepSize / 3.0) * sum, EPSILON);
+    return 1.0 / integral;
 }
 
 float DirectionalSpectrum(const vec2 WaveVector, const float Omega)
