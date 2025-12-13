@@ -84,13 +84,14 @@ float Jonswap(const float omega)
     return SpectrumParams.Alpha * G2 / omega5 * exp(-1.25 * omegaPByOmega4) * pow(GAMMA, r);
 }
 
-float GetSpreadValue(float theta, float ROmega, float Beta)
+float GetSpreadValue(const float theta, const  float ROmega, const float Beta)
 {
     return CalculateSwellDirectionalSpread(theta, ROmega) * DonelanBannerDirectionalSpread(Beta, theta);
 }
 
-float CalculateNormalizationFactor(float ROmega, float Beta)
+float CalculateNormalizationFactor(const float ROmega, const  float Beta)
 {
+    // Uses Composite Simpson's 1/3 rule to approximate the integral
     const uint steps = 64;
     const float start = -PI;
     const float end = PI;
