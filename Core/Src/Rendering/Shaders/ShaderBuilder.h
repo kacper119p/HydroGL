@@ -69,7 +69,7 @@ namespace Core
         static GLenum ShaderStageToGl(ShaderStage Stage);
 
     public:
-        ShaderBuilder& SetStage(const std::string_view& Path, const ShaderStage Stage)
+        ShaderBuilder& SetStage(const std::string_view Path, const ShaderStage Stage)
         {
             const uint8_t index = static_cast<uint8_t>(Stage);
             _shaderStages[index].Path = Path;

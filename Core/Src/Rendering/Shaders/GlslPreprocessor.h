@@ -24,12 +24,12 @@ namespace Core
          * @param Path Path to a file.
          * @return Preprocessed file's content.
          */
-        static std::string PreprocessFile(const std::string_view& Path);
+        static std::string PreprocessFile(std::string_view Path);
 
     private:
-        static std::string PreprocessInternal(const std::string_view& Path,
+        static std::string PreprocessInternal(std::string_view Path,
                                               std::unordered_set<std::string>& IncludedFiles);
 
-        static std::string FindFile(const std::string_view& Path, const std::string_view& CallerPath);
+        static std::string FindFile(std::string_view Path, const std::string_view& CallerPath);
     };
 }

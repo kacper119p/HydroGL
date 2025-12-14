@@ -11,13 +11,13 @@ namespace Core
     std::filesystem::path GlslPreprocessor::_includeDirectory("Assets/Shaders/Include/");
     std::filesystem::path GlslPreprocessor::_shadersDirectory("Assets/Shaders");
 
-    std::string GlslPreprocessor::PreprocessFile(const std::string_view& Path)
+    std::string GlslPreprocessor::PreprocessFile(const std::string_view Path)
     {
         std::unordered_set<std::string> includedFiles;
         return PreprocessInternal(Path, includedFiles);
     }
 
-    std::string GlslPreprocessor::PreprocessInternal(const std::string_view& Path,
+    std::string GlslPreprocessor::PreprocessInternal(const std::string_view Path,
                                                      std::unordered_set<std::string>& IncludedFiles)
     {
         std::string source;
@@ -60,7 +60,7 @@ namespace Core
         return output.str();
     }
 
-    std::string GlslPreprocessor::FindFile(const std::string_view& Path, const std::string_view& CallerPath)
+    std::string GlslPreprocessor::FindFile(const std::string_view Path, const std::string_view& CallerPath)
     {
         // Search in Caller's directory.
         const std::filesystem::path callerPath(CallerPath);
