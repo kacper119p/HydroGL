@@ -243,7 +243,7 @@ namespace Core
         glBindTextureUnit(5, SceneColor);
         glBindTextureUnit(6, SceneDepth);
 
-        _oceanGrid.Draw();
+        _oceanGrid.Draw(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
