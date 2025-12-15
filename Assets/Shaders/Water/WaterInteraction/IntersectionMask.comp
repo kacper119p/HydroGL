@@ -65,7 +65,7 @@ void main()
         return;
     }
 
-    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * worldSpacePosition;
+    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * localSpacePosition;
     const float f = abs(velocitySpacePosition.x) / ShaderUniforms.BoundsSizeX;
     const float g = ShaderUniforms.Ga * velocitySpacePosition.y + ShaderUniforms.Gb;
 
