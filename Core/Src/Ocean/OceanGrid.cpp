@@ -1,7 +1,6 @@
 #include "OceanGrid.h"
 
 #include <array>
-#include <cmath>
 #include <vector>
 #include <glad/glad.h>
 #include <glm/common.hpp>
@@ -144,7 +143,7 @@ namespace Core
         };
         for (auto& plane : planes)
         {
-            const float length = std::sqrt(plane.x * plane.x + plane.y * plane.y + plane.z * plane.z);
+            const float length = glm::length(glm::vec3(plane));
             plane /= length;
         }
 
