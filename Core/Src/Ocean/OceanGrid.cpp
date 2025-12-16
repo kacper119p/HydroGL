@@ -75,25 +75,26 @@ namespace Core
         _patchPositionsVbo = GlBufferUnique::Create();
         _ebo = GlBufferUnique::Create();
 
-        glBindVertexArray(_vao);
-        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-        glBufferData(GL_ARRAY_BUFFER, static_cast<int64_t>(sizeof(glm::vec3) * vertexCount),
-                     vertexPositions,GL_STATIC_DRAW);
+        glNamedBufferData(_vbo, static_cast<GLsizeiptr>(sizeof(glm::vec3) * vertexCount), vertexPositions,
+                          GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), reinterpret_cast<void*>(0));
+        glEnableVertexArrayAttrib(_vao, 0);
+        glVertexArrayAttribFormat(_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_vao, 0, 0);
+        glVertexArrayVertexBuffer(_vao, 0, _vbo, 0, sizeof(glm::vec3));
 
-        glBindBuffer(GL_ARRAY_BUFFER, _patchPositionsVbo);
-        glBufferData(GL_ARRAY_BUFFER, static_cast<int64_t>(sizeof(glm::vec3) * _patchCount),
-                     nullptr, GL_DYNAMIC_DRAW);
 
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), reinterpret_cast<void*>(0));
-        glVertexAttribDivisor(1, 1);
+        glNamedBufferStorage(_patchPositionsVbo, static_cast<GLsizeiptr>(sizeof(glm::vec3) * _patchCount), nullptr,
+                             GL_DYNAMIC_STORAGE_BIT);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<int64_t>(sizeof(uint32_t) * indexCount),
-                     indices, GL_STATIC_DRAW);
+        glEnableVertexArrayAttrib(_vao, 1);
+        glVertexArrayAttribFormat(_vao, 1, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_vao, 1, 1);
+        glVertexArrayBindingDivisor(_vao, 1, 1);
+        glVertexArrayVertexBuffer(_vao, 1, _patchPositionsVbo, 0, sizeof(glm::vec3));
+
+        glNamedBufferStorage(_ebo, static_cast<GLsizeiptr>(sizeof(uint32_t) * indexCount), indices, GL_NONE);
+        glVertexArrayElementBuffer(_vao, _ebo);
 
         _elementCount = static_cast<int>(indexCount);
         delete[] vertexPositions;
@@ -114,14 +115,19 @@ namespace Core
 
         if (visiblePatchCount > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _patchPositionsVbo);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<int64_t>(sizeof(glm::vec3) * visiblePatchCount),
-                            _visiblePatches);
+            glNamedBufferSubData(_patchPositionsVbo,
+                                 0,
+                                 static_cast<int64_t>(sizeof(glm::vec3) * visiblePatchCount),
+                                 _visiblePatches);
 
             glBindVertexArray(_vao);
             glPatchParameteri(GL_PATCH_VERTICES, 4);
-            glDrawElementsInstanced(GL_PATCHES, _elementCount, GL_UNSIGNED_INT,
-                                    nullptr, static_cast<int32_t>(visiblePatchCount));
+
+            glDrawElementsInstanced(GL_PATCHES,
+                                    _elementCount,
+                                    GL_UNSIGNED_INT,
+                                    nullptr,
+                                    static_cast<int32_t>(visiblePatchCount));
         }
     }
 

@@ -40,6 +40,6 @@ namespace Core
                   const glm::vec3& CameraPosition) const;
 
     private:
-        uint32_t FrustumCulling(const glm::mat4& ViewProjection, const glm::vec3& GridOffset) const;
+        [[nodiscard]] uint32_t FrustumCulling(const glm::mat4& ViewProjection, const glm::vec3& GridOffset) const;
     };
 }
