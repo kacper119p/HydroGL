@@ -134,12 +134,12 @@ namespace Core
     {
         const float* const m = glm::value_ptr(ViewProjection);
         glm::vec4 planes[6]{
-            planes[0] = glm::vec4(m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]), // Left
-            planes[1] = glm::vec4(m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]), // Right
-            planes[2] = glm::vec4(m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]), // Bottom
-            planes[3] = glm::vec4(m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]), // Top
-            planes[4] = glm::vec4(m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]), // Near
-            planes[5] = glm::vec4(m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]) // Far
+            glm::vec4(m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]), // Left
+            glm::vec4(m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]), // Right
+            glm::vec4(m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]), // Bottom
+            glm::vec4(m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]), // Top
+            glm::vec4(m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]), // Near
+            glm::vec4(m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]) // Far
         };
         for (auto& plane : planes)
         {
