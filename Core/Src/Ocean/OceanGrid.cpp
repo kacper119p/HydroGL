@@ -15,10 +15,10 @@ namespace Core
         const float halfPatchSize = patchSize * 0.5f;
         _quadSize = patchSize / static_cast<float>(PatchSubdivisions);
 
-        constexpr float verticalExtend = 100.0f;
+        constexpr float verticalExtent = 100.0f;
         constexpr float horizontalMargin = 30.0f;
 
-        _patchExtent = glm::vec3(halfPatchSize + horizontalMargin, verticalExtend,
+        _patchExtent = glm::vec3(halfPatchSize + horizontalMargin, verticalExtent,
                                  halfPatchSize + horizontalMargin);
 
         const uint32_t verticesOnEdge = PatchSubdivisions + 1;
