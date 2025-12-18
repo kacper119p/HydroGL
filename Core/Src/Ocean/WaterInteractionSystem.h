@@ -116,12 +116,6 @@ namespace Core
         };
 
     private:
-        static constexpr float WaveDampingMin = 0.98f;
-        static constexpr float WaveDampingMax = 0.999f;
-        static constexpr float DampingMaxVelocity = 5.0f;
-        static constexpr float MaxDynamicWaveFieldSize = 1000.0f;
-
-    private:
         TriangleBuffer _triangleBuffer;
         DynamicWavesSampleBuffer _dynamicWavesSampleBuffer;
         Shader _triangleProcessorComputeShader;

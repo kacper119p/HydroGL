@@ -19,6 +19,13 @@ layout(binding = 1) uniform sampler2D PreviousFrameWaves0;
 layout(binding = 2) uniform sampler2D PreviousFrameWaves1;
 layout(binding = 3, r32f) writeonly restrict uniform image2D OutputWaves;
 
+float calculateEdgeFade(vec2 uv) {
+    const vec2 distanceToEdge = min(uv, 1.0 - uv);
+    const vec2 fade = smoothstep(vec2(0.0), vec2(0.1), distanceToEdge);
+    const float result = fade.x * fade.y;
+    return result * result;
+}
+
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
@@ -54,9 +61,12 @@ void main()
     const float laplacian = ShaderUniforms.AWaveFactor * (rightSample + leftSample + upSample + downSample - 4.0 * centerSample);
     const float waveHeight = ShaderUniforms.WaveDampingFactor * (laplacian + 2.0 * centerSample - oldWaveSample);
 
+    const vec2 uv = vec2(pixelCoords) / vec2(textureResolution);
+    const float edgeFade = calculateEdgeFade(uv);
+
     const vec2 currentLocalPosition = vec2(centeredPixelCoords) / currentDelta;
     const vec2 maskTexCoord = (-currentLocalPosition) / ShaderUniforms.MaskFieldSize + 0.5;
     const float maskDisplacement = texture(DisplacementMask, maskTexCoord).r;
 
-    imageStore(OutputWaves, pixelCoords, vec4(waveHeight + maskDisplacement));
+    imageStore(OutputWaves, pixelCoords, vec4(waveHeight * edgeFade + maskDisplacement));
 }
