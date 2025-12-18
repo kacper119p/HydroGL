@@ -70,6 +70,6 @@ namespace Core::Math
      */
     [[nodiscard]] inline glm::mat2 CreateInverseRotationMatrix2DFromUnitVector(const glm::vec2& NewUp)
     {
-        return glm::transpose(CreateRotationMatrix2DFromUnitVector(NewUp));
+        return glm::mat2(-NewUp.y, NewUp.x, NewUp.x, NewUp.y);
     }
 }
