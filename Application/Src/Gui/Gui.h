@@ -6,9 +6,12 @@
 
 namespace Application
 {
+    class CameraManager;
+
     class Gui
     {
         Core::WaterSystem* _waterSystem = nullptr;
+        CameraManager* _cameraManager = nullptr;
         std::unique_ptr<TextureArraySliceViewer> _textureArraySliceViewer;
         uint32_t _windowWidth;
         uint32_t _windowHeight;
@@ -18,10 +21,11 @@ namespace Application
         bool _showGui = true;
         bool _showWaterSettings = false;
         bool _showSystemInfo = false;
+        bool _showCameraSettings = false;
         bool _showTextureViewer = false;
 
     public:
-        explicit Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem);
+        explicit Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem, CameraManager& CameraManager);
 
     public:
         ~Gui();
@@ -34,6 +38,8 @@ namespace Application
         void RenderWaterSettings();
 
         void RenderSystemInfoWindow();
+
+        void RenderCameraSettings();
 
         void RenderTextureViewer();
     };

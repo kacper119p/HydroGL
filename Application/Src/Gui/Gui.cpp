@@ -5,6 +5,7 @@
 
 #include "ImGuiContext.h"
 #include "SystemInfo.h"
+#include "Camera/CameraManager.h"
 
 namespace
 {
@@ -15,8 +16,9 @@ namespace
 
 namespace Application
 {
-    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem)
+    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem, CameraManager& CameraManager)
         : _waterSystem(&WaterSystem),
+          _cameraManager(&CameraManager),
           _textureArraySliceViewer(std::make_unique<TextureArraySliceViewer>()),
           _windowWidth(Window.GetWindowWidth()),
           _windowHeight(Window.GetWindowHeight()),
@@ -41,22 +43,29 @@ namespace Application
     void Gui::Render()
     {
         Platform::ImGuiContext::ImGuiBeginFrame();
-        if (_showGui)
+        if (!_showGui)
         {
-            RenderTopBar();
-            if (_showWaterSettings)
-            {
-                RenderWaterSettings();
-            }
-            if (_showSystemInfo)
-            {
-                RenderSystemInfoWindow();
-            }
-            if (_showTextureViewer)
-            {
-                RenderTextureViewer();
-            }
+            return;
         }
+
+        RenderTopBar();
+        if (_showWaterSettings)
+        {
+            RenderWaterSettings();
+        }
+        if (_showSystemInfo)
+        {
+            RenderSystemInfoWindow();
+        }
+        if (_showCameraSettings)
+        {
+            RenderCameraSettings();
+        }
+        if (_showTextureViewer)
+        {
+            RenderTextureViewer();
+        }
+
         Platform::ImGuiContext::ImGuiEndFrame();
     }
 
@@ -70,6 +79,10 @@ namespace Application
         if (ImGui::Button("System Info"))
         {
             _showSystemInfo = !_showSystemInfo;
+        }
+        if (ImGui::Button("Camera Settings"))
+        {
+            _showCameraSettings = !_showCameraSettings;
         }
         if (ImGui::Button("Texture Viewer"))
         {
@@ -219,6 +232,31 @@ namespace Application
             ImGui::Separator();
             ImGui::Text("Application average: %.3f ms/frame\n%.1f FPS",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        }
+        ImGui::End();
+    }
+
+    void Gui::RenderCameraSettings()
+    {
+        if (ImGui::Begin("Camera Settings", &_showCameraSettings, FloatingWindowFlags))
+        {
+            float rotationSensitivity = _cameraManager->GetRotationSensitivity() /
+                                        CameraManager::DefaultRotationSensitivity;
+            if (ImGui::DragFloat("Look Sensitivity", &rotationSensitivity, 0.01f, 0.0f,
+                                 std::numeric_limits<float>::max(), "%.2f"))
+            {
+                _cameraManager->SetRotationSensitivity(
+                    glm::max(rotationSensitivity, 0.0f) * CameraManager::DefaultRotationSensitivity);
+            }
+
+            float movementSensitivity = _cameraManager->GetMovementSensitivity() /
+                                        CameraManager::DefaultMovementSensitivity;
+            if (ImGui::DragFloat("Movement Speed", &movementSensitivity, 0.1f, 0.1f,
+                                 std::numeric_limits<float>::max(), "%.2f"))
+            {
+                _cameraManager->SetMovementSensitivity(
+                    glm::max(movementSensitivity, 0.1f) * CameraManager::DefaultMovementSensitivity);
+            }
         }
         ImGui::End();
     }
