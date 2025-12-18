@@ -65,9 +65,9 @@ void main()
         return;
     }
 
-    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * worldSpacePosition;
+    const vec2 velocitySpacePosition = ShaderUniforms.VelocitySpaceTransform * localSpacePosition;
     const float f = abs(velocitySpacePosition.x) / ShaderUniforms.BoundsSizeX;
     const float g = ShaderUniforms.Ga * velocitySpacePosition.y + ShaderUniforms.Gb;
 
-    imageStore(Output, pixelCoords, vec4(clamp(ShaderUniforms.DisplacementStrength * (f + g) * ShaderUniforms.DeltaTime, -1.0, 1.0)));
+    imageStore(Output, pixelCoords, vec4(ShaderUniforms.DisplacementStrength * (f + g) * ShaderUniforms.DeltaTime));
 }

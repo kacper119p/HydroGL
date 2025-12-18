@@ -22,6 +22,10 @@ namespace Core
         constexpr int64_t IntersectionPolygonsHeaderSize = 8; // max(sizeof(int32_t), 8) for std430 alignment
         constexpr int64_t DynamicWavesHeaderSize = 16; // max(sizeof(int32_t), 16) for std430 alignment
         constexpr size_t DefaultDynamicWavesCapacity = 32;
+        constexpr float WaveDampingMin = 0.98f;
+        constexpr float WaveDampingMax = 0.999f;
+        constexpr float DampingMaxVelocity = 5.0f;
+        constexpr float MaxDynamicWaveFieldSize = 1000.0f;
     }
 
     WaterInteractionSystem::WaterInteractionSystem()
