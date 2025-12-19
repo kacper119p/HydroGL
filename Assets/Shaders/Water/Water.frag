@@ -5,21 +5,15 @@
 #include "Normal.glsl"
 #include "Lighting.glsl"
 
-uniform vec3 CameraPosition;
-
 in vec3 OriginalPosition;
 in vec3 DisplacedPosition;
 in vec4 ClipSpacePosition;
 
-uniform mat4 ViewMatrix;
-uniform vec3 SurfaceColor;
-uniform vec3 Absorption;
-uniform float CameraNearPlane;
-uniform float CameraFarPlane;
-
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
 DEFINE_FOAM_PARAMETERS_BUFFER(0);
+
+DEFINE_WATER_PARAMETERS_BUFFER(1);
 
 struct dynamicWaveSampleParameters
 {
@@ -49,7 +43,7 @@ float LinearizeDepth(float depth)
 {
     float z = depth * 2.0 - 1.0;
 
-    return (2.0 * CameraNearPlane * CameraFarPlane) / (CameraFarPlane + CameraNearPlane - z * (CameraFarPlane - CameraNearPlane));
+    return (2.0 * WaterParameters.CameraNearPlane * WaterParameters.CameraFarPlane) / (WaterParameters.CameraFarPlane + WaterParameters.CameraNearPlane - z * (WaterParameters.CameraFarPlane - WaterParameters.CameraNearPlane));
 }
 
 layout (early_fragment_tests) in;
@@ -77,9 +71,9 @@ void main()
 
     const float compression = clamp((FoamParameters.FoamThreshold - jacobian) / FoamParameters.FoamThreshold, 0.0, 1.0);
     const float foamMask = clamp(FoamParameters.FoamIntensity * pow(compression, FoamParameters.FoamExponent), 0.0, 1.0);
-    const vec3 baseSurfaceColor = mix(SurfaceColor, vec3(1.0, 1.0, 1.0), foamMask);
-    const float metallic = mix(0.05, 0.0, foamMask);
-    const float roughness = mix(0.5, 1.0, foamMask);
+    const vec3 baseSurfaceColor = mix(WaterParameters.SurfaceColor, WaterParameters.FoamColor, foamMask);
+    const float metallic = mix(WaterParameters.Metallic, WaterParameters.FoamMetallic, foamMask);
+    const float roughness = mix(WaterParameters.Roughness, WaterParameters.FoamRoughness, foamMask);
 
     // ------------------------------------------------------------------
     // Adding height and slope contributions from dynamic waves
@@ -104,13 +98,13 @@ void main()
     // ------------------------------------------------------------------
     const vec3 normal = NormalFromSlope(slope + dynamicSlope);
 
-    const vec3 ViewDirection = normalize(CameraPosition - DisplacedPosition);
+    const vec3 ViewDirection = normalize(WaterParameters.CameraPosition - DisplacedPosition);
     const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, DisplacedPosition, ViewDirection, 1.0);
 
     // ------------------------------------------------------------------
     // Refraction
     // ------------------------------------------------------------------
-    const vec3 viewSpaceNormal = mat3(ViewMatrix) * normal;
+    const vec3 viewSpaceNormal = mat3(WaterParameters.ViewMatrix) * normal;
 
     const ivec2 screenSize = textureSize(SceneColor, 0);
     const float aspectRatio = float(screenSize.x) / float(screenSize.y);
@@ -147,7 +141,7 @@ void main()
     const float linearFinalBackgroundDepth = LinearizeDepth(finalBackgroundDepth);
     const float finalDepthDifference = max(linearFinalBackgroundDepth - linearWaterDepth, 0.0);
 
-    const vec3 transmittance = exp(-Absorption * finalDepthDifference);
+    const vec3 transmittance = exp(-WaterParameters.Absorption * finalDepthDifference);
 
     const vec3 backgroundColor = texture(SceneColor, screenUV).rgb;
     const vec3 refractedColor = backgroundColor * transmittance;

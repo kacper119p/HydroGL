@@ -96,13 +96,14 @@ namespace Core
                               const uint32_t FoamSettingsUbo,
                               const glm::vec2& WindVelocity,
                               const glm::vec3& SceneColor,
+                              const glm::vec3& FoamColor,
                               const glm::vec3& CameraPosition,
                               const glm::mat4& ViewMatrix,
                               const glm::mat4& ProjectionMatrix) const
     {
         const uint32_t particlesToSpawn = static_cast<uint32_t>(_spawnRate * DeltaTime);
-        PrepareNextFrame(ViewMatrix, ProjectionMatrix, CameraPosition, SceneColor,
-                         WindVelocity, particlesToSpawn, DeltaTime);
+        PrepareNextFrame(ViewMatrix, ProjectionMatrix, CameraPosition, SceneColor, FoamColor, WindVelocity,
+                         particlesToSpawn, DeltaTime);
         BindData(CascadeSettingsSsbo, FoamSettingsUbo, DisplacementMaps, SlopeMaps, VelocityMaps);
 
         _spawnShader.Use();
@@ -152,8 +153,8 @@ namespace Core
 
     void SprayManager::PrepareNextFrame(const glm::mat4& ViewMatrix, const glm::mat4& ProjectionMatrix,
                                         const glm::vec3& CameraPosition, const glm::vec3& SceneColor,
-                                        const glm::vec2& WindVelocity, const uint32_t ParticlesToSpawn,
-                                        const float DeltaTime) const
+                                        const glm::vec3& FoamColor, const glm::vec2& WindVelocity,
+                                        const uint32_t ParticlesToSpawn, const float DeltaTime) const
     {
         const float currentTime = Platform::TimeManager::GetTime();
         const SprayParameters sprayParameters
@@ -167,6 +168,7 @@ namespace Core
             WindVelocity,
             *reinterpret_cast<const uint32_t*>(&currentTime),
             _spawnRange,
+            FoamColor,
             _lifetime,
             DeltaTime,
             currentTime,

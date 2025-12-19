@@ -11,8 +11,7 @@ out vec3 OriginalPosition;
 out vec3 DisplacedPosition;
 out vec4 ClipSpacePosition;
 
-uniform mat4 ViewMatrix;
-uniform mat4 ProjectionMatrix;
+DEFINE_WATER_PARAMETERS_BUFFER(1);
 
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
 
@@ -61,6 +60,6 @@ void main()
     OriginalPosition = position;
     DisplacedPosition = tessendorfPosition;
 
-    ClipSpacePosition = ProjectionMatrix * ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
+    ClipSpacePosition = WaterParameters.ProjectionMatrix * WaterParameters.ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
     gl_Position = ClipSpacePosition;
 }

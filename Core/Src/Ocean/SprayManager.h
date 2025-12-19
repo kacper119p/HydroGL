@@ -28,6 +28,7 @@ namespace Core
             alignas(16) const glm::vec2 WindVelocity;
             alignas(4) uint32_t Seed;
             alignas(4) float SpawnRange;
+            alignas(16) glm::vec3 FoamColor;
             alignas(4) float Lifetime;
             alignas(4) float DeltaTime;
             alignas(4) float Time;
@@ -165,6 +166,7 @@ namespace Core
                     uint32_t FoamSettingsUbo,
                     const glm::vec2& WindVelocity,
                     const glm::vec3& SceneColor,
+                    const glm::vec3& FoamColor,
                     const glm::vec3& CameraPosition,
                     const glm::mat4& ViewMatrix,
                     const glm::mat4& ProjectionMatrix) const;
@@ -176,6 +178,7 @@ namespace Core
                               const glm::mat4& ProjectionMatrix,
                               const glm::vec3& CameraPosition,
                               const glm::vec3& SceneColor,
+                              const glm::vec3& FoamColor,
                               const glm::vec2& WindVelocity,
                               uint32_t ParticlesToSpawn,
                               float DeltaTime) const;

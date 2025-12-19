@@ -1,22 +1,20 @@
 #version 460 core
 
+#include "Water/WaterCommon.glsl"
+
 layout (vertices = 4) out;
 
 in vec3 Position[];
 
 out vec3 tcPosition[];
 
-uniform vec3 CameraPosition;
-uniform float MaxDistance = 50.0;
-uniform float MinDistance = 10.0;
-uniform float MaxTessLevel = 32.0;
-uniform float MinTessLevel = 1.0;
+DEFINE_WATER_PARAMETERS_BUFFER(1);
 
 float CalculateTesselationLevel(vec3 p0, vec3 p1)
 {
     vec3 center = (p0 + p1) * 0.5;
-    float distance = distance(center, CameraPosition);
-    return mix(MaxTessLevel, MinTessLevel, clamp(distance / MaxDistance, 0.0, 1.0));
+    float distance = distance(center, WaterParameters.CameraPosition);
+    return mix(WaterParameters.MaxTesselationLevel, WaterParameters.MinTesselationLevel, clamp(distance / WaterParameters.TesselationMaxDistance, 0.0, 1.0));
 }
 
 void main()

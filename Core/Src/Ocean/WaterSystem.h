@@ -42,9 +42,6 @@ namespace Core
             alignas(4) float FoamExponent;
             alignas(4) float FoamIntensity;
 
-        private:
-            alignas(4) float Padding{};
-
         public:
             FoamMaskShaderUniforms(const float FoamThreshold,
                                    const float FoamExponent, const float FoamIntensity)
@@ -55,7 +52,7 @@ namespace Core
             }
         };
 
-        struct alignas(8) InitialSpectrumSettingsBuffer
+        struct alignas(16) InitialSpectrumSettingsBuffer
         {
         public:
             glm::vec2 WindVelocity;
@@ -77,6 +74,61 @@ namespace Core
                   Swell(Swell),
                   Alpha(Alpha),
                   PeakWaveFrequency(PeakWaveFrequency)
+            {
+            }
+        };
+
+        struct alignas(16) WaterShaderUniforms
+        {
+            alignas(16) glm::mat4 ViewMatrix;
+            alignas(16) glm::mat4 ProjectionMatrix;
+
+            alignas(16) glm::vec2 GridOrigin;
+            alignas(4) float CameraNearPlane;
+            alignas(4) float CameraFarPlane;
+            alignas(16) glm::vec3 CameraPosition;
+
+            alignas(4) float TesselationMaxDistance;
+            alignas(4) float TesselationMinDistance;
+            alignas(4) float MaxTesselationLevel;
+            alignas(4) float MinTesselationLevel;
+
+            alignas(16) glm::vec3 SurfaceColor;
+            alignas(4) float Metallic;
+            alignas(16) glm::vec3 Absorption;
+            alignas(4) float Roughness;
+            alignas(16) glm::vec3 FoamColor;
+            alignas(4) float FoamMetallic;
+            alignas(4) float FoamRoughness;
+
+            WaterShaderUniforms(float TesselationMaxDistance,
+                                float TesselationMinDistance,
+                                float MaxTesselationLevel,
+                                float MinTesselationLevel,
+                                const glm::vec3& SurfaceColor,
+                                float Metallic,
+                                const glm::vec3& Absorption,
+                                float Roughness,
+                                const glm::vec3& FoamColor,
+                                float FoamMetallic,
+                                float FoamRoughness)
+                : ViewMatrix(),
+                  ProjectionMatrix(),
+                  GridOrigin(),
+                  CameraNearPlane(0.0f),
+                  CameraFarPlane(0.0f),
+                  CameraPosition(),
+                  TesselationMaxDistance(TesselationMaxDistance),
+                  TesselationMinDistance(TesselationMinDistance),
+                  MaxTesselationLevel(MaxTesselationLevel),
+                  MinTesselationLevel(MinTesselationLevel),
+                  SurfaceColor(SurfaceColor),
+                  Metallic(Metallic),
+                  Absorption(Absorption),
+                  Roughness(Roughness),
+                  FoamColor(FoamColor),
+                  FoamMetallic(FoamMetallic),
+                  FoamRoughness(FoamRoughness)
             {
             }
         };
@@ -180,21 +232,6 @@ namespace Core
             }
         };
 
-        struct WaterShaderUniformLocations
-        {
-            int32_t ViewMatrix;
-            int32_t ProjectionMatrix;
-            int32_t CameraPosition;
-            int32_t Time;
-            int32_t GridOrigin;
-            int32_t SurfaceColor;
-            int32_t Absorption;
-            int32_t CameraNearPlane;
-            int32_t CameraFarPlane;
-
-            explicit WaterShaderUniformLocations(Shader WaterShader);
-        };
-
         struct FftShaderUniformLocations
         {
             int32_t TotalCount;
@@ -231,7 +268,6 @@ namespace Core
         Shader _initialSpectrumComputeShader;
         Shader _spectrumComputeShader;
 
-        WaterShaderUniformLocations _waterShaderUniformLocations;
         FftShaderUniformLocations _fftHorizontalShaderUniformLocations;
         FftShaderUniformLocations _fftVerticalShaderUniformLocations;
         SpectrumShaderUniformLocations _spectrumShaderUniformLocations;
@@ -247,28 +283,32 @@ namespace Core
         GlTextureUnique _gaussianNoiseTexture;
 
         FoamMaskShaderUniforms _foamUniformBufferData;
+        WaterShaderUniforms _waterShaderUniforms;
         InitialSpectrumSettingsBuffer _initialSpectrumSettingsBufferData;
         CascadeSettingsBuffer _cascadeSettings;
 
         GlBufferUnique _initialSpectrumSettingsUbo;
         GlBufferUnique _foamMaskSettingsUbo;
+        GlBufferUnique _waterSettingsUbo;
         GlBufferUnique _cascadeSettingsSsbo;
 
     public:
         WaterSystem(const glm::ivec2& WindowSize, uint32_t MainDepthBuffer);
 
     private:
-        static uint32_t CreateTextureArray(int32_t Layers);
+        static GlTextureUnique CreateTextureArray(int32_t Layers);
 
-        static uint32_t CreateSlopeTextureArray();
+        static GlTextureUnique CreateSlopeTextureArray();
 
-        static uint32_t CreateGaussianNoise();
+        static GlTextureUnique CreateGaussianNoise();
 
-        static uint32_t CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData);
+        static GlBufferUnique CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData);
 
-        static uint32_t CreateFoamMaskSettingsUbo(const FoamMaskShaderUniforms& InitialData);
+        static GlBufferUnique CreateFoamMaskSettingsUbo(const FoamMaskShaderUniforms& InitialData);
 
-        static uint32_t CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData);
+        static GlBufferUnique CreateWaterSettingsUbo(const WaterShaderUniforms& InitialData);
+
+        static GlBufferUnique CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData);
 
         static float CalculateInitialSpectrumAlpha(const glm::vec2 WindVelocity, const float Fetch,
                                                    const float Gravity)
@@ -321,6 +361,116 @@ namespace Core
         [[nodiscard]] float GetFoamIntensity() const
         {
             return _foamUniformBufferData.FoamIntensity;
+        }
+
+        void SetTesselationMaxDistance(const float TesselationMaxDistance)
+        {
+            _waterShaderUniforms.TesselationMaxDistance = TesselationMaxDistance;
+        }
+
+        [[nodiscard]] float GetTesselationMaxDistance() const
+        {
+            return _waterShaderUniforms.TesselationMaxDistance;
+        }
+
+        void SetTesselationMinDistance(const float TesselationMinDistance)
+        {
+            _waterShaderUniforms.TesselationMinDistance = TesselationMinDistance;
+        }
+
+        [[nodiscard]] float GetTesselationMinDistance() const
+        {
+            return _waterShaderUniforms.TesselationMinDistance;
+        }
+
+        void SetMaxTesselationLevel(const float MaxTesselationLevel)
+        {
+            _waterShaderUniforms.MaxTesselationLevel = MaxTesselationLevel;
+        }
+
+        [[nodiscard]] float GetMaxTesselationLevel() const
+        {
+            return _waterShaderUniforms.MaxTesselationLevel;
+        }
+
+        void SetMinTesselationLevel(const float MinTesselationLevel)
+        {
+            _waterShaderUniforms.MinTesselationLevel = MinTesselationLevel;
+        }
+
+        [[nodiscard]] float GetMinTesselationLevel() const
+        {
+            return _waterShaderUniforms.MinTesselationLevel;
+        }
+
+        void SetSurfaceColor(const glm::vec3& SurfaceColor)
+        {
+            _waterShaderUniforms.SurfaceColor = SurfaceColor;
+        }
+
+        [[nodiscard]] glm::vec3 GetSurfaceColor() const
+        {
+            return _waterShaderUniforms.SurfaceColor;
+        }
+
+        void SetMetallic(const float Metallic)
+        {
+            _waterShaderUniforms.Metallic = Metallic;
+        }
+
+        [[nodiscard]] float GetMetallic() const
+        {
+            return _waterShaderUniforms.Metallic;
+        }
+
+        void SetAbsorption(const glm::vec3& Absorption)
+        {
+            _waterShaderUniforms.Absorption = Absorption;
+        }
+
+        [[nodiscard]] glm::vec3 GetAbsorption() const
+        {
+            return _waterShaderUniforms.Absorption;
+        }
+
+        void SetRoughness(const float Roughness)
+        {
+            _waterShaderUniforms.Roughness = Roughness;
+        }
+
+        [[nodiscard]] float GetRoughness() const
+        {
+            return _waterShaderUniforms.Roughness;
+        }
+
+        void SetFoamColor(const glm::vec3& FoamColor)
+        {
+            _waterShaderUniforms.FoamColor = FoamColor;
+        }
+
+        [[nodiscard]] glm::vec3 GetFoamColor() const
+        {
+            return _waterShaderUniforms.FoamColor;
+        }
+
+        void SetFoamMetallic(const float FoamMetallic)
+        {
+            _waterShaderUniforms.FoamMetallic = FoamMetallic;
+        }
+
+        [[nodiscard]] float GetFoamMetallic() const
+        {
+            return _waterShaderUniforms.FoamMetallic;
+        }
+
+        void SetFoamRoughness(const float FoamRoughness)
+        {
+            _waterShaderUniforms.FoamRoughness = FoamRoughness;
+        }
+
+        [[nodiscard]] float GetFoamRoughness() const
+        {
+            return _waterShaderUniforms.FoamRoughness;
         }
 
         void SetWindVelocity(const glm::vec2 WindVelocity)
@@ -396,7 +546,7 @@ namespace Core
 
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     const glm::vec3& AmbientLightColor, uint32_t DynamicWavesSampleSsboId, uint32_t SceneColor,
-                    uint32_t SceneDepth) const;
+                    uint32_t SceneDepth);
 
         void RenderSpray(uint32_t TargetFrameBuffer) const;
 
