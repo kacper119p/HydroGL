@@ -9,5 +9,5 @@ layout (location = 0) out vec4 Output;
 
 void main()
 {
-    Output = vec4(SceneColor, clamp(texture(Input, TexCoords).r, 0, 1));
+    Output = vec4(SceneColor * FoamColor, clamp(texture(Input, TexCoords).r, 0, 1));
 }

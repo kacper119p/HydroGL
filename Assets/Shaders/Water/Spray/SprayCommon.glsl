@@ -53,6 +53,7 @@ layout (std140, binding = 0) uniform sprayParameters
     vec2 WindVelocity;
     uint Seed;
     float SpawnRange;
+    vec3 FoamColor;
     float LifeTime;
     float DeltaTime;
     float Time;

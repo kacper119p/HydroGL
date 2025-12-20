@@ -5,6 +5,7 @@
 
 #include "ImGuiContext.h"
 #include "SystemInfo.h"
+#include "Camera/CameraManager.h"
 
 namespace
 {
@@ -15,8 +16,9 @@ namespace
 
 namespace Application
 {
-    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem)
+    Gui::Gui(const Platform::Window& Window, Core::WaterSystem& WaterSystem, CameraManager& CameraManager)
         : _waterSystem(&WaterSystem),
+          _cameraManager(&CameraManager),
           _textureArraySliceViewer(std::make_unique<TextureArraySliceViewer>()),
           _windowWidth(Window.GetWindowWidth()),
           _windowHeight(Window.GetWindowHeight()),
@@ -52,6 +54,10 @@ namespace Application
             {
                 RenderSystemInfoWindow();
             }
+            if (_showCameraSettings)
+            {
+                RenderCameraSettings();
+            }
             if (_showTextureViewer)
             {
                 RenderTextureViewer();
@@ -70,6 +76,10 @@ namespace Application
         if (ImGui::Button("System Info"))
         {
             _showSystemInfo = !_showSystemInfo;
+        }
+        if (ImGui::Button("Camera Settings"))
+        {
+            _showCameraSettings = !_showCameraSettings;
         }
         if (ImGui::Button("Texture Viewer"))
         {
@@ -96,7 +106,7 @@ namespace Application
     {
         if (ImGui::Begin("Water Settings", &_showWaterSettings, FloatingWindowFlags))
         {
-            if (ImGui::CollapsingHeader("Wind Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Spectrum Settings"))
             {
                 glm::vec2 windVelocity = _waterSystem->GetWindVelocity();
                 if (ImGui::DragFloat2("Wind Velocity [m/s]", &windVelocity[0]))
@@ -121,7 +131,33 @@ namespace Application
                     _waterSystem->SetSwell(swell);
                 }
             }
-            if (ImGui::CollapsingHeader("Foam Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Tesselation Settings"))
+            {
+                float tesselationMaxDistance = _waterSystem->GetTesselationMaxDistance();
+                if (ImGui::DragFloat("Max Distance", &tesselationMaxDistance, 1.0f, 0.1f,
+                                     std::numeric_limits<float>::max(), "%.1f"))
+                {
+                    _waterSystem->SetTesselationMaxDistance(glm::max(tesselationMaxDistance, 0.1f));
+                }
+                float tesselationMinDistance = _waterSystem->GetTesselationMinDistance();
+                if (ImGui::DragFloat("Min Distance", &tesselationMinDistance, 1.0f, 0.1f,
+                                     std::numeric_limits<float>::max(), "%.1f"))
+                {
+                    _waterSystem->SetTesselationMinDistance(glm::max(tesselationMinDistance, 0.1f));
+                }
+                float maxTesselationLevel = _waterSystem->GetMaxTesselationLevel();
+                if (ImGui::DragFloat("Max Level", &maxTesselationLevel, 1.0f, 1.0f, 64.0f, "%.0f"))
+                {
+                    _waterSystem->SetMaxTesselationLevel(glm::clamp(maxTesselationLevel, 1.0f, 64.0f));
+                }
+
+                float minTesselationLevel = _waterSystem->GetMinTesselationLevel();
+                if (ImGui::DragFloat("Min Level", &minTesselationLevel, 1.0f, 1.0f, 64.0f, "%.0f"))
+                {
+                    _waterSystem->SetMinTesselationLevel(glm::clamp(minTesselationLevel, 1.0f, 64.0f));
+                }
+            }
+            if (ImGui::CollapsingHeader("Foam Settings"))
             {
                 float foamThreshold = _waterSystem->GetFoamThreshold();
                 if (ImGui::DragFloat("Threshold", &foamThreshold, 0.01f, 0.0f,
@@ -142,7 +178,7 @@ namespace Application
                     _waterSystem->SetFoamIntensity(glm::max(foamIntensity, 0.0f));
                 }
             }
-            if (ImGui::CollapsingHeader("Spray Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Spray Settings"))
             {
                 Core::SprayManager& sprayManager = _waterSystem->GetSprayManager();
 
@@ -191,6 +227,45 @@ namespace Application
                     sprayManager.SetWindInfluence(glm::clamp(windInfluence, 0.0f, 1.0f));
                 }
             }
+            if (ImGui::CollapsingHeader("Lighting"))
+            {
+                glm::vec3 surfaceColor = _waterSystem->GetSurfaceColor();
+                if (ImGui::ColorEdit3("Surface Color", &surfaceColor[0]))
+                {
+                    _waterSystem->SetSurfaceColor(surfaceColor);
+                }
+                float metallic = _waterSystem->GetMetallic();
+                if (ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f))
+                {
+                    _waterSystem->SetMetallic(glm::clamp(metallic, 0.0f, 1.0f));
+                }
+                glm::vec3 absorption = _waterSystem->GetAbsorption();
+                if (ImGui::ColorEdit3("Absorption", &absorption[0]))
+                {
+                    _waterSystem->SetAbsorption(absorption);
+                }
+                float roughness = _waterSystem->GetRoughness();
+                if (ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f))
+                {
+                    _waterSystem->SetRoughness(glm::clamp(roughness, 0.0f, 1.0f));
+                }
+                glm::vec3 foamColor = _waterSystem->GetFoamColor();
+                if (ImGui::ColorEdit3("Foam Color", &foamColor[0]))
+                {
+                    _waterSystem->SetFoamColor(foamColor);
+                }
+                float foamMetallic = _waterSystem->GetFoamMetallic();
+                if (ImGui::SliderFloat("Foam Metallic", &foamMetallic, 0.0f, 1.0f))
+                {
+                    _waterSystem->SetFoamMetallic(glm::clamp(foamMetallic, 0.0f, 1.0f));
+                }
+
+                float foamRoughness = _waterSystem->GetFoamRoughness();
+                if (ImGui::SliderFloat("Foam Roughness", &foamRoughness, 0.0f, 1.0f))
+                {
+                    _waterSystem->SetFoamRoughness(glm::clamp(foamRoughness, 0.0f, 1.0f));
+                }
+            }
         }
         ImGui::End();
     }
@@ -219,6 +294,31 @@ namespace Application
             ImGui::Separator();
             ImGui::Text("Application average: %.3f ms/frame\n%.1f FPS",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        }
+        ImGui::End();
+    }
+
+    void Gui::RenderCameraSettings()
+    {
+        if (ImGui::Begin("Camera Settings", &_showCameraSettings, FloatingWindowFlags))
+        {
+            float rotationSensitivity = _cameraManager->GetRotationSensitivity() /
+                                        CameraManager::DefaultRotationSensitivity;
+            if (ImGui::DragFloat("Look Sensitivity", &rotationSensitivity, 0.01f, 0.0f,
+                                 std::numeric_limits<float>::max(), "%.2f"))
+            {
+                _cameraManager->SetRotationSensitivity(
+                    glm::max(rotationSensitivity, 0.0f) * CameraManager::DefaultRotationSensitivity);
+            }
+
+            float movementSensitivity = _cameraManager->GetMovementSensitivity() /
+                                        CameraManager::DefaultMovementSensitivity;
+            if (ImGui::DragFloat("Movement Speed", &movementSensitivity, 0.1f, 0.1f,
+                                 std::numeric_limits<float>::max(), "%.2f"))
+            {
+                _cameraManager->SetMovementSensitivity(
+                    glm::max(movementSensitivity, 0.1f) * CameraManager::DefaultMovementSensitivity);
+            }
         }
         ImGui::End();
     }

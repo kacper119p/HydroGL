@@ -24,6 +24,32 @@ const float G2 = G * G;
         float FoamIntensity; \
  } FoamParameters;
 
+#define DEFINE_WATER_PARAMETERS_BUFFER(binding_point) \
+layout(std140, binding = binding_point) uniform waterParameters \
+    { \
+        mat4 ViewMatrix;\
+        mat4 ProjectionMatrix;\
+        \
+        vec2 GridOrigin;\
+        float CameraNearPlane;\
+        float CameraFarPlane;\
+        \
+        vec3 CameraPosition;\
+        \
+        float TesselationMaxDistance;\
+        float TesselationMinDistance;\
+        float MaxTesselationLevel;\
+        float MinTesselationLevel;\
+        \
+        vec3 SurfaceColor;\
+        float Metallic;\
+        vec3 Absorption;\
+        float Roughness;\
+        vec3 FoamColor;\
+        float FoamMetallic;\
+        float FoamRoughness;\
+ } WaterParameters;
+
 struct cascadeSettings
 {
     float WaveLengthLowerBound;

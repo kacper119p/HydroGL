@@ -7,9 +7,13 @@ namespace Application
 {
     class CameraManager
     {
+    public:
+        static constexpr float DefaultRotationSensitivity = 2.5f;
+        static constexpr float DefaultMovementSensitivity = 2.0f;
+
     private:
-        float _rotationSensitivity = 2.5f;
-        float _movementSensitivity = 2.0f;
+        float _rotationSensitivity = DefaultRotationSensitivity;
+        float _movementSensitivity = DefaultMovementSensitivity;
 
         float _movementX = 0.0f;
         float _movementY = 0.0f;

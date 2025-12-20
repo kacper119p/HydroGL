@@ -1,4 +1,5 @@
 #include "WaterSystem.h"
+#include "Ocean/WaterSystem.h"
 
 #include <chrono>
 #include <iostream>
@@ -24,19 +25,19 @@ namespace Core
         constexpr float DefaultFoamThreshold = 2.0f;
         constexpr float DefaultFoamExponent = 4.45f;
         constexpr float DefaultFoamIntensity = 2.0f;
-    }
 
-    WaterSystem::WaterShaderUniformLocations::WaterShaderUniformLocations(const Shader WaterShader)
-        : ViewMatrix(WaterShader.GetUniformLocation("ViewMatrix")),
-          ProjectionMatrix(WaterShader.GetUniformLocation("ProjectionMatrix")),
-          CameraPosition(WaterShader.GetUniformLocation("CameraPosition")),
-          Time(WaterShader.GetUniformLocation("Time")),
-          GridOrigin(WaterShader.GetUniformLocation("GridOrigin")),
-          SurfaceColor(WaterShader.GetUniformLocation("SurfaceColor")),
-          Absorption(WaterShader.GetUniformLocation("Absorption")),
-          CameraNearPlane(WaterShader.GetUniformLocation("CameraNearPlane")),
-          CameraFarPlane(WaterShader.GetUniformLocation("CameraFarPlane"))
-    {
+        constexpr float DefaultTesselationMaxDistance = 50.0f;
+        constexpr float DefaultTesselationMinDistance = 10.0f;
+        constexpr float DefaultMaxTesselationLevel = 32.0f;
+        constexpr float DefaultMinTesselationLevel = 1.0f;
+
+        constexpr glm::vec3 DefaultSurfaceColor{0.005f, 0.1f, 0.2f};
+        constexpr float DefaultMetallic = 0.05f;
+        constexpr glm::vec3 DefaultAbsorption{0.5f, 0.2f, 0.05f};
+        constexpr float DefaultRoughness = 0.5f;
+        constexpr glm::vec3 DefaultFoamColor{1.0f, 1.0f, 1.0f};
+        constexpr float DefaultFoamMetallic = 0.0f;
+        constexpr float DefaultFoamRoughness = 1.0f;
     }
 
     WaterSystem::FftShaderUniformLocations::FftShaderUniformLocations(Shader FftShader)
@@ -74,7 +75,6 @@ namespace Core
           _spectrumComputeShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Spectrum.comp", ShaderStage::ComputeShader)
               .Build()),
-          _waterShaderUniformLocations(_waterShader),
           _fftHorizontalShaderUniformLocations(_fftHorizontalShader),
           _fftVerticalShaderUniformLocations(_fftVerticalShader),
           _spectrumShaderUniformLocations(_spectrumComputeShader),
@@ -88,6 +88,12 @@ namespace Core
           _tmpTextures(CreateTextureArray(VelocityPackedTexturesCount * CascadeCount)),
           _gaussianNoiseTexture(CreateGaussianNoise()),
           _foamUniformBufferData(DefaultFoamThreshold, DefaultFoamExponent, DefaultFoamIntensity),
+          _waterShaderUniforms(DefaultTesselationMaxDistance, DefaultTesselationMinDistance,
+                               DefaultMaxTesselationLevel, DefaultMinTesselationLevel,
+                               DefaultSurfaceColor, DefaultMetallic,
+                               DefaultAbsorption, DefaultRoughness,
+                               DefaultFoamColor, DefaultFoamMetallic,
+                               DefaultFoamRoughness),
           _initialSpectrumSettingsBufferData(DefaultWindVelocity, DefaultFetch, DefaultDelta, DefaultSwell,
                                              CalculateInitialSpectrumAlpha(
                                                  DefaultWindVelocity, DefaultFetch, Gravity),
@@ -100,36 +106,35 @@ namespace Core
                            }),
           _initialSpectrumSettingsUbo(CreateInitialSpectrumSettingsUbo(_initialSpectrumSettingsBufferData)),
           _foamMaskSettingsUbo(CreateFoamMaskSettingsUbo(_foamUniformBufferData)),
+          _waterSettingsUbo(CreateWaterSettingsUbo(_waterShaderUniforms)),
           _cascadeSettingsSsbo(CreateCascadeSettingsSsbo(_cascadeSettings))
     {
         UpdateInitialSpectrum();
     }
 
-    uint32_t WaterSystem::CreateTextureArray(const int32_t Layers)
+    GlTextureUnique WaterSystem::CreateTextureArray(const int32_t Layers)
     {
-        uint32_t textureId;
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &textureId);
-        glTextureStorage3D(textureId, 1, GL_RGBA32F, TextureResolution, TextureResolution, Layers);
-        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        return textureId;
+        GlTextureUnique texture = GlTextureUnique::Create(GL_TEXTURE_2D_ARRAY);
+        glTextureStorage3D(texture, 1, GL_RGBA32F, TextureResolution, TextureResolution, Layers);
+        glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        return texture;
     }
 
-    uint32_t WaterSystem::CreateSlopeTextureArray()
+    GlTextureUnique WaterSystem::CreateSlopeTextureArray()
     {
-        uint32_t textureId;
-        glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &textureId);
+        GlTextureUnique texture = GlTextureUnique::Create(GL_TEXTURE_2D_ARRAY);
         const int32_t mipLevels = static_cast<int32_t>(std::floorf(std::log2f(TextureResolution))) + 1;
-        glTextureStorage3D(textureId, mipLevels, GL_RGBA32F, TextureResolution, TextureResolution, CascadeCount);
-        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        return textureId;
+        glTextureStorage3D(texture, mipLevels, GL_RGBA32F, TextureResolution, TextureResolution, CascadeCount);
+        glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        return texture;
     }
 
     void WaterSystem::UpdateInitialSpectrum() const
@@ -146,7 +151,7 @@ namespace Core
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
     }
 
-    uint32_t WaterSystem::CreateGaussianNoise()
+    GlTextureUnique WaterSystem::CreateGaussianNoise()
     {
         constexpr size_t count = 2 * TextureResolution * TextureResolution;
         float* textureData = new float[count];
@@ -158,44 +163,46 @@ namespace Core
             textureData[i] = dist(rng);
         }
 
-        uint32_t textureId;
-        glCreateTextures(GL_TEXTURE_2D, 1, &textureId);
-        glTextureStorage2D(textureId, 1, GL_RG32F, TextureResolution, TextureResolution);
-        glTextureSubImage2D(textureId, 0, 0, 0, TextureResolution, TextureResolution, GL_RG, GL_FLOAT, textureData);
-        glTextureParameteri(textureId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(textureId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTextureParameteri(textureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        GlTextureUnique texture = GlTextureUnique::Create(GL_TEXTURE_2D);
+        glTextureStorage2D(texture, 1, GL_RG32F, TextureResolution, TextureResolution);
+        glTextureSubImage2D(texture, 0, 0, 0, TextureResolution, TextureResolution, GL_RG, GL_FLOAT, textureData);
+        glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
         delete[] textureData;
-        return textureId;
+        return texture;
     }
 
-    uint32_t WaterSystem::CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData)
+    GlBufferUnique WaterSystem::CreateInitialSpectrumSettingsUbo(const InitialSpectrumSettingsBuffer& InitialData)
     {
-        uint32_t id;
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_UNIFORM_BUFFER, id);
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(InitialSpectrumSettingsBuffer), &InitialData,
-                     GL_STATIC_COPY);
-        return id;
+        GlBufferUnique buffer = GlBufferUnique::Create();
+        glBindBuffer(GL_UNIFORM_BUFFER, buffer);
+        glNamedBufferStorage(buffer, sizeof(InitialSpectrumSettingsBuffer), &InitialData,
+                             GL_DYNAMIC_STORAGE_BIT);
+        return buffer;
     }
 
-    uint32_t WaterSystem::CreateFoamMaskSettingsUbo(const FoamMaskShaderUniforms& InitialData)
+    GlBufferUnique WaterSystem::CreateFoamMaskSettingsUbo(const FoamMaskShaderUniforms& InitialData)
     {
-        uint32_t id;
-        glCreateBuffers(1, &id);
-        glNamedBufferStorage(id, sizeof(FoamMaskShaderUniforms), &InitialData, GL_DYNAMIC_STORAGE_BIT);
-        return id;
+        GlBufferUnique buffer = GlBufferUnique::Create();
+        glNamedBufferStorage(buffer, sizeof(FoamMaskShaderUniforms), &InitialData, GL_DYNAMIC_STORAGE_BIT);
+        return buffer;
     }
 
-    uint32_t WaterSystem::CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData)
+    GlBufferUnique WaterSystem::CreateWaterSettingsUbo(const WaterShaderUniforms& InitialData)
     {
-        uint32_t id;
-        glGenBuffers(1, &id);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, InitialData.GetDataSize(), InitialData.GetData(), GL_STATIC_COPY);
-        return id;
+        GlBufferUnique buffer = GlBufferUnique::Create();
+        glNamedBufferStorage(buffer, sizeof(WaterShaderUniforms), &InitialData, GL_DYNAMIC_STORAGE_BIT);
+        return buffer;
+    }
+
+    GlBufferUnique WaterSystem::CreateCascadeSettingsSsbo(const CascadeSettingsBuffer& InitialData)
+    {
+        GlBufferUnique buffer = GlBufferUnique::Create();
+        glNamedBufferData(buffer, InitialData.GetDataSize(), InitialData.GetData(), GL_STATIC_COPY);
+        return buffer;
     }
 
     void WaterSystem::Render(const float DeltaTime,
@@ -204,7 +211,7 @@ namespace Core
                              const glm::vec3& AmbientLightColor,
                              const uint32_t DynamicWavesSampleSsboId,
                              const uint32_t SceneColor,
-                             const uint32_t SceneDepth) const
+                             const uint32_t SceneDepth)
     {
         UpdateSpectrumTexture();
 
@@ -222,19 +229,20 @@ namespace Core
         const glm::vec2 gridOrigin =
                 glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
 
+        _waterShaderUniforms.ViewMatrix = viewMatrix;
+        _waterShaderUniforms.ProjectionMatrix = Camera.GetProjectionMatrix();
+        _waterShaderUniforms.GridOrigin = gridOrigin;
+        _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
+        _waterShaderUniforms.CameraFarPlane = Camera.GetFarPlane();
+        _waterShaderUniforms.CameraPosition = cameraPosition;
+
+        glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
+
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         _waterShader.Use();
-        _waterShader.SetUniform(_waterShaderUniformLocations.ViewMatrix, viewMatrix);
-        _waterShader.SetUniform(_waterShaderUniformLocations.ProjectionMatrix, Camera.GetProjectionMatrix());
-        _waterShader.SetUniform(_waterShaderUniformLocations.CameraPosition, cameraPosition);
-        _waterShader.SetUniform(_waterShaderUniformLocations.Time, Platform::TimeManager::GetTime());
-        _waterShader.SetUniform(_waterShaderUniformLocations.GridOrigin, gridOrigin);
-        _waterShader.SetUniform(_waterShaderUniformLocations.SurfaceColor, glm::vec3(0.005f, 0.1f, 0.2f));
-        _waterShader.SetUniform(_waterShaderUniformLocations.Absorption, glm::vec3(0.5f, 0.2f, 0.05f));
-        _waterShader.SetUniform(_waterShaderUniformLocations.CameraNearPlane, Camera.GetNearPlane());
-        _waterShader.SetUniform(_waterShaderUniformLocations.CameraFarPlane, Camera.GetFarPlane());
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, _waterSettingsUbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _cascadeSettingsSsbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, DynamicWavesSampleSsboId);
 
@@ -255,6 +263,7 @@ namespace Core
                              _foamMaskSettingsUbo,
                              -_initialSpectrumSettingsBufferData.WindVelocity,
                              AmbientLightColor,
+                             _waterShaderUniforms.FoamColor,
                              cameraPosition,
                              viewMatrix,
                              Camera.GetProjectionMatrix());
