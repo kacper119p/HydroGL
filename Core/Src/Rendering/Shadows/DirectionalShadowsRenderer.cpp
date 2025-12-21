@@ -71,7 +71,7 @@ namespace Core
                                               glm::vec3(0.0f, 1.0f, 0.0f));
 
             // Calculate AABB in Light Space to tightly fit the frustum slice
-            glm::vec3 firstLightSpaceCorner = glm::vec3(lightView * glm::vec4(corners[0], 0.0f));
+            glm::vec3 firstLightSpaceCorner = glm::vec3(lightView * glm::vec4(corners[0], 1.0f));
             glm::vec3 minCorner = firstLightSpaceCorner;
             glm::vec3 maxCorner = firstLightSpaceCorner;
 
@@ -119,7 +119,7 @@ namespace Core
         const glm::vec3 cameraPosition = glm::vec3(invView[3]);
         const glm::vec3 cameraForward = glm::normalize(-glm::vec3(invView[2]));
         const glm::vec3 cameraRight = glm::normalize(glm::vec3(invView[0]));
-        const glm::vec3 cameraLeft = glm::normalize(glm::vec3(invView[1]));
+        const glm::vec3 cameraUp = glm::normalize(glm::vec3(invView[1]));
 
         // Assumes glm::perspective
         const float tanHalfVFov = 1.0f / ProjectionMatrix[1][1];
@@ -133,16 +133,16 @@ namespace Core
         const glm::vec3 farCenter = cameraPosition + cameraForward * FarCameraPlane;
 
         // Near Plane Corners
-        Result[0] = nearCenter + cameraLeft * nearPlaneSize.y + cameraRight * nearPlaneSize.x; // Top Right
-        Result[1] = nearCenter + cameraLeft * nearPlaneSize.y - cameraRight * nearPlaneSize.x; // Top Left
-        Result[2] = nearCenter - cameraLeft * nearPlaneSize.y - cameraRight * nearPlaneSize.x; // Bottom Left
-        Result[3] = nearCenter - cameraLeft * nearPlaneSize.y + cameraRight * nearPlaneSize.x; // Bottom Right
+        Result[0] = nearCenter + cameraUp * nearPlaneSize.y + cameraRight * nearPlaneSize.x; // Top Right
+        Result[1] = nearCenter + cameraUp * nearPlaneSize.y - cameraRight * nearPlaneSize.x; // Top Left
+        Result[2] = nearCenter - cameraUp * nearPlaneSize.y - cameraRight * nearPlaneSize.x; // Bottom Left
+        Result[3] = nearCenter - cameraUp * nearPlaneSize.y + cameraRight * nearPlaneSize.x; // Bottom Right
 
         // Far Plane Corners
-        Result[4] = farCenter + cameraLeft * farPlaneSize.y + cameraRight * farPlaneSize.x; // Top Right
-        Result[5] = farCenter + cameraLeft * farPlaneSize.y - cameraRight * farPlaneSize.x; // Top Left
-        Result[6] = farCenter - cameraLeft * farPlaneSize.y - cameraRight * farPlaneSize.x; // Bottom Left
-        Result[7] = farCenter - cameraLeft * farPlaneSize.y + cameraRight * farPlaneSize.x; // Bottom Right
+        Result[4] = farCenter + cameraUp * farPlaneSize.y + cameraRight * farPlaneSize.x; // Top Right
+        Result[5] = farCenter + cameraUp * farPlaneSize.y - cameraRight * farPlaneSize.x; // Top Left
+        Result[6] = farCenter - cameraUp * farPlaneSize.y - cameraRight * farPlaneSize.x; // Bottom Left
+        Result[7] = farCenter - cameraUp * farPlaneSize.y + cameraRight * farPlaneSize.x; // Bottom Right
     }
 
     GlBufferUnique DirectionalShadowsRenderer::CreateShadowPassUbo()
