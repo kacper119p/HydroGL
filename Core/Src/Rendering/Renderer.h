@@ -8,6 +8,7 @@
 #include "Postprocessing/BloomPostprocessingEffect.h"
 #include "RendererHelpers/DrawElementsIndirectCommand.h"
 #include "RendererHelpers/SceneFrameBuffer.h"
+#include "Rendering/RendererHelpers/DirectionalShadowsRenderer.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Skybox.h"
 #include "Scene/Scene.h"
@@ -27,7 +28,7 @@ namespace Core
     private:
         struct alignas(16) LightDataBuffer
         {
-            alignas(4) uint32_t DirectionalLightCount = 0;
+            alignas(16) uint32_t DirectionalLightCount = 0;
             alignas(4) uint32_t PointLightCount = 0;
             alignas(4) uint32_t SpotlightCount = 0;
             alignas(16) DirectionalLightComponent::ShaderData DirectionalLight;
@@ -63,6 +64,7 @@ namespace Core
 
         glm::mat4 _directionalLightProjectionMatrix;
 
+        DirectionalShadowsRenderer _directionalShadowsRenderer;
         SceneFrameBuffer _frameBuffer;
         BloomPostprocessingEffect _bloomPostprocessingEffect;
 
@@ -85,7 +87,10 @@ namespace Core
         void RenderFrame(const Engine& Engine, float DeltaTime);
 
     private:
-        void BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,
-                           const TransformComponent& CameraTransform, const Skybox& Skybox);
+        void BindLightData(const entt::registry* EntityRegistry, const glm::mat4& ViewMatrix, const Skybox& Skybox);
+
+        void RenderShadows(const entt::registry* EntityRegistry, const CameraComponent& Camera,
+                           const glm::mat4& ViewMatrix, uint32_t TransformsBuffer, uint32_t IndirectDrawCommandsBuffer,
+                           uint32_t ObjectCount);
     };
 }

@@ -12,23 +12,25 @@ namespace Core
 
         struct alignas(16) ShaderData
         {
-            glm::mat4 LightSpaceTransform;
-            glm::vec3 Direction;
-            [[maybe_unused]] float _padding0;
-            glm::vec3 Color;
-            [[maybe_unused]] float _padding1;
+            alignas(16) glm::mat4 ViewMatrix{};
+            alignas(16) glm::mat4 CascadeViewProj[4]{};
+            alignas(16) float CascadeSplits[4]{};
+            alignas(16) glm::vec3 Direction;
+            alignas(16) glm::vec3 Color;
 
             ShaderData()
             {
             }
 
-            ShaderData(const DirectionalLightComponent& spotlight, const glm::mat4& lightSpaceTransform,
-                       const glm::vec3& Direction) :
-                LightSpaceTransform(lightSpaceTransform),
-                Direction(Direction),
-                Color(spotlight.Color)
+            ShaderData(const DirectionalLightComponent& Light, const glm::mat4& ViewMatrix,
+                       const glm::mat4 (&CascadeViewProj)[4], const float (&CascadeSplits)[4],
+                       const glm::vec3& Direction) : ViewMatrix(ViewMatrix),
+                                                     Direction(Direction),
+                                                     Color(Light.Color)
 
             {
+                std::memcpy(this->CascadeViewProj, CascadeViewProj, sizeof(glm::mat4) * 4);
+                std::memcpy(this->CascadeSplits, CascadeSplits, sizeof(float) * 4);
             }
         };
     };
