@@ -279,8 +279,8 @@ namespace Core
             const entt::entity entity = *iterator;
             const TransformComponent& transform = directionalLightView.get<TransformComponent>(entity);
 
-            (void) _directionalShadowsRenderer.RenderShadows(Camera, ViewMatrix, transform.GetWorldForward(),
-                                                             TransformsBuffer, IndirectDrawCommandsBuffer, ObjectCount);
+            _directionalShadowsRenderer.RenderShadows(Camera, ViewMatrix, transform.GetWorldForward(),
+                                                      TransformsBuffer, IndirectDrawCommandsBuffer, ObjectCount);
         }
     }
 }

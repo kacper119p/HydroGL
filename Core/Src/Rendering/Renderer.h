@@ -8,7 +8,7 @@
 #include "Postprocessing/BloomPostprocessingEffect.h"
 #include "RendererHelpers/DrawElementsIndirectCommand.h"
 #include "RendererHelpers/SceneFrameBuffer.h"
-#include "Rendering/RendererHelpers/DirectionalShadowsRenderer.h"
+#include "Shadows/DirectionalShadowsRenderer.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Skybox.h"
 #include "Scene/Scene.h"

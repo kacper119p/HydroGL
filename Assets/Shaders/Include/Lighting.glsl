@@ -64,8 +64,8 @@ float FastPow5(float x)
     return x * x2 * x2;
 }
 
-float CalculateDirectionalLightShadowAttenuation(directionalLight Light, vec3 worldPos) {
-    float depth = abs((Light.ViewMatrix * vec4(worldPos, 1.0)).z);
+float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, const vec3 WorldPosition, const vec3 Normal) {
+    const float depth = abs((Light.ViewMatrix * vec4(WorldPosition, 1.0)).z);
     int layer = -1;
     for (int i = 0; i < 4; ++i) {
         if (depth < Light.CascadeSplits[i]) {
@@ -75,27 +75,28 @@ float CalculateDirectionalLightShadowAttenuation(directionalLight Light, vec3 wo
     }
     if (layer == -1) layer = 3;
 
-    vec4 fragPosLightSpace = Light.CascadeViewProj[layer] * vec4(worldPos, 1.0);
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
+    const vec4 fragPosLightSpace = Light.CascadeViewProj[layer] * vec4(WorldPosition, 1.0);
+    const vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w * 0.5 + 0.5;
+
+    const float bias = max(SHADOW_BIAS * (1.0 - dot(Normal, Light.Direction)), SHADOW_BIAS);
 
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(DirectionalLightShadowMaps, 0).xy;
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
-            shadow += texture(DirectionalLightShadowMaps, vec4(projCoords.xy + vec2(x, y) * texelSize, layer, projCoords.z));
+    const  vec2 texelSize = 1.0 / textureSize(DirectionalLightShadowMaps, 0).xy;
+    for (int x = -3; x <= 3; ++x) {
+        for (int y = -3; y <= 3; ++y) {
+            shadow += texture(DirectionalLightShadowMaps, vec4(projCoords.xy + vec2(x, y) * texelSize, layer, projCoords.z - bias));
         }
     }
-    return shadow / 9.0;
+    return shadow / 36.0;
 }
 
-light CalculateDirectionalLight(directionalLight Light, vec3 Position)
+light CalculateDirectionalLight(directionalLight Light, vec3 Position, vec3 Normal)
 {
     light result;
     result.Direction = Light.Direction;
     result.Color = Light.Color;
 
-    result.Attenuation = CalculateDirectionalLightShadowAttenuation(Light, Position);
+    result.Attenuation = CalculateDirectionalLightShadowAttenuation(Light, Position, Normal);
     return result;
 }
 
@@ -265,7 +266,7 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
 
     if (DirectionalLightCount > 0)
     {
-        Light += CalculateLightInfluence(CalculateDirectionalLight(DirectionalLight, Position),
+        Light += CalculateLightInfluence(CalculateDirectionalLight(DirectionalLight, Position, Normal),
         BaseColor,
         Normal,
         ViewDirection,
