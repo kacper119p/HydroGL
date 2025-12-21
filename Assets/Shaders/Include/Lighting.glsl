@@ -2,7 +2,9 @@
 
 struct directionalLight
 {
-    mat4 DirectionalLightSpaceTransform;
+    mat4 ViewMatrix;
+    mat4 CascadeViewProj[4];
+    float CascadeSplits[4];
     vec3 Direction;
     float _padding0;
     vec3 Color;
@@ -38,14 +40,10 @@ struct light
     float Attenuation;
 };
 
-layout (binding = 10) uniform sampler2DShadow DirectionalLightShadowMap;
-layout (binding = 11) uniform samplerCubeShadow PointLightShadowMap0;
-layout (binding = 12) uniform samplerCubeShadow PointLightShadowMap1;
-layout (binding = 13) uniform samplerCubeShadow SpotLightShadowMap0;
-layout (binding = 14) uniform samplerCubeShadow SpotLightShadowMap1;
-layout (binding = 0) uniform samplerCube IrradianceMap;
-layout (binding = 1) uniform samplerCube PrefilterMap;
-layout (binding = 2) uniform sampler2D BrdfLUT;
+layout (binding = 17) uniform samplerCube IrradianceMap;
+layout (binding = 18) uniform samplerCube PrefilterMap;
+layout (binding = 19) uniform sampler2D BrdfLUT;
+layout (binding = 20) uniform sampler2DArrayShadow DirectionalLightShadowMaps;
 
 layout (std430, binding = 3) buffer Lights {
     uint DirectionalLightCount;
@@ -66,17 +64,39 @@ float FastPow5(float x)
     return x * x2 * x2;
 }
 
-light CalculateDirectionalLight(directionalLight Light, vec3 Position)
+float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, const vec3 WorldPosition, const vec3 Normal) {
+    const float depth = abs((Light.ViewMatrix * vec4(WorldPosition, 1.0)).z);
+    int layer = -1;
+    for (int i = 0; i < 4; ++i) {
+        if (depth < Light.CascadeSplits[i]) {
+            layer = i;
+            break;
+        }
+    }
+    if (layer == -1) layer = 3;
+
+    const vec4 fragPosLightSpace = Light.CascadeViewProj[layer] * vec4(WorldPosition, 1.0);
+    const vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w * 0.5 + 0.5;
+
+    const float bias = max(SHADOW_BIAS * (1.0 - dot(Normal, Light.Direction)), SHADOW_BIAS);
+
+    float shadow = 0.0;
+    const  vec2 texelSize = 1.0 / textureSize(DirectionalLightShadowMaps, 0).xy;
+    for (int x = -3; x <= 3; ++x) {
+        for (int y = -3; y <= 3; ++y) {
+            shadow += texture(DirectionalLightShadowMaps, vec4(projCoords.xy + vec2(x, y) * texelSize, layer, projCoords.z - bias));
+        }
+    }
+    return shadow / 36.0;
+}
+
+light CalculateDirectionalLight(directionalLight Light, vec3 Position, vec3 Normal)
 {
     light result;
     result.Direction = Light.Direction;
     result.Color = Light.Color;
 
-    vec4 fragPosLightSpace = DirectionalLight.DirectionalLightSpaceTransform * vec4(Position, 1.0);
-    vec3 shadowCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    shadowCoords.xyz = shadowCoords.xyz * 0.5 + 0.5;
-    // result.Attenuation = texture(DirectionalLightShadowMap, shadowCoords, SHADOW_BIAS);
-    result.Attenuation = 1.0;
+    result.Attenuation = CalculateDirectionalLightShadowAttenuation(Light, Position, Normal);
     return result;
 }
 
@@ -246,7 +266,7 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
 
     if (DirectionalLightCount > 0)
     {
-        Light += CalculateLightInfluence(CalculateDirectionalLight(DirectionalLight, Position),
+        Light += CalculateLightInfluence(CalculateDirectionalLight(DirectionalLight, Position, Normal),
         BaseColor,
         Normal,
         ViewDirection,

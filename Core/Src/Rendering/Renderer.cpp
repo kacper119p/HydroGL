@@ -67,19 +67,6 @@ namespace Core
 
         const CameraComponent& camera = cameraView.get<CameraComponent>(cameraEntity);
         const TransformComponent& cameraTransform = cameraView.get<TransformComponent>(cameraEntity);
-        glDepthMask(GL_TRUE);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-        glViewport(0, 0, static_cast<int32_t>(_resolution.x), static_cast<int32_t>(_resolution.y));
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glCullFace(GL_BACK);
-        _frameBuffer.BindMultiSampledFramebuffer();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         // ------------------------ MESHES ------------------------
 
         MeshManager::BindVao();
@@ -127,22 +114,45 @@ namespace Core
                              _transformMatrices.data());
 
         MeshManager::BindVao();
+
+        // ------------------------ DIRECTIONAL LIGHT SHADOWS ------------------------
+
+        const glm::mat4 viewMatrix = glm::inverse(cameraTransform.GetLocalToWorldMatrix());
+
+        RenderShadows(entityRegistry, camera, viewMatrix, _transformsSsbo, _indirectDrawCommandsSsbo, trueCount);
+
+        // ------------------------ MAIN RENDERING PASSES SETUP ------------------------
         materialManager.BindMaterialBuffer();
+
+        glDepthMask(GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+        glViewport(0, 0, static_cast<int32_t>(_resolution.x), static_cast<int32_t>(_resolution.y));
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glCullFace(GL_BACK);
+        _frameBuffer.BindMultiSampledFramebuffer();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _transformsSsbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _indirectDrawCommandsSsbo);
 
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, _indirectDrawCommandsSsbo);
 
-        BindLightData(entityRegistry, camera, cameraTransform, scene.GetSkybox());
-
-        const glm::mat4 viewMatrix = glm::inverse(cameraTransform.GetLocalToWorldMatrix());
+        // ------------------------ DEPTH PREPASS ------------------------
 
         _depthPassShader.Use();
         _depthPassShader.SetUniform(_depthPassViewMatrixLocation, viewMatrix);
         _depthPassShader.SetUniform(_depthPassProjectionMatrixLocation, camera.GetProjectionMatrix());
 
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
+
+        // ------------------------ MAIN PASS ------------------------
+
+        BindLightData(entityRegistry, viewMatrix, scene.GetSkybox());
 
         _pbrShader.Use();
         _pbrShader.SetUniform(_pbrViewMatrixLocation, viewMatrix);
@@ -180,37 +190,32 @@ namespace Core
         _bloomPostprocessingEffect.Render(_frameBuffer.GetTransparentColorBuffer());
     }
 
-    void Renderer::BindLightData(const entt::registry* EntityRegistry, const CameraComponent& Camera,
-                                 const TransformComponent& CameraTransform, const Skybox& Skybox)
+    void Renderer::BindLightData(const entt::registry* EntityRegistry, const glm::mat4& ViewMatrix,
+                                 const Skybox& Skybox)
     {
-        const auto& directionalLightView = EntityRegistry->view<DirectionalLightComponent, TransformComponent>();
-        uint32_t directionalLightCount = 0;
-
-        for (const entt::entity entity : directionalLightView)
+        if (const auto& directionalLightView = EntityRegistry->view<DirectionalLightComponent, TransformComponent>();
+            directionalLightView.begin() != directionalLightView.end())
         {
-            const TransformComponent& transform = directionalLightView.get<TransformComponent>(entity);
-
-            const glm::vec3 lightDirection = transform.GetWorldForward();
-
-            glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
-            glm::mat4 lightView = glm::lookAt(cameraPosition + transform.GetWorldForward() * 100.0f,
-                                              cameraPosition,
-                                              glm::vec3(0.0f, 1.0f, 0.0f));
-
-            glm::mat4 lightSpaceTransform = _directionalLightProjectionMatrix * lightView;
-
+            entt::entity entity = *directionalLightView.begin();
             const DirectionalLightComponent& light = directionalLightView.get<DirectionalLightComponent>(entity);
+            const TransformComponent& transform = directionalLightView.get<TransformComponent>(entity);
+            const glm::vec3 lightDirection = transform.GetWorldForward();
+            const DirectionalShadowsRenderer::DirectionalLightSamplingData& lightSamplingData =
+                    _directionalShadowsRenderer.GetDirectionalLightSamplingData();
 
-            DirectionalLightComponent::ShaderData lightData(light, lightSpaceTransform, lightDirection);
+            DirectionalLightComponent::ShaderData lightData(light,
+                                                            ViewMatrix,
+                                                            lightSamplingData.CascadeViewProjMatrices,
+                                                            lightSamplingData.CascadeSplits,
+                                                            lightDirection);
             _lightDataBuffer.DirectionalLight = lightData;
 
-            directionalLightCount++;
-            if (directionalLightCount == MaxDirectionalLights)
-            {
-                break;
-            }
+            _lightDataBuffer.DirectionalLightCount = 1;
+        } else
+        {
+            _lightDataBuffer.DirectionalLightCount = 0;
         }
-        _lightDataBuffer.DirectionalLightCount = directionalLightCount;
+
 
         const auto& pointLightsView = EntityRegistry->view<PointLightComponent, TransformComponent>();
         uint32_t pointLightCount = 0;
@@ -256,8 +261,26 @@ namespace Core
         glNamedBufferData(_lightsSsbo, sizeof(LightDataBuffer), &_lightDataBuffer, GL_DYNAMIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, _lightsSsbo);
 
-        glBindTextureUnit(0, Skybox.GetIrradianceMapMap());
-        glBindTextureUnit(1, Skybox.GetPrefilterMap());
-        glBindTextureUnit(2, _brdfLut);
+        glBindTextureUnit(17, Skybox.GetIrradianceMapMap());
+        glBindTextureUnit(18, Skybox.GetPrefilterMap());
+        glBindTextureUnit(19, _brdfLut);
+        glBindTextureUnit(20, _directionalShadowsRenderer.GetShadowMaps());
+    }
+
+    void Renderer::RenderShadows(const entt::registry* EntityRegistry, const CameraComponent& Camera,
+                                 const glm::mat4& ViewMatrix, const uint32_t TransformsBuffer,
+                                 const uint32_t IndirectDrawCommandsBuffer,
+                                 const uint32_t ObjectCount)
+    {
+        const auto& directionalLightView = EntityRegistry->view<DirectionalLightComponent, TransformComponent>();
+
+        if (const auto iterator = directionalLightView.begin(); iterator != directionalLightView.end())
+        {
+            const entt::entity entity = *iterator;
+            const TransformComponent& transform = directionalLightView.get<TransformComponent>(entity);
+
+            _directionalShadowsRenderer.RenderShadows(Camera, ViewMatrix, transform.GetWorldForward(),
+                                                      TransformsBuffer, IndirectDrawCommandsBuffer, ObjectCount);
+        }
     }
 }
