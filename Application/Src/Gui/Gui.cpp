@@ -268,7 +268,7 @@ namespace Application
                     _waterSystem->SetFoamRoughness(glm::clamp(foamRoughness, 0.0f, 1.0f));
                 }
             }
-            if (ImGui::CollapsingHeader("Sub-Surface Scattering"))
+            if (ImGui::CollapsingHeader("Subsurface Scattering"))
             {
                 float sssDistortion = _waterSystem->GetSssDistortion();
                 if (ImGui::DragFloat("Distortion", &sssDistortion, 0.01f, 0.0f,
