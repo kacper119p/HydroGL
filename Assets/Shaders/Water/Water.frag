@@ -57,7 +57,7 @@ void main()
     float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
 
     const vec3 lowFrequencyNormal = NormalFromSlope(slopeDfdxxDfdzz.xy);
-    const float lowFrequencyjacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
+    const float lowFrequencyJacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
 
     for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
     {
@@ -152,7 +152,7 @@ void main()
     // ------------------------------------------------------------------
     // Subsurface Scattering
     // ------------------------------------------------------------------
-    const float sssMask = clamp(WaterParameters.SssThreshold - lowFrequencyjacobian / WaterParameters.SssThreshold, 0.0, 1.0);
+    const float sssMask = clamp(WaterParameters.SssThreshold - lowFrequencyJacobian / WaterParameters.SssThreshold, 0.0, 1.0);
 
     const vec3 sssLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * WaterParameters.SssDistortion));
     const float sssDot = pow(clamp(dot(ViewDirection, -sssLight), 0.0, 1.0), WaterParameters.SssPower) * WaterParameters.SssScale;

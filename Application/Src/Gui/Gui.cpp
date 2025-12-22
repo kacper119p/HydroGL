@@ -291,17 +291,18 @@ namespace Application
                     _waterSystem->SetSssScale(glm::max(sssScale, 0.0f));
                 }
 
-                glm::vec3 sssColor = _waterSystem->GetSssColor();
-                if (ImGui::ColorEdit3("SSS Color", glm::value_ptr(sssColor)))
-                {
-                    _waterSystem->SetSssColor(sssColor);
-                }
 
                 float sssThreshold = _waterSystem->GetSssThreshold();
                 if (ImGui::DragFloat("Threshold", &sssThreshold, 0.01f, 0.0f,
                                      std::numeric_limits<float>::max(), "%.2f"))
                 {
-                    _waterSystem->SetSssThreshold(std::max(sssThreshold, 0.0f));
+                    _waterSystem->SetSssThreshold(glm::max(sssThreshold, 0.0f));
+                }
+
+                glm::vec3 sssColor = _waterSystem->GetSssColor();
+                if (ImGui::ColorEdit3("Color", glm::value_ptr(sssColor)))
+                {
+                    _waterSystem->SetSssColor(sssColor);
                 }
             }
         }
@@ -392,7 +393,7 @@ namespace Application
                 }
             }
             ImGui::InputInt("Texture ID", &_textureSliceViewerSelectedTexture);
-            _textureSliceViewerSelectedTexture = std::max(_textureSliceViewerSelectedTexture, 0);
+            _textureSliceViewerSelectedTexture = glm::max(_textureSliceViewerSelectedTexture, 0);
 
             if (target == GL_TEXTURE_2D_ARRAY)
             {
