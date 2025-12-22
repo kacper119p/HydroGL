@@ -12,6 +12,8 @@ namespace
     constexpr ImGuiWindowFlags FloatingWindowFlags =
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_NoResize;
+
+    constexpr float Epsilon = std::numeric_limits<float>::epsilon();
 }
 
 namespace Application
@@ -114,11 +116,11 @@ namespace Application
                     _waterSystem->SetWindVelocity(windVelocity);
                 }
                 float fetch = _waterSystem->GetFetch();
-                if (ImGui::DragFloat("Fetch [m]", &fetch, 1.0f, 0.1f,
+                if (ImGui::DragFloat("Fetch [m]", &fetch, 1.0f, Epsilon,
                                      std::numeric_limits<float>::max(), "%.1f")
                 )
                 {
-                    _waterSystem->SetFetch(glm::max(fetch, 0.1f));
+                    _waterSystem->SetFetch(glm::max(fetch, Epsilon));
                 }
                 float delta = _waterSystem->GetDelta();
                 if (ImGui::SliderFloat("Delta", &delta, 0.0f, 1.0f))
@@ -190,10 +192,10 @@ namespace Application
                 }
 
                 float lifetime = sprayManager.GetLifetime();
-                if (ImGui::DragFloat("Lifetime", &lifetime, 0.1f, 0.1f,
+                if (ImGui::DragFloat("Lifetime", &lifetime, 0.1f, Epsilon,
                                      std::numeric_limits<float>::max(), "%.2f"))
                 {
-                    sprayManager.SetLifetime(glm::max(lifetime, 0.1f));
+                    sprayManager.SetLifetime(glm::max(lifetime, Epsilon));
                 }
 
                 float sprayOpacity = sprayManager.GetSprayOpacity();
@@ -264,6 +266,42 @@ namespace Application
                 if (ImGui::SliderFloat("Foam Roughness", &foamRoughness, 0.0f, 1.0f))
                 {
                     _waterSystem->SetFoamRoughness(glm::clamp(foamRoughness, 0.0f, 1.0f));
+                }
+            }
+            if (ImGui::CollapsingHeader("Sub-Surface Scattering"))
+            {
+                float sssDistortion = _waterSystem->GetSssDistortion();
+                if (ImGui::DragFloat("Distortion", &sssDistortion, 0.01f, 0.0f,
+                                     std::numeric_limits<float>::max(), "%.2f"))
+                {
+                    _waterSystem->SetSssDistortion(glm::max(sssDistortion, 0.0f));
+                }
+
+                float sssPower = _waterSystem->GetSssPower();
+                if (ImGui::DragFloat("Power", &sssPower, 0.01f, Epsilon,
+                                     std::numeric_limits<float>::max(), "%.2f"))
+                {
+                    _waterSystem->SetSssPower(glm::max(sssPower, Epsilon));
+                }
+
+                float sssScale = _waterSystem->GetSssScale();
+                if (ImGui::DragFloat("Scale", &sssScale, 0.01f, 0.0f,
+                                     std::numeric_limits<float>::max(), "%.2f"))
+                {
+                    _waterSystem->SetSssScale(glm::max(sssScale, 0.0f));
+                }
+
+                glm::vec3 sssColor = _waterSystem->GetSssColor();
+                if (ImGui::ColorEdit3("SSS Color", glm::value_ptr(sssColor)))
+                {
+                    _waterSystem->SetSssColor(sssColor);
+                }
+
+                float sssThreshold = _waterSystem->GetSssThreshold();
+                if (ImGui::DragFloat("Threshold", &sssThreshold, 0.01f, 0.0f,
+                                     std::numeric_limits<float>::max(), "%.2f"))
+                {
+                    _waterSystem->SetSssThreshold(std::max(sssThreshold, 0.0f));
                 }
             }
         }

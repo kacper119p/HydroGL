@@ -465,6 +465,56 @@ namespace Core
             return _waterShaderUniforms.FoamRoughness;
         }
 
+        void SetSssDistortion(const float SssDistortion)
+        {
+            _waterShaderUniforms.SssDistortion = SssDistortion;
+        }
+
+        [[nodiscard]] float GetSssDistortion() const
+        {
+            return _waterShaderUniforms.SssDistortion;
+        }
+
+        void SetSssPower(const float SssPower)
+        {
+            _waterShaderUniforms.SssPower = SssPower;
+        }
+
+        [[nodiscard]] float GetSssPower() const
+        {
+            return _waterShaderUniforms.SssPower;
+        }
+
+        void SetSssScale(const float SssScale)
+        {
+            _waterShaderUniforms.SssScale = SssScale;
+        }
+
+        [[nodiscard]] float GetSssScale() const
+        {
+            return _waterShaderUniforms.SssScale;
+        }
+
+        void SetSssColor(const glm::vec3& SssColor)
+        {
+            _waterShaderUniforms.SssColor = SssColor;
+        }
+
+        [[nodiscard]] const glm::vec3& GetSssColor() const
+        {
+            return _waterShaderUniforms.SssColor;
+        }
+
+        void SetSssThreshold(const float SssThreshold)
+        {
+            _waterShaderUniforms.SssThreshold = SssThreshold;
+        }
+
+        [[nodiscard]] float GetSssThreshold() const
+        {
+            return _waterShaderUniforms.SssThreshold;
+        }
+
         void SetWindVelocity(const glm::vec2 WindVelocity)
         {
             _initialSpectrumSettingsBufferData.WindVelocity = WindVelocity;
