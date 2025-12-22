@@ -56,6 +56,9 @@ void main()
     vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
     float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
 
+    const vec3 lowFrequencyNormal = NormalFromSlope(slopeDfdxxDfdzz.xy);
+    const float lowFrequencyjacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
+
     for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
     {
         const vec2 texCoord = vec2(OriginalPosition.x, OriginalPosition.z) / CascadeSettingsBuffer.CascadeSettings[i].Length;
@@ -147,9 +150,26 @@ void main()
     const vec3 refractedColor = backgroundColor * transmittance;
 
     // ------------------------------------------------------------------
+    // Subsurface Scattering
+    // ------------------------------------------------------------------
+
+    vec3 vLight = LightsBuffer.DirectionalLight.Direction;
+
+    const float fLTDistortion = 0.5;
+    const float fLTPower = 2.0;
+    const float fLTScale = 2.5;
+    const float fLTThreshold = 2.0;
+    float fWaveCrestMask = clamp(1.0 - lowFrequencyjacobian / 1.0, 0.0, 1.0);
+    const vec3 vSSSColor = vec3(0.1, 0.8, 0.6);
+
+    vec3 vLTLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * fLTDistortion));
+    float fLTDot = pow(clamp(dot(ViewDirection, -vLTLight),0.0,1.0),fLTPower) * fLTScale;
+    float fFinalSSS = fLTDot * fWaveCrestMask;
+    vec3 sssTerm = vSSSColor * fFinalSSS * (1.0 - foamMask);
+    // ------------------------------------------------------------------
     // Final color
     // ------------------------------------------------------------------
 
-    const vec3 color = refractedColor + surfaceColor;
+    const vec3 color = refractedColor + surfaceColor + sssTerm;
     FragColor = vec4(color, 1.0);
 }
