@@ -45,7 +45,7 @@ layout (binding = 18) uniform samplerCube PrefilterMap;
 layout (binding = 19) uniform sampler2D BrdfLUT;
 layout (binding = 20) uniform sampler2DArrayShadow DirectionalLightShadowMaps;
 
-layout (std430, binding = 3) buffer Lights {
+layout (std430, binding = 3) buffer lightsBuffer {
     uint DirectionalLightCount;
     uint PointLightCount;
     uint SpotlightCount;
@@ -53,7 +53,7 @@ layout (std430, binding = 3) buffer Lights {
     directionalLight DirectionalLight;
     pointLight PointLights[8];
     spotLight Spotlights[8];
-};
+} LightsBuffer;
 
 const float SHADOW_BIAS = 0.00005;
 const float MAX_REFLECTION_LOD = 4.0;
@@ -269,9 +269,9 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, BaseColor, Metallic);
 
-    if (DirectionalLightCount > 0)
+    if (LightsBuffer.DirectionalLightCount > 0)
     {
-        Light += CalculateLightInfluence(CalculateDirectionalLight(DirectionalLight, Position, Normal),
+        Light += CalculateLightInfluence(CalculateDirectionalLight(LightsBuffer.DirectionalLight, Position, Normal),
         BaseColor,
         Normal,
         ViewDirection,
@@ -280,9 +280,9 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
         F0);
     }
 
-    for (uint i = 0; i < PointLightCount; ++i)
+    for (uint i = 0; i < LightsBuffer.PointLightCount; ++i)
     {
-        Light += CalculateLightInfluence(CalculatePointLight(PointLights[i], Position),
+        Light += CalculateLightInfluence(CalculatePointLight(LightsBuffer.PointLights[i], Position),
         BaseColor,
         Normal,
         ViewDirection,
@@ -291,9 +291,9 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
         F0);
     }
 
-    for (uint i = 0; i < SpotlightCount; ++i)
+    for (uint i = 0; i < LightsBuffer.SpotlightCount; ++i)
     {
-        Light += CalculateLightInfluence(CalculateSpotLight(Spotlights[i], Position),
+        Light += CalculateLightInfluence(CalculateSpotLight(LightsBuffer.Spotlights[i], Position),
         BaseColor,
         Normal,
         ViewDirection,
