@@ -4,6 +4,11 @@
 
 #include "Rendering/Shaders/ShaderBuilder.h"
 
+namespace
+{
+    constexpr float LightProjectionZMargin = 5.0f;
+}
+
 namespace Core
 {
     DirectionalShadowsRenderer::DirectionalShadowsRenderer()
@@ -83,9 +88,12 @@ namespace Core
             }
 
             // Extend Z-Range (Near/Far planes) to capture occluders outside the frustum
-            constexpr float margin = 2.0f;
-            minCorner.z = minCorner.z < 0.0f ? minCorner.z * margin : minCorner.z /= margin;
-            maxCorner.z = maxCorner.z < 0.0f ? maxCorner.z / margin : maxCorner.z *= margin;
+            minCorner.z = minCorner.z < 0.0f
+                              ? minCorner.z * LightProjectionZMargin
+                              : minCorner.z / LightProjectionZMargin;
+            maxCorner.z = maxCorner.z < 0.0f
+                              ? maxCorner.z / LightProjectionZMargin
+                              : maxCorner.z * LightProjectionZMargin;
 
             // Texel Snapping
             float shadowMapWidth = static_cast<float>(ShadowMapResolution);
