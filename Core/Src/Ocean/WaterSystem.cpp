@@ -38,9 +38,55 @@ namespace Core
         constexpr glm::vec3 DefaultFoamColor{1.0f, 1.0f, 1.0f};
         constexpr float DefaultFoamMetallic = 0.0f;
         constexpr float DefaultFoamRoughness = 1.0f;
+
+        constexpr float DefaultSssDistortion = 0.5f;
+        constexpr float DefaultSssPower = 2.0f;
+        constexpr float DefaultSssScale = 2.5f;
+        constexpr glm::vec3 DefaultSssColor{0.1f, 0.8f, 0.6f};
+        constexpr float DefaultSssThreshold = 1.0f;
     }
 
-    WaterSystem::FftShaderUniformLocations::FftShaderUniformLocations(Shader FftShader)
+    WaterSystem::WaterShaderUniforms::WaterShaderUniforms(const float TesselationMaxDistance,
+                                                          const float TesselationMinDistance,
+                                                          const float MaxTesselationLevel,
+                                                          const float MinTesselationLevel,
+                                                          const glm::vec3& SurfaceColor,
+                                                          const float Metallic,
+                                                          const glm::vec3& Absorption,
+                                                          const float Roughness,
+                                                          const glm::vec3& FoamColor,
+                                                          const float FoamMetallic,
+                                                          const float FoamRoughness,
+                                                          const float SssDistortion,
+                                                          const float SssPower,
+                                                          const float SssScale,
+                                                          const glm::vec3& SssColor,
+                                                          const float SssThreshold): ViewMatrix(),
+        ProjectionMatrix(),
+        GridOrigin(),
+        CameraNearPlane(0.0f),
+        CameraFarPlane(0.0f),
+        CameraPosition(),
+        TesselationMaxDistance(TesselationMaxDistance),
+        TesselationMinDistance(TesselationMinDistance),
+        MaxTesselationLevel(MaxTesselationLevel),
+        MinTesselationLevel(MinTesselationLevel),
+        SurfaceColor(SurfaceColor),
+        Metallic(Metallic),
+        Absorption(Absorption),
+        Roughness(Roughness),
+        FoamColor(FoamColor),
+        FoamMetallic(FoamMetallic),
+        FoamRoughness(FoamRoughness),
+        SssDistortion(SssDistortion),
+        SssPower(SssPower),
+        SssScale(SssScale),
+        SssColor(SssColor),
+        SssThreshold(SssThreshold)
+    {
+    }
+
+    WaterSystem::FftShaderUniformLocations::FftShaderUniformLocations(const Shader FftShader)
         : TotalCount(FftShader.GetUniformLocation("TotalCount")),
           Subcount(FftShader.GetUniformLocation("Subcount"))
     {
@@ -93,7 +139,9 @@ namespace Core
                                DefaultSurfaceColor, DefaultMetallic,
                                DefaultAbsorption, DefaultRoughness,
                                DefaultFoamColor, DefaultFoamMetallic,
-                               DefaultFoamRoughness),
+                               DefaultFoamRoughness, DefaultSssDistortion,
+                               DefaultSssPower, DefaultSssScale,
+                               DefaultSssColor, DefaultSssThreshold),
           _initialSpectrumSettingsBufferData(DefaultWindVelocity, DefaultFetch, DefaultDelta, DefaultSwell,
                                              CalculateInitialSpectrumAlpha(
                                                  DefaultWindVelocity, DefaultFetch, Gravity),

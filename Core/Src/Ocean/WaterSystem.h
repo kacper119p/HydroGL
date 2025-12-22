@@ -101,6 +101,12 @@ namespace Core
             alignas(4) float FoamMetallic;
             alignas(4) float FoamRoughness;
 
+            alignas(4) float SssDistortion;
+            alignas(4) float SssPower;
+            alignas(4) float SssScale;
+            alignas(16) glm::vec3 SssColor;
+            alignas(4) float SssThreshold;
+
             WaterShaderUniforms(float TesselationMaxDistance,
                                 float TesselationMinDistance,
                                 float MaxTesselationLevel,
@@ -111,26 +117,12 @@ namespace Core
                                 float Roughness,
                                 const glm::vec3& FoamColor,
                                 float FoamMetallic,
-                                float FoamRoughness)
-                : ViewMatrix(),
-                  ProjectionMatrix(),
-                  GridOrigin(),
-                  CameraNearPlane(0.0f),
-                  CameraFarPlane(0.0f),
-                  CameraPosition(),
-                  TesselationMaxDistance(TesselationMaxDistance),
-                  TesselationMinDistance(TesselationMinDistance),
-                  MaxTesselationLevel(MaxTesselationLevel),
-                  MinTesselationLevel(MinTesselationLevel),
-                  SurfaceColor(SurfaceColor),
-                  Metallic(Metallic),
-                  Absorption(Absorption),
-                  Roughness(Roughness),
-                  FoamColor(FoamColor),
-                  FoamMetallic(FoamMetallic),
-                  FoamRoughness(FoamRoughness)
-            {
-            }
+                                float FoamRoughness,
+                                float SssDistortion,
+                                float SssPower,
+                                float SssScale,
+                                const glm::vec3& SssColor,
+                                float SssThreshold);
         };
 
         class CascadeSettingsBuffer

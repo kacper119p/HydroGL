@@ -152,24 +152,16 @@ void main()
     // ------------------------------------------------------------------
     // Subsurface Scattering
     // ------------------------------------------------------------------
+    const float sssMask = clamp(WaterParameters.SssThreshold - lowFrequencyjacobian / WaterParameters.SssThreshold, 0.0, 1.0);
 
-    vec3 vLight = LightsBuffer.DirectionalLight.Direction;
-
-    const float fLTDistortion = 0.5;
-    const float fLTPower = 2.0;
-    const float fLTScale = 2.5;
-    const float fLTThreshold = 2.0;
-    float fWaveCrestMask = clamp(1.0 - lowFrequencyjacobian / 1.0, 0.0, 1.0);
-    const vec3 vSSSColor = vec3(0.1, 0.8, 0.6);
-
-    vec3 vLTLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * fLTDistortion));
-    float fLTDot = pow(clamp(dot(ViewDirection, -vLTLight),0.0,1.0),fLTPower) * fLTScale;
-    float fFinalSSS = fLTDot * fWaveCrestMask;
-    vec3 sssTerm = vSSSColor * fFinalSSS * (1.0 - foamMask);
+    const vec3 sssLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * WaterParameters.SssDistortion));
+    const float sssDot = pow(clamp(dot(ViewDirection, -sssLight), 0.0, 1.0), WaterParameters.SssPower) * WaterParameters.SssScale;
+    const float sssStrength = sssDot * sssMask;
+    const vec3 sssColor = WaterParameters.SssColor * sssStrength * (1.0 - foamMask);
     // ------------------------------------------------------------------
     // Final color
     // ------------------------------------------------------------------
 
-    const vec3 color = refractedColor + surfaceColor + sssTerm;
+    const vec3 color = refractedColor + surfaceColor + sssColor;
     FragColor = vec4(color, 1.0);
 }

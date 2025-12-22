@@ -48,6 +48,12 @@ layout(std140, binding = binding_point) uniform waterParameters \
         vec3 FoamColor;\
         float FoamMetallic;\
         float FoamRoughness;\
+        \
+        float SssDistortion;\
+        float SssPower;\
+        float SssScale;\
+        vec3 SssColor;\
+        float SssThreshold;\
  } WaterParameters;
 
 struct cascadeSettings
