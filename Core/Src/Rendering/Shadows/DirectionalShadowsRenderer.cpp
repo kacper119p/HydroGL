@@ -84,8 +84,8 @@ namespace Core
 
             // Extend Z-Range (Near/Far planes) to capture occluders outside the frustum
             constexpr float margin = 2.0f;
-            minCorner.z = minCorner.z < 0.0f ? minCorner.z * margin : minCorner.z /= margin;
-            maxCorner.z = maxCorner.z < 0.0f ? maxCorner.z / margin : maxCorner.z *= margin;
+            minCorner.z = minCorner.z < 0.0f ? minCorner.z * margin : minCorner.z / margin;
+            maxCorner.z = maxCorner.z < 0.0f ? maxCorner.z / margin : maxCorner.z * margin;
 
             // Texel Snapping
             float shadowMapWidth = static_cast<float>(ShadowMapResolution);

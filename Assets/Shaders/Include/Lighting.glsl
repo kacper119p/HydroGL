@@ -65,7 +65,7 @@ float FastPow5(float x)
 }
 
 float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, const vec3 WorldPosition, const vec3 Normal) {
-    const float depth = abs((Light.ViewMatrix * vec4(WorldPosition, 1.0)).z);
+    const float depth = -(Light.ViewMatrix * vec4(WorldPosition, 1.0)).z;
     int layer = -1;
     for (int i = 0; i < 4; ++i) {
         if (depth < Light.CascadeSplits[i]) {
@@ -77,6 +77,11 @@ float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, c
 
     const vec4 fragPosLightSpace = Light.CascadeViewProj[layer] * vec4(WorldPosition, 1.0);
     const vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w * 0.5 + 0.5;
+
+    if (projCoords.z < 0.0 || projCoords.z > 1.0)
+    {
+        return 1.0;
+    }
 
     const float bias = max(SHADOW_BIAS * (1.0 - dot(Normal, Light.Direction)), SHADOW_BIAS);
 
