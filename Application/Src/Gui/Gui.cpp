@@ -16,8 +16,7 @@ namespace
 
     constexpr float Epsilon = std::numeric_limits<float>::epsilon();
 
-#define GUI_UNIQUE_ID(name) constexpr int32_t name\
-    = ::std::bit_cast<int32_t>(::Core::Hash::FoldHash(::Core::Hash::HashString(#name)))
+#define GUI_UNIQUE_ID(name) constexpr int32_t name = ::std::bit_cast<int32_t>(::Core::Hash::HashString32(#name))
 
     GUI_UNIQUE_ID(TopBarId);
     GUI_UNIQUE_ID(WaterSettingsWindowId);
