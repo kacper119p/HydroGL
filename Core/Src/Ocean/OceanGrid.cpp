@@ -158,7 +158,7 @@ namespace Core
         for (uint32_t i = 0; i < _patchCount; ++i)
         {
             bool inside = true;
-            const glm::vec3 worldPatchPos = _allPatchPositions[i] + GridOffset;
+            const glm::vec3 worldPatchPos = _allPatchPositions[i] + glm::vec3(GridOffset.x, 0.0f, GridOffset.z);
 
             for (uint32_t j = 0; j < 6; ++j)
             {
