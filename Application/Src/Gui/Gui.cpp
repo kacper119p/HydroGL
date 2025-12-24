@@ -6,6 +6,7 @@
 #include "ImGuiContext.h"
 #include "SystemInfo.h"
 #include "Camera/CameraManager.h"
+#include "Math/Hash.h"
 
 namespace
 {
@@ -14,6 +15,21 @@ namespace
             ImGuiWindowFlags_NoResize;
 
     constexpr float Epsilon = std::numeric_limits<float>::epsilon();
+
+#define GUI_UNIQUE_ID(name) constexpr int32_t name\
+    = ::std::bit_cast<int32_t>(::Core::Hash::FoldHash(::Core::Hash::HashString(#name)))
+
+    GUI_UNIQUE_ID(TopBarId);
+    GUI_UNIQUE_ID(WaterSettingsWindowId);
+    GUI_UNIQUE_ID(WaterSpectrumId);
+    GUI_UNIQUE_ID(WaterTessellationId);
+    GUI_UNIQUE_ID(WaterFoamId);
+    GUI_UNIQUE_ID(WaterSprayId);
+    GUI_UNIQUE_ID(WaterLightingId);
+    GUI_UNIQUE_ID(WaterSssId);
+    GUI_UNIQUE_ID(SystemInfoWindowId);
+    GUI_UNIQUE_ID(CameraSettingsWindowId);
+    GUI_UNIQUE_ID(TextureViewerWindowId);
 }
 
 namespace Application
@@ -70,6 +86,7 @@ namespace Application
 
     void Gui::RenderTopBar()
     {
+        ImGui::PushID(TopBarId);
         ImGui::BeginMainMenuBar();
         if (ImGui::Button("Water Settings"))
         {
@@ -102,14 +119,17 @@ namespace Application
         ImGui::SameLine(labelX);
         ImGui::TextUnformatted(rightText.c_str());
         ImGui::EndMainMenuBar();
+        ImGui::PopID();
     }
 
     void Gui::RenderWaterSettings()
     {
+        ImGui::PushID(WaterSettingsWindowId);
         if (ImGui::Begin("Water Settings", &_showWaterSettings, FloatingWindowFlags))
         {
             if (ImGui::CollapsingHeader("Spectrum Settings"))
             {
+                ImGui::PushID(WaterSpectrumId);
                 glm::vec2 windVelocity = _waterSystem->GetWindVelocity();
                 if (ImGui::DragFloat2("Wind Velocity [m/s]", &windVelocity[0]))
                 {
@@ -132,9 +152,11 @@ namespace Application
                 {
                     _waterSystem->SetSwell(swell);
                 }
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Tesselation Settings"))
             {
+                ImGui::PushID(WaterTessellationId);
                 float tesselationMaxDistance = _waterSystem->GetTesselationMaxDistance();
                 if (ImGui::DragFloat("Max Distance", &tesselationMaxDistance, 1.0f, 0.1f,
                                      std::numeric_limits<float>::max(), "%.1f"))
@@ -158,9 +180,11 @@ namespace Application
                 {
                     _waterSystem->SetMinTesselationLevel(glm::clamp(minTesselationLevel, 1.0f, 64.0f));
                 }
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Foam Settings"))
             {
+                ImGui::PushID(WaterFoamId);
                 float foamThreshold = _waterSystem->GetFoamThreshold();
                 if (ImGui::DragFloat("Threshold", &foamThreshold, 0.01f, 0.0f,
                                      std::numeric_limits<float>::max(), "%.2f"))
@@ -179,9 +203,11 @@ namespace Application
                 {
                     _waterSystem->SetFoamIntensity(glm::max(foamIntensity, 0.0f));
                 }
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Spray Settings"))
             {
+                ImGui::PushID(WaterSprayId);
                 Core::SprayManager& sprayManager = _waterSystem->GetSprayManager();
 
                 float spawnRange = sprayManager.GetSpawnRange();
@@ -228,9 +254,11 @@ namespace Application
                 {
                     sprayManager.SetWindInfluence(glm::clamp(windInfluence, 0.0f, 1.0f));
                 }
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Lighting"))
             {
+                ImGui::PushID(WaterLightingId);
                 glm::vec3 surfaceColor = _waterSystem->GetSurfaceColor();
                 if (ImGui::ColorEdit3("Surface Color", &surfaceColor[0]))
                 {
@@ -267,9 +295,11 @@ namespace Application
                 {
                     _waterSystem->SetFoamRoughness(glm::clamp(foamRoughness, 0.0f, 1.0f));
                 }
+                ImGui::PopID();
             }
             if (ImGui::CollapsingHeader("Subsurface Scattering"))
             {
+                ImGui::PushID(WaterSssId);
                 float sssDistortion = _waterSystem->GetSssDistortion();
                 if (ImGui::DragFloat("Distortion", &sssDistortion, 0.01f, 0.0f,
                                      std::numeric_limits<float>::max(), "%.2f"))
@@ -304,13 +334,16 @@ namespace Application
                 {
                     _waterSystem->SetSssColor(sssColor);
                 }
+                ImGui::PopID();
             }
         }
         ImGui::End();
+        ImGui::PopID();
     }
 
     void Gui::RenderSystemInfoWindow()
     {
+        ImGui::PushID(SystemInfoWindowId);
         if (ImGui::Begin("System Info", &_showSystemInfo, FloatingWindowFlags))
         {
             const GLubyte* renderer = glGetString(GL_RENDERER);
@@ -335,10 +368,12 @@ namespace Application
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
         ImGui::End();
+        ImGui::PopID();
     }
 
     void Gui::RenderCameraSettings()
     {
+        ImGui::PushID(CameraSettingsWindowId);
         if (ImGui::Begin("Camera Settings", &_showCameraSettings, FloatingWindowFlags))
         {
             float rotationSensitivity = _cameraManager->GetRotationSensitivity() /
@@ -360,10 +395,12 @@ namespace Application
             }
         }
         ImGui::End();
+        ImGui::PopID();
     }
 
     void Gui::RenderTextureViewer()
     {
+        ImGui::PushID(TextureViewerWindowId);
         if (ImGui::Begin("Texture Viewer", &_showTextureViewer, FloatingWindowFlags))
         {
             constexpr ImVec2 imageSize(512, 512);
@@ -401,5 +438,6 @@ namespace Application
             }
         }
         ImGui::End();
+        ImGui::PopID();
     }
 }
