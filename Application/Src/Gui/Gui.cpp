@@ -2,7 +2,6 @@
 
 #include <format>
 #include <imgui.h>
-#include <spdlog/spdlog.h>
 
 #include "ImGuiContext.h"
 #include "SystemInfo.h"
