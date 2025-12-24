@@ -16,12 +16,13 @@ namespace
 
     constexpr float Epsilon = std::numeric_limits<float>::epsilon();
 
-#define GUI_UNIQUE_ID(name) constexpr int32_t name = ::std::bit_cast<int32_t>(::Core::Hash::HashString(#name))
+#define GUI_UNIQUE_ID(name) constexpr int32_t name\
+    = ::std::bit_cast<int32_t>(::Core::Hash::FoldHash(::Core::Hash::HashString(#name)))
 
     GUI_UNIQUE_ID(TopBarId);
     GUI_UNIQUE_ID(WaterSettingsWindowId);
     GUI_UNIQUE_ID(WaterSpectrumId);
-    GUI_UNIQUE_ID(WaterTesselationId);
+    GUI_UNIQUE_ID(WaterTessellationId);
     GUI_UNIQUE_ID(WaterFoamId);
     GUI_UNIQUE_ID(WaterSprayId);
     GUI_UNIQUE_ID(WaterLightingId);
@@ -155,7 +156,7 @@ namespace Application
             }
             if (ImGui::CollapsingHeader("Tesselation Settings"))
             {
-                ImGui::PushID(WaterTesselationId);
+                ImGui::PushID(WaterTessellationId);
                 float tesselationMaxDistance = _waterSystem->GetTesselationMaxDistance();
                 if (ImGui::DragFloat("Max Distance", &tesselationMaxDistance, 1.0f, 0.1f,
                                      std::numeric_limits<float>::max(), "%.1f"))
