@@ -28,13 +28,13 @@ namespace Core::Hash
     }
 
     /**
-    * @brief Computes the FNV-1a hash of a given string at compile time.
-    *
-    * https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
-    *
-    * @param String The input string to hash.
-    * @return The computed hash value as a 32-bit unsigned integer.
-    */
+     * @brief Computes the FNV-1a hash of a given string at compile time.
+     *
+     * https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+     *
+     * @param String The input string to hash.
+     * @return The computed hash value as a 32-bit unsigned integer.
+     */
     [[nodiscard]] constexpr uint32_t HashString32(const std::string_view String)
     {
         constexpr uint32_t fnvOffsetBasis = 0x811c9dc5;
