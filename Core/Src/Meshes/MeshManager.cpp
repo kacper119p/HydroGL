@@ -31,9 +31,9 @@ namespace Core
         _glVertexBuffer = GlBufferUnique::Create();
 
         glNamedBufferStorage(_glElementBuffer, VertexBufferMaxCapacity * sizeof(uint32_t),
-                             nullptr,GL_DYNAMIC_STORAGE_BIT);
+                             nullptr, GL_DYNAMIC_STORAGE_BIT);
         glNamedBufferStorage(_glVertexBuffer, VertexBufferMaxCapacity * MeshVerticesData::VertexSize,
-                             nullptr,GL_DYNAMIC_STORAGE_BIT);
+                             nullptr, GL_DYNAMIC_STORAGE_BIT);
 
         // Face indices
         glVertexArrayElementBuffer(_glVertexArray, _glElementBuffer);
