@@ -14,9 +14,9 @@ namespace Core
     MeshVerticesData MeshManager::_vertexBuffer(VertexBufferMaxCapacity);
     MeshFacesData MeshManager::_faceBuffer(VertexBufferMaxCapacity);
 
-    std::vector<glm::uvec2> MeshManager::_takenVertexMemoryChunks;
+    std::vector<MeshManager::MemoryChunk> MeshManager::_takenVertexMemoryChunks;
 
-    std::vector<glm::uvec2> MeshManager::_takenFaceMemoryChunks;
+    std::vector<MeshManager::MemoryChunk> MeshManager::_takenFaceMemoryChunks;
 
     std::unordered_map<std::string, Mesh> MeshManager::_meshCache(256);
 
@@ -68,11 +68,6 @@ namespace Core
         glVertexArrayVertexBuffer(_glVertexArray, 3, _glVertexBuffer, tangentsOffset, sizeof(glm::vec3));
     }
 
-    void MeshManager::FreeResources()
-    {
-        //TODO: Free remaining resources
-    }
-
     Mesh MeshManager::GetMesh(const std::string& Path)
     {
         if (const auto iterator = _meshCache.find(Path); iterator != _meshCache.end())
@@ -90,7 +85,7 @@ namespace Core
         const auto iterator = _meshCache.find(Path);
         if (iterator != _meshCache.end())
         {
-            //TODO: Free block
+            FreeMeshMemoryChunk(iterator->second);
             _meshCache.erase(iterator);
             return true;
         }
@@ -102,7 +97,7 @@ namespace Core
         for (const auto& [path, mesh] : _meshCache)
             if (mesh == Mesh)
             {
-                //TODO: Free block
+                FreeMeshMemoryChunk(Mesh);
                 _meshCache.erase(path);
                 return true;
             }
@@ -111,10 +106,8 @@ namespace Core
 
     void MeshManager::DeleteAllMeshes()
     {
-        for (const auto& pair : _meshCache)
-        {
-            //TODO: Free block
-        }
+        _takenVertexMemoryChunks.clear();
+        _takenFaceMemoryChunks.clear();
         _meshCache.clear();
     }
 
@@ -228,7 +221,16 @@ namespace Core
                              _faceBuffer.Indices + Mesh._indicesIndex);
     }
 
-    uint32_t MeshManager::AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks)
+    void MeshManager::FreeMeshMemoryChunk(const Mesh& Mesh)
+    {
+        const MemoryChunk vertexChunkToFree(Mesh._verticesIndex);
+        const MemoryChunk faceChunkToFree(Mesh._indicesIndex);
+
+        std::erase(_takenVertexMemoryChunks, vertexChunkToFree);
+        std::erase(_takenFaceMemoryChunks, faceChunkToFree);
+    }
+
+    uint32_t MeshManager::AllocateMemoryChunk(uint32_t VertexCount, std::vector<MemoryChunk>& TakenMemoryChunks)
     {
         if (TakenMemoryChunks.empty())
         {
@@ -238,15 +240,15 @@ namespace Core
 
         if (TakenMemoryChunks.size() == 1)
         {
-            const uint32_t areaStart = TakenMemoryChunks[0].y + 1;
+            const uint32_t areaStart = TakenMemoryChunks[0].End + 1;
             TakenMemoryChunks.emplace_back(areaStart, areaStart + VertexCount);
             return areaStart;
         }
 
         for (uint32_t i = 0; i < TakenMemoryChunks.size() - 1; ++i)
         {
-            const uint32_t areaLowerBound = TakenMemoryChunks[i].y;
-            const uint32_t areaUpperBound = TakenMemoryChunks[i + 1].x;
+            const uint32_t areaLowerBound = TakenMemoryChunks[i].End;
+            const uint32_t areaUpperBound = TakenMemoryChunks[i + 1].Start;
             if (areaUpperBound - areaLowerBound > VertexCount)
             {
                 TakenMemoryChunks.emplace(TakenMemoryChunks.begin() + i + 1, areaLowerBound + 1,
