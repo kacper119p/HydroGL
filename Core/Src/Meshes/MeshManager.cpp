@@ -30,36 +30,42 @@ namespace Core
         _glElementBuffer = GlBufferUnique::Create();
         _glVertexBuffer = GlBufferUnique::Create();
 
-        glBindVertexArray(_glVertexArray);
-        glBindBuffer(GL_ARRAY_BUFFER, _glVertexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _glElementBuffer);
+        glNamedBufferStorage(_glElementBuffer, VertexBufferMaxCapacity * sizeof(uint32_t),
+                             nullptr,GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(_glVertexBuffer, VertexBufferMaxCapacity * MeshVerticesData::VertexSize,
+                             nullptr,GL_DYNAMIC_STORAGE_BIT);
 
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, VertexBufferMaxCapacity * sizeof(unsigned int), nullptr, GL_STATIC_DRAW);
-        glBufferData(GL_ARRAY_BUFFER, VertexBufferMaxCapacity * MeshVerticesData::VertexSize, nullptr, GL_STATIC_DRAW);
+        // Face indices
+        glVertexArrayElementBuffer(_glVertexArray, _glElementBuffer);
 
         const std::byte* base = reinterpret_cast<std::byte*>(_vertexBuffer.Positions);
 
-        //Vertex::Position
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                              reinterpret_cast<void*>(0));
+        //Positions
+        glEnableVertexArrayAttrib(_glVertexArray, 0);
+        glVertexArrayAttribFormat(_glVertexArray, 0, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_glVertexArray, 0, 0);
+        glVertexArrayVertexBuffer(_glVertexArray, 0, _glVertexBuffer, 0, sizeof(glm::vec3));
 
-        //Vertex::TexCoords
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2),
-                              reinterpret_cast<void*>(reinterpret_cast<std::byte*>(_vertexBuffer.TexCoords) - base));
+        //TexCoords
+        const ptrdiff_t texCoordsOffset = reinterpret_cast<std::byte*>(_vertexBuffer.TexCoords) - base;
+        glEnableVertexArrayAttrib(_glVertexArray, 1);
+        glVertexArrayAttribFormat(_glVertexArray, 1, 2, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_glVertexArray, 1, 1);
+        glVertexArrayVertexBuffer(_glVertexArray, 1, _glVertexBuffer, texCoordsOffset, sizeof(glm::vec2));
 
-        //Vertex::Normal
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                              reinterpret_cast<void*>(reinterpret_cast<std::byte*>(_vertexBuffer.Normals) - base));
+        //Normals
+        const ptrdiff_t normalsOffset = reinterpret_cast<std::byte*>(_vertexBuffer.Normals) - base;
+        glEnableVertexArrayAttrib(_glVertexArray, 2);
+        glVertexArrayAttribFormat(_glVertexArray, 2, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_glVertexArray, 2, 2);
+        glVertexArrayVertexBuffer(_glVertexArray, 2, _glVertexBuffer, normalsOffset, sizeof(glm::vec3));
 
-        //Vertex::Tangent
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                              reinterpret_cast<void*>(reinterpret_cast<std::byte*>(_vertexBuffer.Tangents) - base));
-
-        glBindVertexArray(0);
+        //Tangents
+        const ptrdiff_t tangentsOffset = reinterpret_cast<std::byte*>(_vertexBuffer.Tangents) - base;
+        glEnableVertexArrayAttrib(_glVertexArray, 3);
+        glVertexArrayAttribFormat(_glVertexArray, 3, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_glVertexArray, 3, 3);
+        glVertexArrayVertexBuffer(_glVertexArray, 3, _glVertexBuffer, tangentsOffset, sizeof(glm::vec3));
     }
 
     void MeshManager::FreeResources()
@@ -194,37 +200,32 @@ namespace Core
 
     void MeshManager::UploadToGpu(const Mesh& Mesh)
     {
-        glBindVertexArray(_glVertexArray);
-
-        glBindBuffer(GL_ARRAY_BUFFER, _glVertexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _glElementBuffer);
-
         const std::byte* base = reinterpret_cast<std::byte*>(_vertexBuffer.Positions);
 
-        glBufferSubData(GL_ARRAY_BUFFER,
-                        static_cast<GLintptr>(Mesh._verticesIndex * sizeof(glm::vec3)),
-                        static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec3)),
-                        _vertexBuffer.Positions + Mesh._verticesIndex);
-        glBufferSubData(GL_ARRAY_BUFFER,
-                        static_cast<GLintptr>((reinterpret_cast<std::byte*>(_vertexBuffer.TexCoords) - base)
-                                              + Mesh._verticesIndex * sizeof(glm::vec2)),
-                        static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec2)),
-                        _vertexBuffer.TexCoords + Mesh._verticesIndex);
-        glBufferSubData(GL_ARRAY_BUFFER,
-                        static_cast<GLintptr>((reinterpret_cast<std::byte*>(_vertexBuffer.Normals) - base)
-                                              + Mesh._verticesIndex * sizeof(glm::vec3)),
-                        static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec3)),
-                        _vertexBuffer.Normals + Mesh._verticesIndex);
-        glBufferSubData(GL_ARRAY_BUFFER,
-                        static_cast<GLintptr>((reinterpret_cast<std::byte*>(_vertexBuffer.Tangents) - base)
-                                              + Mesh._verticesIndex * sizeof(glm::vec3)),
-                        static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec3)),
-                        _vertexBuffer.Tangents + Mesh._verticesIndex);
+        glNamedBufferSubData(_glVertexBuffer,
+                             static_cast<GLintptr>(Mesh._verticesIndex * sizeof(glm::vec3)),
+                             static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec3)),
+                             _vertexBuffer.Positions + Mesh._verticesIndex);
+        glNamedBufferSubData(_glVertexBuffer,
+                             static_cast<GLintptr>((reinterpret_cast<std::byte*>(_vertexBuffer.TexCoords) - base)
+                                                   + Mesh._verticesIndex * sizeof(glm::vec2)),
+                             static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec2)),
+                             _vertexBuffer.TexCoords + Mesh._verticesIndex);
+        glNamedBufferSubData(_glVertexBuffer,
+                             static_cast<GLintptr>((reinterpret_cast<std::byte*>(_vertexBuffer.Normals) - base)
+                                                   + Mesh._verticesIndex * sizeof(glm::vec3)),
+                             static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec3)),
+                             _vertexBuffer.Normals + Mesh._verticesIndex);
+        glNamedBufferSubData(_glVertexBuffer,
+                             static_cast<GLintptr>((reinterpret_cast<std::byte*>(_vertexBuffer.Tangents) - base)
+                                                   + Mesh._verticesIndex * sizeof(glm::vec3)),
+                             static_cast<GLintptr>(Mesh._verticesCount * sizeof(glm::vec3)),
+                             _vertexBuffer.Tangents + Mesh._verticesIndex);
 
-        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER,
-                        static_cast<GLintptr>(Mesh._indicesIndex * sizeof(uint32_t)),
-                        static_cast<GLintptr>(Mesh._indicesCount * sizeof(uint32_t)),
-                        _faceBuffer.Indices + Mesh._indicesIndex);
+        glNamedBufferSubData(_glElementBuffer,
+                             static_cast<GLintptr>(Mesh._indicesIndex * sizeof(uint32_t)),
+                             static_cast<GLintptr>(Mesh._indicesCount * sizeof(uint32_t)),
+                             _faceBuffer.Indices + Mesh._indicesIndex);
     }
 
     uint32_t MeshManager::AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks)
