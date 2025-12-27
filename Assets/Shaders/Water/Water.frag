@@ -56,7 +56,6 @@ void main()
     vec4 slopeDfdxxDfdzz =  texture(SlopeMaps, vec3(texCoord, 0));
     float dfdzx = texture(DisplacementMaps, vec3(texCoord, 0)).w;
 
-    const vec3 lowFrequencyNormal = NormalFromSlope(slopeDfdxxDfdzz.xy);
     const float lowFrequencyJacobian = (1.0 + slopeDfdxxDfdzz.z) * (1.0 + slopeDfdxxDfdzz.w) - dfdzx * dfdzx;
 
     for (int i = 1; i < CascadeSettingsBuffer.CascadeCount; ++i)
@@ -86,13 +85,15 @@ void main()
     {
         const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
-        const float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
+        const float texelSize = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
 
         const float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
-        const float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
-        const float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
+        const float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texelSize, 0)).r;
+        const float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texelSize)).r;
 
-        const vec2 dh = vec2((hX - hC) / texel, (hY - hC) / texel);
+        const float physicalTexelSize = DynamicWavesBuffer.Waves[i].WaveFieldSize * texelSize;
+
+        const vec2 dh = vec2((hX - hC) / physicalTexelSize, (hY - hC) / physicalTexelSize);
         dynamicSlope += dh;
     }
 
@@ -154,7 +155,7 @@ void main()
     // ------------------------------------------------------------------
     const float sssMask = clamp(WaterParameters.SssThreshold - lowFrequencyJacobian / WaterParameters.SssThreshold, 0.0, 1.0);
 
-    const vec3 sssLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * WaterParameters.SssDistortion));
+    const vec3 sssLight = normalize(LightsBuffer.DirectionalLight.Direction + (normal * WaterParameters.SssDistortion));
     const float sssDot = pow(clamp(dot(ViewDirection, -sssLight), 0.0, 1.0), WaterParameters.SssPower) * WaterParameters.SssScale;
     const float sssStrength = sssDot * sssMask;
     const vec3 sssColor = WaterParameters.SssColor * sssStrength * (1.0 - foamMask);
