@@ -27,7 +27,5 @@ namespace Core
     Engine::~Engine()
     {
         spdlog::info("Engine Shutdown.");
-
-        MeshManager::FreeResources();
     }
 }

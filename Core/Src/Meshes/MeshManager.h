@@ -16,12 +16,45 @@ namespace Core
     {
     public:
         static constexpr uint32_t VertexBufferMaxCapacity = 4194304; //Space for 2^22 vertices
+    private:
+        struct MemoryChunk
+        {
+            uint32_t Start;
+            uint32_t End;
+
+            /**
+             * @brief Single parameter constructor used for searching.
+             * @param Start The start index of the memory chunk.
+             */
+            explicit MemoryChunk(const uint32_t Start) : Start(Start), End(0)
+            {
+            }
+
+            /**
+             * @brief Constructor.
+             * @param Start The start index of the memory chunk.
+             * @param End The end index of the memory chunk.
+             */
+            MemoryChunk(const uint32_t Start, const uint32_t End) : Start(Start), End(End)
+            {
+            }
+
+            friend bool operator==(const MemoryChunk& Lhs, const MemoryChunk& Rhs)
+            {
+                return Lhs.Start == Rhs.Start;
+            }
+
+            friend bool operator!=(const MemoryChunk& Lhs, const MemoryChunk& Rhs)
+            {
+                return !(Lhs == Rhs);
+            }
+        };
 
     private:
         static MeshVerticesData _vertexBuffer;
         static MeshFacesData _faceBuffer;
-        static std::vector<glm::uvec2> _takenVertexMemoryChunks;
-        static std::vector<glm::uvec2> _takenFaceMemoryChunks;
+        static std::vector<MemoryChunk> _takenVertexMemoryChunks;
+        static std::vector<MemoryChunk> _takenFaceMemoryChunks;
 
         static std::unordered_map<std::string, Mesh> _meshCache;
 
@@ -67,8 +100,6 @@ namespace Core
 
         static void Initialize();
 
-        static void FreeResources();
-
         [[nodiscard]] static Mesh GetMesh(const std::string& Path);
 
         static bool DeleteMesh(const std::string& Path);
@@ -83,7 +114,7 @@ namespace Core
 
         [[nodiscard]] static std::string GetMeshPath(const Mesh& Mesh);
 
-        static uint32_t AllocateMemoryChunk(uint32_t VertexCount, std::vector<glm::uvec2>& TakenMemoryChunks);
+        static uint32_t AllocateMemoryChunk(uint32_t VertexCount, std::vector<MemoryChunk>& TakenMemoryChunks);
 
         static void BindVao()
         {
@@ -96,5 +127,7 @@ namespace Core
         static void ProcessScene(const aiScene& Scene, Mesh& Mesh);
 
         static void UploadToGpu(const Mesh& Mesh);
+
+        static void FreeMeshMemoryChunk(const Mesh& Mesh);
     };
 }
