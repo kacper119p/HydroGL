@@ -19,11 +19,11 @@ layout(binding = 1) uniform sampler2D PreviousFrameWaves0;
 layout(binding = 2) uniform sampler2D PreviousFrameWaves1;
 layout(binding = 3, r32f) writeonly restrict uniform image2D OutputWaves;
 
-float calculateEdgeFade(vec2 uv) {
+float calculateEdgeFade(const vec2 uv) {
+    const float margin = 0.1;
     const vec2 distanceToEdge = min(uv, 1.0 - uv);
-    const vec2 fade = smoothstep(vec2(0.0), vec2(0.1), distanceToEdge);
-    const float result = fade.x * fade.y;
-    return result * result;
+    const vec2 fade = clamp(distanceToEdge / margin, 0.0, 1.0);
+    return fade.x * fade.y;
 }
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
@@ -38,14 +38,14 @@ void main()
     const float previousDelta1 = float(textureResolution.x) / ShaderUniforms.PreviousInteractiveWavesFieldSize1;
     const float currentDelta = float(textureResolution.x) / ShaderUniforms.CurrentInteractiveWavesFieldSize;
 
-    float scaleRatio0 = ShaderUniforms.CurrentInteractiveWavesFieldSize / ShaderUniforms.PreviousInteractiveWavesFieldSize0;
-    float scaleRatio1 = ShaderUniforms.CurrentInteractiveWavesFieldSize / ShaderUniforms.PreviousInteractiveWavesFieldSize1;
+    const float scaleRatio0 = ShaderUniforms.CurrentInteractiveWavesFieldSize / ShaderUniforms.PreviousInteractiveWavesFieldSize0;
+    const float scaleRatio1 = ShaderUniforms.CurrentInteractiveWavesFieldSize / ShaderUniforms.PreviousInteractiveWavesFieldSize1;
 
-    vec2 worldOffsetPixels0 = (ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition0) * previousDelta0;
-    vec2 worldOffsetPixels1 = (ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition1) * previousDelta1;
+    const vec2 worldOffsetPixels0 = (ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition0) * previousDelta0;
+    const vec2 worldOffsetPixels1 = (ShaderUniforms.CurrentObjectWorldPosition - ShaderUniforms.PreviousObjectWorldPosition1) * previousDelta1;
 
-    vec2 previousSamplePosition0 = (vec2(centeredPixelCoords) * scaleRatio0 - worldOffsetPixels0 + vec2(textureCenter) + 0.5) / float(textureResolution);
-    vec2 previousSamplePosition1 = (vec2(centeredPixelCoords) * scaleRatio1 - worldOffsetPixels1 + vec2(textureCenter) + 0.5) / float(textureResolution);
+    const vec2 previousSamplePosition0 = (vec2(centeredPixelCoords) * scaleRatio0 - worldOffsetPixels0 + vec2(textureCenter) + 0.5) / float(textureResolution);
+    const vec2 previousSamplePosition1 = (vec2(centeredPixelCoords) * scaleRatio1 - worldOffsetPixels1 + vec2(textureCenter) + 0.5) / float(textureResolution);
 
     const vec2 dx = vec2(1.0 / float(textureResolution), 0.0);
     const vec2 dy = vec2(0.0, 1.0 / float(textureResolution));
