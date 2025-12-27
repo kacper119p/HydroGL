@@ -249,7 +249,7 @@ namespace Core
             return 0;
         }
 
-        for (uint32_t i = 0; i < TakenMemoryChunks.size() - 1; ++i)
+        for (size_t i = 0; i < TakenMemoryChunks.size() - 1; ++i)
         {
             const uint32_t areaLowerBound = TakenMemoryChunks[i].End;
             const uint32_t areaUpperBound = TakenMemoryChunks[i + 1].Start;
@@ -262,8 +262,7 @@ namespace Core
         }
 
         const uint32_t lastChunkEnd = TakenMemoryChunks.back().End;
-        if (VertexBufferMaxCapacity > lastChunkEnd + 1
-            && VertexBufferMaxCapacity - 1 - lastChunkEnd >= VertexCount)
+        if (VertexBufferMaxCapacity - 1 - lastChunkEnd >= VertexCount)
         {
             const uint32_t newStart = lastChunkEnd + 1;
             TakenMemoryChunks.emplace_back(newStart, newStart + VertexCount - 1);
@@ -283,7 +282,8 @@ namespace Core
         );
 
         const aiScene* scene = importer.ReadFile(Path,
-                                                 aiProcess_Triangulate | aiProcess_GenNormals);
+                                                 aiProcess_Triangulate | aiProcess_GenNormals |
+                                                 aiProcess_CalcTangentSpace);
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
             !scene->mRootNode)
