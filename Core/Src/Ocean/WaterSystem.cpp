@@ -39,11 +39,11 @@ namespace Core
         constexpr float DefaultFoamMetallic = 0.0f;
         constexpr float DefaultFoamRoughness = 1.0f;
 
-        constexpr float DefaultSssDistortion = 0.5f;
-        constexpr float DefaultSssPower = 2.0f;
+        constexpr float DefaultSssDistortion = 1.1f;
+        constexpr float DefaultSssPower = 3.0f;
         constexpr float DefaultSssScale = 2.5f;
         constexpr glm::vec3 DefaultSssColor{0.1f, 0.8f, 0.6f};
-        constexpr float DefaultSssThreshold = 1.0f;
+        constexpr float DefaultSssThreshold = 1.1f;
     }
 
     WaterSystem::WaterShaderUniforms::WaterShaderUniforms(const float TesselationMaxDistance,
