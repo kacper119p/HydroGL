@@ -230,19 +230,23 @@ namespace Core
         std::erase(_takenFaceMemoryChunks, faceChunkToFree);
     }
 
-    uint32_t MeshManager::AllocateMemoryChunk(uint32_t VertexCount, std::vector<MemoryChunk>& TakenMemoryChunks)
+    uint32_t MeshManager::AllocateMemoryChunk(const uint32_t VertexCount, std::vector<MemoryChunk>& TakenMemoryChunks)
     {
         if (TakenMemoryChunks.empty())
         {
-            TakenMemoryChunks.emplace_back(0, VertexCount);
-            return 0;
+            if (VertexCount <= VertexBufferMaxCapacity)
+            {
+                TakenMemoryChunks.emplace_back(0, VertexCount - 1);
+                return 0;
+            }
+            CHECK(false, "Program ran out of allocated vertex memory!");
+            return std::numeric_limits<uint32_t>::max();
         }
 
-        if (TakenMemoryChunks.size() == 1)
+        if (TakenMemoryChunks[0].Start >= VertexCount)
         {
-            const uint32_t areaStart = TakenMemoryChunks[0].End + 1;
-            TakenMemoryChunks.emplace_back(areaStart, areaStart + VertexCount);
-            return areaStart;
+            TakenMemoryChunks.emplace(TakenMemoryChunks.begin(), 0, VertexCount - 1);
+            return 0;
         }
 
         for (uint32_t i = 0; i < TakenMemoryChunks.size() - 1; ++i)
@@ -252,9 +256,18 @@ namespace Core
             if (areaUpperBound - areaLowerBound > VertexCount)
             {
                 TakenMemoryChunks.emplace(TakenMemoryChunks.begin() + i + 1, areaLowerBound + 1,
-                                          areaUpperBound - 1);
+                                          areaLowerBound + VertexCount);
                 return areaLowerBound + 1;
             }
+        }
+
+        const uint32_t lastChunkEnd = TakenMemoryChunks.back().End;
+        if (VertexBufferMaxCapacity > lastChunkEnd + 1
+            && VertexBufferMaxCapacity - 1 - lastChunkEnd >= VertexCount)
+        {
+            const uint32_t newStart = lastChunkEnd + 1;
+            TakenMemoryChunks.emplace_back(newStart, newStart + VertexCount - 1);
+            return newStart;
         }
 
         CHECK(false, "Program ran out of allocated vertex memory!");
