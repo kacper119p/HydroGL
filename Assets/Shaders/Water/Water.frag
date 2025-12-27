@@ -86,13 +86,15 @@ void main()
     {
         const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
-        const float texel = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
+        const float texelSize = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
 
         const float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
-        const float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texel, 0)).r;
-        const float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texel)).r;
+        const float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texelSize, 0)).r;
+        const float hY = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(0, texelSize)).r;
 
-        const vec2 dh = vec2((hX - hC) / texel, (hY - hC) / texel);
+        const float physicalTexelSize = DynamicWavesBuffer.Waves[i].WaveFieldSize * texelSize;
+
+        const vec2 dh = vec2((hX - hC) / physicalTexelSize, (hY - hC) / physicalTexelSize);
         dynamicSlope += dh;
     }
 
