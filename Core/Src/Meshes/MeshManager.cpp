@@ -187,7 +187,7 @@ namespace Core
             {
                 const aiFace& face = mesh->mFaces[i];
                 CHECK(face.mNumIndices == 3, "Mesh is not triangulated!");
-                for (unsigned int j = 0; j < 3; j++)
+                for (uint32_t j = 0; j < 3; j++)
                 {
                     _faceBuffer.Indices[offset] = face.mIndices[j];
                     offset++;
@@ -243,7 +243,7 @@ namespace Core
             return areaStart;
         }
 
-        for (int i = 0; i < TakenMemoryChunks.size() - 1; ++i)
+        for (uint32_t i = 0; i < TakenMemoryChunks.size() - 1; ++i)
         {
             const uint32_t areaLowerBound = TakenMemoryChunks[i].y;
             const uint32_t areaUpperBound = TakenMemoryChunks[i + 1].x;
