@@ -32,8 +32,11 @@ target_link_libraries(${LIBRARY_NAME} PRIVATE ${OPENGL_LIBRARIES})
 #Link third party libraries
 target_link_libraries(${LIBRARY_NAME} PUBLIC imgui)
 target_link_libraries(${LIBRARY_NAME} PRIVATE glad)
-target_link_libraries(${LIBRARY_NAME} PRIVATE wgl)
 target_link_libraries(${LIBRARY_NAME} PRIVATE spdlog::spdlog)
+
+if (WIN32)
+    target_link_libraries(${LIBRARY_NAME} PRIVATE wgl)
+endif ()
 
 target_include_directories(${LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
         ${glad_SOURCE_DIR})

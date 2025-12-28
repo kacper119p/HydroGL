@@ -71,9 +71,6 @@ CPMAddPackage(
         GITHUB_REPOSITORY assimp/assimp
         GIT_TAG v6.0.2
         OPTIONS
-        "ASSIMP_BUILD_TESTS OFF"
-        "ASSIMP_NO_EXPORT ON"
-        "ASSIMP_BUILD_ASSIMP_TOOLS OFF"
         "ASSIMP_INJECT_DEBUG_POSTFIX OFF"
         "BUILD_SHARED_LIBS OFF"
         "ASSIMP_NO_EXPORT ON"
@@ -91,9 +88,9 @@ CPMAddPackage(
 CPMAddPackage(
         NAME JoltPhysics
         GITHUB_REPOSITORY jrouwe/JoltPhysics
-        GIT_TAG v5.4.0
-        GIT_TAG "v5.5.0"
+        GIT_TAG v5.5.0
         SOURCE_SUBDIR "Build"
+        OPTIONS
         "TARGET_HELLO_WORLD OFF"
         "TARGET_SAMPLES OFF"
         "TARGET_VIEWER OFF"
@@ -113,7 +110,6 @@ CPMAddPackage(
 
 set_target_properties(
         glad
-        wgl
         boost
         imgui
         assimp
@@ -122,3 +118,7 @@ set_target_properties(
         EnTT
         Jolt
         PROPERTIES FOLDER "ThirdParty")
+
+if (WIN32)
+    set_target_properties(wgl PROPERTIES FOLDER "ThirdParty")
+endif ()
