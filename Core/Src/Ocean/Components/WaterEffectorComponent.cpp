@@ -27,7 +27,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
     glCreateTextures(GL_TEXTURE_2D, 1, &MaskTexture);
     glCreateTextures(GL_TEXTURE_2D, 3, InteractiveWavesTextures.Data());
 
-    void* textureData = calloc(TexturesResolution * TexturesResolution, sizeof(float));
+    void* textureData = std::calloc(TexturesResolution * TexturesResolution, sizeof(float));
 
     glTextureStorage2D(MaskTexture, 1, GL_R32F, TexturesResolution,
                        TexturesResolution);
@@ -53,7 +53,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
         InteractiveWavesTextureHandles[i] = glGetTextureHandleARB(InteractiveWavesTextures[i]);
         glMakeTextureHandleResidentARB(InteractiveWavesTextureHandles[i]);
     }
-    free(textureData);
+    std::free(textureData);
 }
 
 Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,

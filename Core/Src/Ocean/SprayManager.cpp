@@ -10,17 +10,17 @@ namespace Core
 {
     GlBufferUnique SprayManager::CreateParticleDataSsbo()
     {
-        void* initialData = calloc(MaxParticleCount, sizeof(ParticleData));
+        void* initialData = std::calloc(MaxParticleCount, sizeof(ParticleData));
         GlBufferUnique buffer = GlBufferUnique::Create();
         glNamedBufferStorage(buffer, MaxParticleCount * sizeof(ParticleData), initialData, GL_DYNAMIC_STORAGE_BIT);
-        free(initialData);
+        std::free(initialData);
         return buffer;
     }
 
     GlBufferUnique SprayManager::CreateFreeListSsbo()
     {
         uint32_t* const initialData
-                = static_cast<uint32_t*>(malloc(sizeof(int32_t) + MaxParticleCount * sizeof(uint32_t)));
+                = static_cast<uint32_t*>(std::malloc(sizeof(int32_t) + MaxParticleCount * sizeof(uint32_t)));
         int32_t* freeCount = reinterpret_cast<int32_t*>(initialData);
         *freeCount = MaxParticleCount;
         uint32_t* const indices = initialData + 1;
@@ -31,7 +31,7 @@ namespace Core
         GlBufferUnique buffer = GlBufferUnique::Create();
         glNamedBufferStorage(buffer, sizeof(int32_t) + MaxParticleCount * sizeof(uint32_t), initialData,
                              GL_DYNAMIC_STORAGE_BIT);
-        free(initialData);
+        std::free(initialData);
         return buffer;
     }
 
@@ -46,10 +46,10 @@ namespace Core
 
     GlBufferUnique SprayManager::CreateAliveListSsbo()
     {
-        void* initialData = calloc(MaxParticleCount, sizeof(ParticleData));
+        void* initialData = std::calloc(MaxParticleCount, sizeof(ParticleData));
         GlBufferUnique buffer = GlBufferUnique::Create();
         glNamedBufferStorage(buffer, MaxParticleCount * sizeof(uint32_t), initialData, GL_DYNAMIC_STORAGE_BIT);
-        free(initialData);
+        std::free(initialData);
         return buffer;
     }
 

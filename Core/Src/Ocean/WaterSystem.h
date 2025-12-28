@@ -151,7 +151,7 @@ namespace Core
         public:
             explicit CascadeSettingsBuffer(const int32_t TextureResolution)
                 : _capacity(3),
-                  _buffer(static_cast<InternalBuffer*>(malloc(InternalBuffer::CalculateSize(_capacity))))
+                  _buffer(static_cast<InternalBuffer*>(std::malloc(InternalBuffer::CalculateSize(_capacity))))
             {
                 _buffer->TextureResolution = TextureResolution;
                 _buffer->CascadeCount = 0;
@@ -162,7 +162,7 @@ namespace Core
                                   const std::initializer_list<CascadeSettings>&
                                   InitialValues) : _capacity(InitialValues.size())
             {
-                _buffer = static_cast<InternalBuffer*>(malloc(InternalBuffer::CalculateSize(_capacity)));
+                _buffer = static_cast<InternalBuffer*>(std::malloc(InternalBuffer::CalculateSize(_capacity)));
                 _buffer->TextureResolution = TextureResolution;
                 _buffer->CascadeCount = static_cast<int32_t>(InitialValues.size());
                 _buffer->VelocityLayers = VelocityLayers;
@@ -174,7 +174,7 @@ namespace Core
         public:
             ~CascadeSettingsBuffer()
             {
-                free(_buffer);
+                std::free(_buffer);
             }
 
             [[nodiscard]] int32_t GetTextureResolution() const

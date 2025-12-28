@@ -70,13 +70,13 @@ namespace Core
             fclose(file);
             return 0;
         }
-        void* buffer = malloc(fileSize - sizeof(DDS_HEADER) - sizeof(DDS_HEADER_DXT10));
+        void* buffer = std::malloc(fileSize - sizeof(DDS_HEADER) - sizeof(DDS_HEADER_DXT10));
         if (buffer == nullptr)
         {
 #if DEBUG
             NOTIFY_FAILED
 #endif
-            free(buffer);
+            std::free(buffer);
             fclose(file);
             return 0;
         }
@@ -91,7 +91,7 @@ namespace Core
             textureId = CreateTexture2D(textureDescriptor, header, buffer);
         }
 
-        free(buffer);
+        std::free(buffer);
         fclose(file);
 
         return textureId;

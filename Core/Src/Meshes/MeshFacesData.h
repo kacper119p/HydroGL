@@ -12,12 +12,12 @@ namespace Core
     public:
         explicit MeshFacesData(const uint32_t Capacity)
         {
-            Indices = reinterpret_cast<uint32_t*>(malloc(Capacity * sizeof(uint32_t)));
+            Indices = reinterpret_cast<uint32_t*>(std::malloc(Capacity * sizeof(uint32_t)));
         }
 
         ~MeshFacesData()
         {
-            free(Indices);
+            std::free(Indices);
         }
     };
 }
