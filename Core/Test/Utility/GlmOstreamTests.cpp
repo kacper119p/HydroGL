@@ -95,7 +95,7 @@ TEST_F(GlmOstreamTests, Matrix3x2Output)
 {
     const glm::mat3x2 m(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f);
 
-    // Expected format:t: {{col0}, {col1}, {col2}}
+    // Expected format: {{col0}, {col1}, {col2}}
     EXPECT_EQ(ToString(m), "{{1, 2}, {3, 4}, {5, 6}}");
 }
 
