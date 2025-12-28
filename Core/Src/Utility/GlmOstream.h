@@ -1,7 +1,7 @@
 #pragma once
-#include <cstdint>
 #include <ostream>
 #include <glm/detail/qualifier.hpp>
+#include <glm/detail/setup.hpp>
 
 /**
  * @brief Outputs a glm vector to an ostream.
@@ -9,11 +9,11 @@
  * @param Vector Vector to output.
  * @return Reference to the output stream.
  */
-template<int32_t L, typename T, glm::qualifier Q>
+template<glm::length_t L, typename T, glm::qualifier Q>
 std::ostream& operator<<(std::ostream& Ostream, const glm::vec<L, T, Q>& Vector)
 {
     Ostream << "{";
-    for (int32_t i = 0; i < L; ++i)
+    for (glm::length_t i = 0; i < L; ++i)
     {
         Ostream << Vector[i] << (i < L - 1 ? ", " : "");
     }
@@ -27,14 +27,14 @@ std::ostream& operator<<(std::ostream& Ostream, const glm::vec<L, T, Q>& Vector)
  * @param Matrix Matrix to output.
  * @return Reference to the output stream.
  */
-template<int32_t C, int32_t R, typename T, glm::qualifier Q>
+template<glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
 std::ostream& operator<<(std::ostream& Ostream, const glm::mat<C, R, T, Q>& Matrix)
 {
     Ostream << "{";
-    for (int32_t c = 0; c < C; ++c)
+    for (glm::length_t c = 0; c < C; ++c)
     {
         Ostream << "{";
-        for (int32_t r = 0; r < R; ++r)
+        for (glm::length_t r = 0; r < R; ++r)
         {
             Ostream << Matrix[c][r] << (r < R - 1 ? ", " : "");
         }
