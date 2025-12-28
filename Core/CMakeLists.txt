@@ -36,8 +36,6 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
         ${JoltPhysics_SOURCE_DIR}
 )
 
-MESSAGE(${JoltPhysics_SOURCE_DIR})
-
 if (MSVC)
     target_compile_definitions(${LIBRARY_NAME} PRIVATE NOMINMAX)
 endif ()
