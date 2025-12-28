@@ -60,7 +60,7 @@ namespace Core
 
     WaterInteractionSystem::~WaterInteractionSystem()
     {
-        free(_dynamicWavesSampleBuffer.DynamicWavesBuffer);
+        std::free(_dynamicWavesSampleBuffer.DynamicWavesBuffer);
     }
 
     void WaterInteractionSystem::ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem,
@@ -473,7 +473,7 @@ namespace Core
         uint32_t id = 0;
         constexpr int64_t bufferSize = DynamicWavesHeaderSize
                                        + DefaultDynamicWavesCapacity * sizeof(DynamicWavesSampleSsbo);
-        DynamicWavesSampleSsbo* data = static_cast<DynamicWavesSampleSsbo*>(malloc(bufferSize));
+        DynamicWavesSampleSsbo* data = static_cast<DynamicWavesSampleSsbo*>(std::malloc(bufferSize));
         glCreateBuffers(1, &id);
         glNamedBufferData(id, bufferSize, nullptr, GL_DYNAMIC_COPY);
         return DynamicWavesSampleBuffer{GlBufferUnique(id), DefaultDynamicWavesCapacity, data};

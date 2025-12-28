@@ -18,7 +18,7 @@ namespace Core
     public:
         explicit MeshVerticesData(const uint32_t Capacity)
         {
-            void* memory = malloc(Capacity * VertexSize);
+            void* memory = std::malloc(Capacity * VertexSize);
             Positions = reinterpret_cast<glm::vec3*>(memory);
             TexCoords = reinterpret_cast<glm::vec2*>(Positions + Capacity);
             Normals = reinterpret_cast<glm::vec3*>(TexCoords + Capacity);
@@ -27,7 +27,7 @@ namespace Core
 
         ~MeshVerticesData()
         {
-            free(Positions);
+            std::free(Positions);
         }
     };
 }
