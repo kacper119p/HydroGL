@@ -33,13 +33,13 @@ namespace Core::Physics
         }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-        [[nodiscard]] const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
+        [[nodiscard]] const char* GetBroadPhaseLayerName(const JPH::BroadPhaseLayer InLayer) const override
         {
-            switch (inLayer)
+            switch (static_cast<JPH::uint8>(InLayer))
             {
-                case (JPH::BroadPhaseLayer::Type) Physics::BroadPhaseLayers::Static:
+                case static_cast<JPH::uint8>(BroadPhaseLayers::Static):
                     return "STATIC";
-                case (JPH::BroadPhaseLayer::Type) Physics::BroadPhaseLayers::Dynamic:
+                case static_cast<JPH::uint8>(BroadPhaseLayers::Dynamic):
                     return "DYNAMIC";
                 default: JPH_ASSERT(false);
                     return "INVALID";
