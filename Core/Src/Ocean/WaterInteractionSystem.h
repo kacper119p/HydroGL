@@ -99,6 +99,7 @@ namespace Core
             glm::vec3 ObjectPosition;
             float WaveFieldSize;
             uint64_t WaveFieldTexture;
+            uint32_t WaveFieldTextureResolution;
         };
 
         struct alignas(16) DynamicWavesSampleSsbo

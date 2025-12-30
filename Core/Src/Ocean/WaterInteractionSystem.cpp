@@ -407,7 +407,8 @@ namespace Core
                     = DynamicWaveSampleParameters{
                         transform.GetWorldPosition(),
                         waterEffector.PreviousInteractiveWavesFieldSizes[1],
-                        waterEffector.InteractiveWavesTextureHandles[2]
+                        waterEffector.InteractiveWavesTextureHandles[2],
+                        static_cast<uint32_t>(waterEffector.TexturesResolution)
                     };
             ++count;
         }

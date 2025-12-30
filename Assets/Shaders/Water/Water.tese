@@ -20,6 +20,7 @@ struct dynamicWaveSampleParameters
     vec3 ObjectPosition;
     float WaveFieldSize;
     layout(bindless_sampler) sampler2D WaveFieldTexture;
+    uint WaveFieldTextureSize;
 };
 
 layout(std430, binding = 1) readonly restrict buffer DynamicWavesBuffer
