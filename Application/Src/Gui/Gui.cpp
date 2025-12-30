@@ -404,32 +404,32 @@ namespace Application
         {
             constexpr ImVec2 imageSize(512, 512);
             int32_t target = GL_NONE;
-            if (!glIsTexture(_textureSliceViewerSelectedTexture))
+            if (!glIsTexture(_textureViewerSelectedTexture))
             {
                 ImGui::InvisibleButton("Texture", imageSize);
             } else
             {
-                glGetTextureParameteriv(_textureSliceViewerSelectedTexture, GL_TEXTURE_TARGET, &target);
+                glGetTextureParameteriv(_textureViewerSelectedTexture, GL_TEXTURE_TARGET, &target);
                 if (target == GL_TEXTURE_2D_ARRAY)
                 {
                     int32_t layerCount = 0;
-                    glGetTextureLevelParameteriv(_textureSliceViewerSelectedTexture, 0, GL_TEXTURE_DEPTH, &layerCount);
+                    glGetTextureLevelParameteriv(_textureViewerSelectedTexture, 0, GL_TEXTURE_DEPTH, &layerCount);
                     _textureSliceViewerLayerIndex = std::clamp(_textureSliceViewerLayerIndex, 0, layerCount - 1);
-                    _textureArraySliceViewer->ShowLayer(_textureSliceViewerSelectedTexture,
+                    _textureArraySliceViewer->ShowLayer(_textureViewerSelectedTexture,
                                                         _textureSliceViewerLayerIndex, imageSize);
                 } else if (target == GL_TEXTURE_2D)
                 {
                     ImGui::Image(
                         reinterpret_cast<ImTextureID>(reinterpret_cast<void*>(static_cast<intptr_t>(
-                            _textureSliceViewerSelectedTexture))),
+                            _textureViewerSelectedTexture))),
                         imageSize);
                 } else
                 {
                     ImGui::InvisibleButton("Texture", imageSize);
                 }
             }
-            ImGui::InputInt("Texture ID", &_textureSliceViewerSelectedTexture);
-            _textureSliceViewerSelectedTexture = glm::max(_textureSliceViewerSelectedTexture, 0);
+            ImGui::InputInt("Texture ID", &_textureViewerSelectedTexture);
+            _textureViewerSelectedTexture = glm::max(_textureViewerSelectedTexture, 0);
 
             if (target == GL_TEXTURE_2D_ARRAY)
             {
