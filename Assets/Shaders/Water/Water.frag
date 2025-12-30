@@ -6,7 +6,8 @@
 #include "Lighting.glsl"
 
 in vec3 OriginalPosition;
-in vec3 DisplacedPosition;
+in vec3 AmbientDisplacementPosition;
+in vec3 WorldPosition;
 in vec4 ClipSpacePosition;
 
 DEFINE_CASCADE_SETTINGS_BUFFER(0);
@@ -85,7 +86,7 @@ void main()
     vec2 dynamicSlope = vec2(0.0);
     for (int i = 0; i < DynamicWavesBuffer.DynamicWavesCount; ++i)
     {
-        const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
+        const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - AmbientDisplacementPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
         const float texelSize = 1.0 / float(DynamicWavesBuffer.Waves[i].WaveFieldTextureSize);
 
@@ -104,8 +105,8 @@ void main()
     // ------------------------------------------------------------------
     const vec3 normal = NormalFromSlope(slope + dynamicSlope);
 
-    const vec3 ViewDirection = normalize(WaterParameters.CameraPosition - DisplacedPosition);
-    const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, DisplacedPosition, ViewDirection, 1.0);
+    const vec3 ViewDirection = normalize(WaterParameters.CameraPosition - WorldPosition);
+    const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, WorldPosition, ViewDirection, 1.0);
 
     // ------------------------------------------------------------------
     // Refraction

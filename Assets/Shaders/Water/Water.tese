@@ -8,7 +8,8 @@ layout (quads, equal_spacing, ccw) in;
 in vec3 tcPosition[];
 
 out vec3 OriginalPosition;
-out vec3 DisplacedPosition;
+out vec3 AmbientDisplacementPosition;
+out vec3 WorldPosition;
 out vec4 ClipSpacePosition;
 
 DEFINE_WATER_PARAMETERS_BUFFER(1);
@@ -57,10 +58,13 @@ void main()
         const vec2 waveTexCoord = waveLocalPosition / dynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
         dynamicDisplacement.y += texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
     }
+
+    const vec3 worlPosition = tessendorfPosition + dynamicDisplacement;
     
     OriginalPosition = position;
-    DisplacedPosition = tessendorfPosition;
+    AmbientDisplacementPosition = tessendorfPosition;
+    WorldPosition = worlPosition;
 
-    ClipSpacePosition = WaterParameters.ProjectionMatrix * WaterParameters.ViewMatrix * vec4(tessendorfPosition + dynamicDisplacement, 1.0);
+    ClipSpacePosition = WaterParameters.ProjectionMatrix * WaterParameters.ViewMatrix * vec4(worlPosition, 1.0);
     gl_Position = ClipSpacePosition;
 }
