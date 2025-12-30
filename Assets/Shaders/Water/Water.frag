@@ -20,6 +20,7 @@ struct dynamicWaveSampleParameters
     vec3 ObjectPosition;
     float WaveFieldSize;
     layout(bindless_sampler) sampler2D WaveFieldTexture;
+    uint WaveFieldTextureSize;
 };
 
 layout(std430, binding = 1) readonly restrict buffer dynamicWavesBuffer
@@ -86,7 +87,7 @@ void main()
     {
         const vec2 waveLocalPosition =  DynamicWavesBuffer.Waves[i].ObjectPosition.xz - DisplacedPosition.xz;
         const vec2 waveTexCoord = waveLocalPosition / DynamicWavesBuffer.Waves[i].WaveFieldSize + vec2(0.5);
-        const float texelSize = 1.0 / float(textureSize(DynamicWavesBuffer.Waves[i].WaveFieldTexture, 0).x);
+        const float texelSize = 1.0 / float(DynamicWavesBuffer.Waves[i].WaveFieldTextureSize);
 
         const float hC = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
         const float hX = texture(DynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord + vec2(texelSize, 0)).r;
