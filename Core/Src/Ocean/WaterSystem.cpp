@@ -287,7 +287,6 @@ namespace Core
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
 
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         _waterShader.Use();
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
@@ -301,8 +300,6 @@ namespace Core
         glBindTextureUnit(6, SceneDepth);
 
         _oceanGrid.Draw(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
-
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         _sprayManager.Update(DeltaTime,
                              _displacementTextures,
