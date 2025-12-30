@@ -124,11 +124,7 @@ def main():
 
     output_dir_path = os.path.dirname(cubemap_output)
     if not output_dir_path:
-        if args.cleanup and os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-
-        print(f"Removing temporary folder at {output_dir}")
-        raise RuntimeError(f"{output_dir_path} is invalid.")
+        output_dir_path = "."
 
     subprocess.run([
         texconv_path,
