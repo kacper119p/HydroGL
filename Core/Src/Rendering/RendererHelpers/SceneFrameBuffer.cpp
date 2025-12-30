@@ -2,7 +2,7 @@
 
 namespace
 {
-    constexpr GLenum ColorBufferFormat = GL_RGBA16F;
+    constexpr GLenum ColorBufferFormat = GL_R11F_G11F_B10F;
     constexpr GLenum DepthBufferFormat = GL_DEPTH24_STENCIL8;
 }
 
