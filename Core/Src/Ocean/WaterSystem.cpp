@@ -128,8 +128,8 @@ namespace Core
           _hDzDxDfhxTextures(CreateTextureArray(CascadeCount)),
           _dfhzDfdxxDfdzxDfdzz(CreateTextureArray(CascadeCount)),
           _velocityPackedTextures(CreateTextureArray(VelocityPackedTexturesCount * CascadeCount)),
-          _slopeTextures(CreateSlopeTextureArray()),
-          _displacementTextures(CreateTextureArray(CascadeCount)),
+          _slopeTextures(CreateTextureArrayWithMipMapping()),
+          _displacementTextures(CreateTextureArrayWithMipMapping()),
           _velocityTextures(CreateTextureArray(VelocityLayers * CascadeCount)),
           _tmpTextures(CreateTextureArray(VelocityPackedTexturesCount * CascadeCount)),
           _gaussianNoiseTexture(CreateGaussianNoise()),
@@ -172,7 +172,7 @@ namespace Core
         return texture;
     }
 
-    GlTextureUnique WaterSystem::CreateSlopeTextureArray()
+    GlTextureUnique WaterSystem::CreateTextureArrayWithMipMapping()
     {
         GlTextureUnique texture = GlTextureUnique::Create(GL_TEXTURE_2D_ARRAY);
         const int32_t mipLevels = static_cast<int32_t>(std::floorf(std::log2f(TextureResolution))) + 1;
@@ -270,6 +270,7 @@ namespace Core
         AssembleTextures();
 
         glGenerateTextureMipmap(_slopeTextures);
+        glGenerateTextureMipmap(_displacementTextures);
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
