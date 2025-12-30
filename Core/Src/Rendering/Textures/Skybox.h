@@ -16,7 +16,7 @@ namespace Core
         glm::vec3 _environmentColor{};
 
     public:
-        [[nodiscard]] static Skybox CreateSkybox(const std::string_view& FilePath);
+        [[nodiscard]] static Skybox CreateSkybox(std::string_view SkyboxTexturePath, std::string_view IblTexturePath);
 
         static void DestroySkybox(const Skybox& Skybox);
 

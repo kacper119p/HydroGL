@@ -30,7 +30,8 @@ int32_t Application::Application::Run(Platform::Window* Window)
 
     Core::Scene* scene = engine->GetScene();
 
-    scene->SetSkybox(Core::Skybox::CreateSkybox("Assets/Textures/Skyboxes/Skybox.dds"));
+    scene->SetSkybox(Core::Skybox::CreateSkybox("Assets/Textures/Skyboxes/Skybox.dds",
+                                                "Assets/Textures/Skyboxes/SkyboxNoSunDisc.dds"));
 
     entt::registry* entityRegistry = scene->GetEntityRegistry();
 
@@ -91,8 +92,10 @@ int32_t Application::Application::Run(Platform::Window* Window)
         directionalLightEntity);
     Core::DirectionalLightComponent& directionalLight = entityRegistry->emplace<Core::DirectionalLightComponent>(
         directionalLightEntity);
-    directionalLight.Color = glm::vec3(0.0f, 0.0f, 0.0f);
-    directionalLightTransform.SetLocalEulerAngles(glm::vec3(90.0f, 0.0f, 0.0f));
+
+    // Matches Assets/Textures/Skyboxes/Skybox.dds
+    directionalLight.Color = glm::vec3(7.34375, 2.43750f, 0.75000f);
+    directionalLightTransform.SetLocalEulerAngles(glm::vec3(3.875f, 233.5f, 0.0f));
 
     float physicsAccumulatedTime = 0.0f;
     float lastTime = Platform::TimeManager::GetTime();

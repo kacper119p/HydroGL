@@ -10,17 +10,19 @@
 
 namespace Core
 {
-    Skybox Skybox::CreateSkybox(const std::string_view& FilePath)
+    Skybox Skybox::CreateSkybox(const std::string_view SkyboxTexturePath, const std::string_view IblTexturePath)
     {
         Skybox result;
         uint32_t width;
         uint32_t height;
-        result._cubeMap = DdsLoader::LoadDds(FilePath, width, height);
+        result._cubeMap = DdsLoader::LoadDds(SkyboxTexturePath, width, height);
+
+        const GlTextureUnique iblTexture(DdsLoader::LoadDds(IblTexturePath));
 
         CHECK(width == height, "Skybox requires square faces!");
 
-        result._irradianceMap = CubeMapGenerator::IrradianceMapFromSkybox(result._cubeMap);
-        result._prefilterMap = CubeMapGenerator::PrefilterMapFromSkybox(result._cubeMap, width);
+        result._irradianceMap = CubeMapGenerator::IrradianceMapFromSkybox(iblTexture.Get());
+        result._prefilterMap = CubeMapGenerator::PrefilterMapFromSkybox(iblTexture.Get(), width);
 
         result._environmentColor = CubeMapGenerator::GetEnvironmentColorFromIrradianceMap(result._irradianceMap);
 
