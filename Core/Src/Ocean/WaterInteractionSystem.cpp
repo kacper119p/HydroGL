@@ -163,7 +163,7 @@ namespace Core
     void WaterInteractionSystem::DispatchOutputProcessing(const uint32_t AggregationGroupsCount) const
     {
         _outputComputeShader.Use();
-        _outputComputeShader.SetUniform(_partialsCountLocation, static_cast<uint32_t>(AggregationGroupsCount));
+        _outputComputeShader.SetUniform(_partialsCountLocation, AggregationGroupsCount);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _triangleBuffer.PartialSumsBuffer);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _triangleBuffer.OutputBuffer);
         Shader::DispatchCompute(1, 1, 1);
