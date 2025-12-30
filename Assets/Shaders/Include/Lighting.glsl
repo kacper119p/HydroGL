@@ -87,12 +87,12 @@ float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, c
 
     float shadow = 0.0;
     const  vec2 texelSize = 1.0 / textureSize(DirectionalLightShadowMaps, 0).xy;
-    for (int x = -3; x <= 3; ++x) {
-        for (int y = -3; y <= 3; ++y) {
+    for (int x = -2; x <= 2; ++x) {
+        for (int y = -2; y <= 2; ++y) {
             shadow += texture(DirectionalLightShadowMaps, vec4(projCoords.xy + vec2(x, y) * texelSize, layer, projCoords.z - bias));
         }
     }
-    return shadow / 49.0;
+    return shadow / 25.0;
 }
 
 light CalculateDirectionalLight(directionalLight Light, vec3 Position, vec3 Normal)
