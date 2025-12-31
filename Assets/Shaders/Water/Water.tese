@@ -59,12 +59,12 @@ void main()
         dynamicDisplacement.y += texture(dynamicWavesBuffer.Waves[i].WaveFieldTexture, waveTexCoord).r;
     }
 
-    const vec3 worlPosition = tessendorfPosition + dynamicDisplacement;
+    const vec3 worldPosition = tessendorfPosition + dynamicDisplacement;
     
     OriginalPosition = position;
     AmbientDisplacementPosition = tessendorfPosition;
-    WorldPosition = worlPosition;
+    WorldPosition = worldPosition;
 
-    ClipSpacePosition = WaterParameters.ProjectionMatrix * WaterParameters.ViewMatrix * vec4(worlPosition, 1.0);
+    ClipSpacePosition = WaterParameters.ProjectionMatrix * WaterParameters.ViewMatrix * vec4(worldPosition, 1.0);
     gl_Position = ClipSpacePosition;
 }
