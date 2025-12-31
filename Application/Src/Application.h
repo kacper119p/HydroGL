@@ -6,7 +6,6 @@
 #include "Camera/CameraManager.h"
 #include "Gui/Gui.h"
 
-
 namespace Application
 {
     class Application
