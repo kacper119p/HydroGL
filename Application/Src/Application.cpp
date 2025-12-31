@@ -14,9 +14,6 @@
 #include "Scene/TransformComponent.h"
 
 {
-    const std::unique_ptr<Application::Application> application = std::make_unique<Application::Application>();
-    application->Run(Window);
-    return 0;
 }
 
 int32_t Application::Application::Run(Platform::Window* Window)
