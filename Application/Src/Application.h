@@ -6,7 +6,6 @@
 #include "Camera/CameraManager.h"
 #include "Gui/Gui.h"
 
-int32_t ApplicationMain(Platform::Window* Window);
 
 namespace Application
 {

@@ -13,7 +13,6 @@
 #include "Rendering/Textures/Texture.h"
 #include "Scene/TransformComponent.h"
 
-int32_t ApplicationMain(Platform::Window* const Window)
 {
     const std::unique_ptr<Application::Application> application = std::make_unique<Application::Application>();
     application->Run(Window);
