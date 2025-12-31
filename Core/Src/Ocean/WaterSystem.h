@@ -290,7 +290,7 @@ namespace Core
     private:
         static GlTextureUnique CreateTextureArray(int32_t Layers);
 
-        static GlTextureUnique CreateSlopeTextureArray();
+        static GlTextureUnique CreateTextureArrayWithMipMapping();
 
         static GlTextureUnique CreateGaussianNoise();
 

@@ -171,7 +171,8 @@ namespace Core
 
         Mesh._indicesIndex = AllocateMemoryChunk(Mesh._indicesCount, _takenFaceMemoryChunks);
 
-        offset = Mesh._indicesIndex;
+        uint32_t indexWriteOffset = Mesh._indicesIndex;
+        uint32_t indexReadOffset = 0;
         for (uint32_t currentMesh = 0; currentMesh < Scene.mNumMeshes; ++currentMesh)
         {
             const aiMesh* mesh = Scene.mMeshes[currentMesh];
@@ -182,10 +183,11 @@ namespace Core
                 CHECK(face.mNumIndices == 3, "Mesh is not triangulated!");
                 for (uint32_t j = 0; j < 3; j++)
                 {
-                    _faceBuffer.Indices[offset] = face.mIndices[j];
-                    offset++;
+                    _faceBuffer.Indices[indexWriteOffset] = face.mIndices[j] + indexReadOffset;
+                    indexWriteOffset++;
                 }
             }
+            indexReadOffset += mesh->mNumFaces * 3;
         }
 
         Mesh._boundingBox = BoundingBox(_vertexBuffer.Positions + Mesh._verticesIndex, Mesh._verticesCount);

@@ -6,7 +6,7 @@
 
 namespace
 {
-    constexpr float LightProjectionZMargin = 5.0f;
+    constexpr float LightProjectionZMargin = 10.0f;
 }
 
 namespace Core
@@ -36,6 +36,7 @@ namespace Core
         glCullFace(GL_FRONT);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_CLAMP);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _shadowPassUbo);
@@ -45,6 +46,8 @@ namespace Core
 
         _shadowPassShader.Use();
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(ObjectCount), 0);
+
+        glDisable(GL_DEPTH_CLAMP);
     }
 
     void DirectionalShadowsRenderer::UpdateShadowCascadeMatrices(const CameraComponent& Camera,
@@ -53,7 +56,6 @@ namespace Core
     {
         for (size_t i = 0; i < CascadeCount; ++i)
         {
-            // Get Frustum Corners for the current cascade slice
             const float nearCameraPlane = (i == 0)
                                               ? Camera.GetNearPlane()
                                               : _directionalLightSamplingData.CascadeSplits[i - 1];
@@ -64,7 +66,6 @@ namespace Core
             std::array<glm::vec3, 8> corners{};
             GetFrustumCornersWorldSpace(corners, projectionMatrix, ViewMatrix, nearCameraPlane, farCameraPlane);
 
-            // Calculate Light View Matrix centered on frustum centroid
             glm::vec3 center = glm::vec3(0.0f);
             for (const auto& v : corners)
             {
@@ -72,47 +73,24 @@ namespace Core
             }
             center /= 8.0f;
 
-            glm::mat4 lightView = glm::lookAt(center + glm::normalize(LightDirection), center,
-                                              glm::vec3(0.0f, 1.0f, 0.0f));
+            const float radius = glm::length(corners[0] - corners[6]) * 0.5f;
+            const float texelsPerUnit = static_cast<float>(ShadowMapResolution) / (radius + radius);
 
-            // Calculate AABB in Light Space to tightly fit the frustum slice
-            glm::vec3 firstLightSpaceCorner = glm::vec3(lightView * glm::vec4(corners[0], 1.0f));
-            glm::vec3 minCorner = firstLightSpaceCorner;
-            glm::vec3 maxCorner = firstLightSpaceCorner;
+            const glm::mat4 snappingLookAt = glm::lookAt(glm::vec3(0.0f), LightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 
-            for (uint32_t j = 1; j < 8; ++j)
-            {
-                glm::vec3 lightSpaceCorner = glm::vec3(lightView * glm::vec4(corners[j], 1.0f));
-                minCorner = glm::min(minCorner, glm::vec3(lightSpaceCorner));
-                maxCorner = glm::max(maxCorner, glm::vec3(lightSpaceCorner));
-            }
+            center = glm::vec3(snappingLookAt * glm::vec4(center, 1.0f));
+            center.x = glm::floor(center.x * texelsPerUnit) / texelsPerUnit;
+            center.y = glm::floor(center.y * texelsPerUnit) / texelsPerUnit;
+            center = glm::vec3(glm::inverse(snappingLookAt) * glm::vec4(center, 1.0f));
 
-            // Extend Z-Range (Near/Far planes) to capture occluders outside the frustum
-            minCorner.z = minCorner.z < 0.0f
-                              ? minCorner.z * LightProjectionZMargin
-                              : minCorner.z / LightProjectionZMargin;
-            maxCorner.z = maxCorner.z < 0.0f
-                              ? maxCorner.z / LightProjectionZMargin
-                              : maxCorner.z * LightProjectionZMargin;
+            glm::vec3 eye = center + LightDirection * (radius);
 
-            // Texel Snapping
-            float shadowMapWidth = static_cast<float>(ShadowMapResolution);
+            glm::mat4 lightView = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::mat4 lightProjection = glm::ortho(-radius, radius,
+                                                   -radius, radius,
+                                                   0.0f, radius * 2.0f);
 
-            const glm::vec2 texelSize{
-                (maxCorner.x - minCorner.x) / shadowMapWidth,
-                (maxCorner.y - minCorner.y) / shadowMapWidth
-            };
-
-            // Snap the min bounds to the nearest texel multiple
-            minCorner.x = glm::floor(minCorner.x / texelSize.x) * texelSize.x;
-            maxCorner.x = glm::floor(maxCorner.x / texelSize.x) * texelSize.x;
-            minCorner.y = glm::floor(minCorner.y / texelSize.y) * texelSize.y;
-            maxCorner.y = glm::floor(maxCorner.y / texelSize.y) * texelSize.y;
-
-            // Final Light Projection Matrix
-            glm::mat4 lightOrtho = glm::ortho(minCorner.x, maxCorner.x, minCorner.y, maxCorner.y, minCorner.z,
-                                              maxCorner.z);
-            _directionalLightSamplingData.CascadeViewProjMatrices[i] = lightOrtho * lightView;
+            _directionalLightSamplingData.CascadeViewProjMatrices[i] = lightProjection * lightView;
         }
         _directionalLightSamplingData.ViewMatrix = ViewMatrix;
         glNamedBufferSubData(_shadowPassUbo, 0, sizeof(DirectionalLightSamplingData), &_directionalLightSamplingData);

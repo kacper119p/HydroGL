@@ -128,8 +128,8 @@ namespace Core
           _hDzDxDfhxTextures(CreateTextureArray(CascadeCount)),
           _dfhzDfdxxDfdzxDfdzz(CreateTextureArray(CascadeCount)),
           _velocityPackedTextures(CreateTextureArray(VelocityPackedTexturesCount * CascadeCount)),
-          _slopeTextures(CreateSlopeTextureArray()),
-          _displacementTextures(CreateTextureArray(CascadeCount)),
+          _slopeTextures(CreateTextureArrayWithMipMapping()),
+          _displacementTextures(CreateTextureArrayWithMipMapping()),
           _velocityTextures(CreateTextureArray(VelocityLayers * CascadeCount)),
           _tmpTextures(CreateTextureArray(VelocityPackedTexturesCount * CascadeCount)),
           _gaussianNoiseTexture(CreateGaussianNoise()),
@@ -172,7 +172,7 @@ namespace Core
         return texture;
     }
 
-    GlTextureUnique WaterSystem::CreateSlopeTextureArray()
+    GlTextureUnique WaterSystem::CreateTextureArrayWithMipMapping()
     {
         GlTextureUnique texture = GlTextureUnique::Create(GL_TEXTURE_2D_ARRAY);
         const int32_t mipLevels = static_cast<int32_t>(std::floorf(std::log2f(TextureResolution))) + 1;
@@ -270,6 +270,7 @@ namespace Core
         AssembleTextures();
 
         glGenerateTextureMipmap(_slopeTextures);
+        glGenerateTextureMipmap(_displacementTextures);
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
@@ -286,7 +287,6 @@ namespace Core
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
 
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         _waterShader.Use();
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
@@ -300,8 +300,6 @@ namespace Core
         glBindTextureUnit(6, SceneDepth);
 
         _oceanGrid.Draw(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
-
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         _sprayManager.Update(DeltaTime,
                              _displacementTextures,
