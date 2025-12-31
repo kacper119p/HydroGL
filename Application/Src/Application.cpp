@@ -13,7 +13,6 @@
 #include "Rendering/Textures/Texture.h"
 #include "Scene/TransformComponent.h"
 
-}
 
 int32_t Application::Application::Run(Platform::Window* Window)
 {
