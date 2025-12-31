@@ -83,7 +83,7 @@ namespace
         const Core::Texture normalMap = Core::Texture::GetTexture("Assets/Textures/Box/NormalMap.dds");
         const Core::Texture rmaoMap = Core::Texture::GetTexture("Assets/Textures/Box/RmaoMap.dds");
 
-        const Core::MaterialId material = MaterialManager()->CreateMaterial(
+        const Core::MaterialId material = MaterialManager->CreateMaterial(
             glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 0.0f,
             baseMap, rmaoMap, normalMap, emissiveMap);
 
@@ -104,7 +104,7 @@ namespace
                 boxRenderedMesh.Mesh = mesh;
                 boxRenderedMesh.Material = material;
                 boxTransform.SetWorldPosition(position);
-                Core::RigidbodyComponent boxRigidbodyComponent = PhysicsSystem()->CreateRigidbodyComponent(
+                Core::RigidbodyComponent boxRigidbodyComponent = PhysicsSystem->CreateRigidbodyComponent(
                     boxTransform, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
                     Core::Physics::Layers::Dynamic);
 
