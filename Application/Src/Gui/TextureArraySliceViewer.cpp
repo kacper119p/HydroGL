@@ -46,10 +46,11 @@ void Application::TextureArraySliceViewer::ShowLayer(const uint32_t ArrayTexture
 
     Core::ScreenQuad::Draw();
 
-    // Restore framebuffer, viewport and default sampler
+    // Restore framebuffer, viewport and default sampler; unbind texture
     glBindFramebuffer(GL_FRAMEBUFFER, previousFbo);
     glViewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
     glBindSampler(0, 0);
+    glBindTextureUnit(0, 0);
 
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
