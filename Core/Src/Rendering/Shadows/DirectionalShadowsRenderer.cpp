@@ -36,6 +36,7 @@ namespace Core
         glCullFace(GL_FRONT);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_CLAMP);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _shadowPassUbo);
@@ -45,6 +46,8 @@ namespace Core
 
         _shadowPassShader.Use();
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(ObjectCount), 0);
+
+        glDisable(GL_DEPTH_CLAMP);
     }
 
     void DirectionalShadowsRenderer::UpdateShadowCascadeMatrices(const CameraComponent& Camera,
@@ -73,19 +76,19 @@ namespace Core
             const float radius = glm::length(corners[0] - corners[6]) * 0.5f;
             const float texelsPerUnit = static_cast<float>(ShadowMapResolution) / (radius + radius);
 
-            const glm::mat4 baseLookAt = glm::lookAt(glm::vec3(0.0f), LightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+            const glm::mat4 snappingLookAt = glm::lookAt(glm::vec3(0.0f), LightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 
-            center = glm::vec3(baseLookAt * glm::vec4(center, 1.0f));
+            center = glm::vec3(snappingLookAt * glm::vec4(center, 1.0f));
             center.x = glm::floor(center.x * texelsPerUnit) / texelsPerUnit;
             center.y = glm::floor(center.y * texelsPerUnit) / texelsPerUnit;
-            center = glm::vec3(glm::inverse(baseLookAt) * glm::vec4(center, 1.0f));
+            center = glm::vec3(glm::inverse(snappingLookAt) * glm::vec4(center, 1.0f));
 
-            glm::vec3 eye = center + LightDirection * (radius + radius);
+            glm::vec3 eye = center + LightDirection * (radius);
 
             glm::mat4 lightView = glm::lookAt(eye, center, glm::vec3(0.0f, 1.0f, 0.0f));
             glm::mat4 lightProjection = glm::ortho(-radius, radius,
                                                    -radius, radius,
-                                                   -radius * LightProjectionZMargin, radius * LightProjectionZMargin);
+                                                   0.0f, radius * 2.0f);
 
             _directionalLightSamplingData.CascadeViewProjMatrices[i] = lightProjection * lightView;
         }
