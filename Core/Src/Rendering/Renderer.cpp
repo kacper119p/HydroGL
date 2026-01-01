@@ -179,11 +179,7 @@ namespace Core
         CubeRenderer::Draw();
 
         _frameBuffer.ResolveMultisampling();
-        //_frameBuffer.BindOpaqueFramebuffer();
-
-        _frameBuffer.BlitOpaqueToTransparent();
-        _frameBuffer.BindTransparentFramebuffer();
-
+        //Water is rendered to multisampledBuffer
         Engine.GetWaterSystem()->Render(DeltaTime,
                                         cameraTransform,
                                         camera,
@@ -191,6 +187,10 @@ namespace Core
                                         Engine.GetWaterInteractionSystem()->GetDynamicWavesSampleBufferId(),
                                         _frameBuffer.GetOpaqueColorBuffer(),
                                         _frameBuffer.GetOpaqueDepthBuffer());
+
+        _frameBuffer.ResolveMultisampling();
+        _frameBuffer.BlitOpaqueToTransparent();
+        _frameBuffer.BindTransparentFramebuffer();
 
         Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetTransparentFrameBuffer());
 
