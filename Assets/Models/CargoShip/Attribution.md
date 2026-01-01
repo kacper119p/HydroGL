@@ -3,3 +3,5 @@
 Changes:
 1. Split meshes by material
 2. Packed and transformed textures to .dds format
+
+CargoShipCollider.glb is based on original work.

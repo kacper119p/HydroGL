@@ -60,14 +60,17 @@ namespace
             colorB, rmaoB, normalB, emissive);
         renderedMeshB.Material = materialB;
 
+        const Core::Mesh colliderMesh = Core::MeshManager::GetMesh("Assets/Models/CargoShip/CargoShipCollider.glb");
+
         transformMain.SetLocalPosition(glm::vec3(0.0f, -2.0f, 0.0f));
         EntityRegistry->emplace<Core::WaterEffectorComponent>(
-            entityMain, renderedMeshMain.Mesh, transformMain.GetWorldPosition(), 0.25f, -0.1f, 0.05f, 512);
+            entityMain, colliderMesh, transformMain.GetWorldPosition(), 0.25f, -0.1f, 0.05f, 512);
         JPH::RefConst<JPH::Shape> colliderShape = Core::MeshColliderFactory::CreateConvexHullCollider(
-            renderedMeshMain.Mesh, 300.0f);
+            colliderMesh, 300.0f);
         Core::RigidbodyComponent rigidBodyComponent = PhysicsSystem->CreateRigidbodyComponent(
             transformMain, colliderShape, JPH::EMotionType::Dynamic, JPH::EActivation::Activate,
             Core::Physics::Layers::Dynamic);
+
         EntityRegistry->emplace<Core::RigidbodyComponent>(entityMain, rigidBodyComponent);
     }
 
