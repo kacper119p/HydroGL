@@ -161,14 +161,14 @@ namespace Core
 
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
-        _frameBuffer.ResolveMultisampling();
-        _frameBuffer.BindOpaqueFramebuffer();
-
         // ------------------------ SKYBOX ------------------------
 
         _skyboxShader.Use();
         _skyboxShader.SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
         _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.GetProjectionMatrix());
+
+        _frameBuffer.ResolveMultisampling();
+        _frameBuffer.BindOpaqueFramebuffer();
 
         glBindTextureUnit(3, scene.GetSkybox().GetCubeMap());
 
