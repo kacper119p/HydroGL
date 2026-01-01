@@ -98,7 +98,7 @@ namespace Core
     }
 
     WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
-        : _oceanGrid(1000.0f, 100, 10),
+        : _oceanGrid(3000.0f, 100, 10),
           _sprayManager(WindowSize, MainDepthBuffer),
           _waterShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
