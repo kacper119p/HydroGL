@@ -145,13 +145,21 @@ void main()
     // ------------------------------------------------------------------
 
     const float finalBackgroundDepth = texture(SceneDepth, screenUV).r;
-    const float linearFinalBackgroundDepth = LinearizeDepth(finalBackgroundDepth);
-    const float finalDepthDifference = max(linearFinalBackgroundDepth - linearWaterDepth, 0.0);
+    vec3 refractedColor;
+    if(finalBackgroundDepth == 1.0)
+    {
+        refractedColor = vec3(0.0);
+    }
+    else
+    {
+        const float linearFinalBackgroundDepth = LinearizeDepth(finalBackgroundDepth);
+        const float finalDepthDifference = max(linearFinalBackgroundDepth - linearWaterDepth, 0.0);
 
-    const vec3 transmittance = exp(-WaterParameters.Absorption * finalDepthDifference);
+        const vec3 transmittance = exp(-WaterParameters.Absorption * finalDepthDifference);
 
-    const vec3 backgroundColor = texture(SceneColor, screenUV).rgb;
-    const vec3 refractedColor = backgroundColor * transmittance;
+        const vec3 backgroundColor = texture(SceneColor, screenUV).rgb;
+        refractedColor = backgroundColor * transmittance;
+    }
 
     // ------------------------------------------------------------------
     // Subsurface Scattering
