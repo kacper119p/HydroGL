@@ -167,12 +167,12 @@ namespace Core
         _skyboxShader.SetUniform(_skyboxViewMatrixLocation, glm::inverse(cameraTransform.GetLocalToWorldMatrix()));
         _skyboxShader.SetUniform(_skyboxProjectionMatrixLocation, camera.GetProjectionMatrix());
 
-        _frameBuffer.ResolveMultisampling();
-        _frameBuffer.BindOpaqueFramebuffer();
-
         glBindTextureUnit(3, scene.GetSkybox().GetCubeMap());
 
         CubeRenderer::Draw();
+
+        _frameBuffer.ResolveMultisampling();
+        //_frameBuffer.BindOpaqueFramebuffer();
 
         _frameBuffer.BlitOpaqueToTransparent();
         _frameBuffer.BindTransparentFramebuffer();
