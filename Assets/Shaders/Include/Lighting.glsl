@@ -45,11 +45,15 @@ layout (binding = 18) uniform samplerCube PrefilterMap;
 layout (binding = 19) uniform sampler2D BrdfLUT;
 layout (binding = 20) uniform sampler2DArrayShadow DirectionalLightShadowMaps;
 
+
 layout (std430, binding = 3) buffer lightsBuffer {
+    vec3 SceneAmbientColor;
+    float CameraNearPlane;
+    float CameraFarPlane;
+    float FogDensity;
     uint DirectionalLightCount;
     uint PointLightCount;
     uint SpotlightCount;
-    float _padding;
     directionalLight DirectionalLight;
     pointLight PointLights[8];
     spotLight Spotlights[8];
@@ -62,6 +66,23 @@ float FastPow5(float x)
 {
     float x2 = x * x;
     return x * x2 * x2;
+}
+
+/**
+ * @brief Converts non-linear depth buffer values (0.0 to 1.0) into linear view-space depth.
+ */
+float LinearizeDepth(const float Depth)
+{
+    const float z = Depth * 2.0 - 1.0;
+    return (2.0 * LightsBuffer.CameraNearPlane * LightsBuffer.CameraFarPlane) / (LightsBuffer.CameraFarPlane + LightsBuffer.CameraNearPlane - z * (LightsBuffer.CameraFarPlane - LightsBuffer.CameraNearPlane));
+}
+
+vec3 ApplyFog(const vec3  BaseColor, const float LinearDepth, const vec3  ViewDirection, const vec3  LightDirection)
+{
+    const float fogAmount = 1.0 - exp(-LinearDepth * LightsBuffer.FogDensity);
+    const float sunAmount = max(dot(-ViewDirection, LightDirection), 0.0);
+    const vec3 fogColor = mix(LightsBuffer.SceneAmbientColor, vec3(1.0, 0.9, 0.7), pow(sunAmount, 8.0));
+    return mix(BaseColor, fogColor, fogAmount);
 }
 
 float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, const vec3 WorldPosition, const vec3 Normal) {

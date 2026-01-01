@@ -28,7 +28,11 @@ namespace Core
     private:
         struct alignas(16) LightDataBuffer
         {
-            alignas(16) uint32_t DirectionalLightCount = 0;
+            glm::vec3 SceneAmbientColor;
+            alignas(4) float CameraNearPlane;
+            alignas(4) float CameraFarPlane;
+            float FogDensity;
+            alignas(4) uint32_t DirectionalLightCount = 0;
             alignas(4) uint32_t PointLightCount = 0;
             alignas(4) uint32_t SpotlightCount = 0;
             alignas(16) DirectionalLightComponent::ShaderData DirectionalLight;
@@ -79,6 +83,16 @@ namespace Core
             return _frameBuffer;
         }
 
+        [[nodiscard]] float GetFogDensity() const
+        {
+            return _lightDataBuffer.FogDensity;
+        }
+
+        void SetFogDensity(const float Value)
+        {
+            _lightDataBuffer.FogDensity = Value;
+        }
+
         explicit Renderer(const glm::uvec2& Resolution);
 
     public:
@@ -87,7 +101,8 @@ namespace Core
         void RenderFrame(const Engine& Engine, float DeltaTime);
 
     private:
-        void BindLightData(const entt::registry* EntityRegistry, const glm::mat4& ViewMatrix, const Skybox& Skybox);
+        void BindLightData(const entt::registry* EntityRegistry, const glm::mat4& ViewMatrix, const Skybox& Skybox,
+                           const CameraComponent& Camera);
 
         void RenderShadows(const entt::registry* EntityRegistry, const CameraComponent& Camera,
                            const glm::mat4& ViewMatrix, uint32_t TransformsBuffer, uint32_t IndirectDrawCommandsBuffer,
