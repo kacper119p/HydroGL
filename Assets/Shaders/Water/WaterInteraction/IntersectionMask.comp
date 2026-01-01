@@ -22,20 +22,14 @@ layout(std430, binding = 0) readonly restrict buffer intersectionBuffer
     intersectionSegment IntersectionSegments[];
 } IntersectionBuffer;
 
-bool CheckRaySegmentIntersection(vec2 RayOrigin, vec2 P0, vec2 P1)
+bool CheckRaySegmentIntersection(const vec2 RayOrigin, const  vec2 P0, const  vec2 P1)
 {
-    float dy = P1.y - P0.y;
-    if (abs(dy) < EPSILON)
+    if ((P0.y > RayOrigin.y) == (P1.y > RayOrigin.y))
     {
         return false;
     }
-    float t1 = (RayOrigin.y - P0.y) / dy;
-    if (t1 <= 0.0 || t1 >= 1.0)
-    {
-        return false;
-    }
-    float t2 = P0.x + t1 * (P1.x - P0.x);
-    return t2 >= RayOrigin.x;
+    float intersectionX = (P1.x - P0.x) * (RayOrigin.y - P0.y) / (P1.y - P0.y) + P0.x;
+    return RayOrigin.x < intersectionX;
 }
 
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;

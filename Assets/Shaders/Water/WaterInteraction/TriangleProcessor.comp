@@ -47,12 +47,12 @@ const int WATER_HEIGHT_RETRIEVE_ITERATIONS = 4;
 const float WATER_DENSITY = 1024.8103;
 const float AIR_DENSITY = 1.204;
 
-float RetrieveWaterHeight(vec2 position)
+float RetrieveWaterHeight(const vec2 Position)
 {
     vec3 displacement = vec3(0.0);
     for (int i = 0; i < WATER_HEIGHT_RETRIEVE_ITERATIONS; ++i)
     {
-        vec2 shiftedPosition = position - displacement.xz;
+        vec2 shiftedPosition = Position - displacement.xz;
         displacement = vec3(0.0);
         for (int cascade = 0; cascade < CascadeSettingsBuffer.CascadeCount; ++cascade)
         {
@@ -63,9 +63,9 @@ float RetrieveWaterHeight(vec2 position)
     return displacement.y;
 }
 
-float Remap(float value, float inMin, float inMax, float outMin, float outMax)
+float Remap(const float Value, const float InMin, const float InMax, const float OutMin, const float OutMax)
 {
-    return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
+    return OutMin + (Value - InMin) * (OutMax - OutMin) / (InMax - InMin);
 }
 
 vec3 RetrieveWaterVelocity(vec3 position)
@@ -91,12 +91,12 @@ vec3 RetrieveWaterVelocity(vec3 position)
     return velocity;
 }
 
-void ProcessTriangle(vec3 VertexPositionsWorldSpace[3], const float TriangleNormalY, out float TriangleArea,
+void ProcessTriangle(const vec3 VertexPositionsWorldSpace[3], const float TriangleNormalY, out float TriangleArea,
 out float SubmergedArea, out float VolumeContribution, out float TriangleDepth, out bool IsOnWaterIntersetion,
 out vec3 P0, out vec3 P1)
 {
     float vertexDepths[3];
-    for (int i = 0; i < 3; ++i)
+    for (uint i = 0; i < 3; ++i)
     {
         vertexDepths[i] = VertexPositionsWorldSpace[i].y - RetrieveWaterHeight(VertexPositionsWorldSpace[i].xz);
     }
@@ -104,7 +104,7 @@ out vec3 P0, out vec3 P1)
     TriangleDepth = (1.0 / 3.0) * (vertexDepths[0] + vertexDepths[1] + vertexDepths[2]);
     TriangleArea = 0.5 * length(cross(VertexPositionsWorldSpace[1] - VertexPositionsWorldSpace[0], VertexPositionsWorldSpace[2] - VertexPositionsWorldSpace[0]));
 
-    bvec3 verticesAboveWater = greaterThanEqual(vec3(vertexDepths[0], vertexDepths[1], vertexDepths[2]), vec3(EPSILON));
+    const bvec3 verticesAboveWater = greaterThanEqual(vec3(vertexDepths[0], vertexDepths[1], vertexDepths[2]), vec3(EPSILON));
     if (all(verticesAboveWater))
     {
         SubmergedArea = 0.0;
@@ -122,7 +122,7 @@ out vec3 P0, out vec3 P1)
     else
     {
         IsOnWaterIntersetion = true;
-        int aboveWaterCount = 0;
+        uint aboveWaterCount = 0;
         int aboveWaterIndex = -1;
 
         for (int i = 0; i < 3; ++i)
@@ -137,23 +137,23 @@ out vec3 P0, out vec3 P1)
         if (aboveWaterCount == 1)
         {
             // One vertex above water, two underwater
-            vec3 v0 = VertexPositionsWorldSpace[aboveWaterIndex];// above water vertex
-            vec3 v1 = VertexPositionsWorldSpace[(aboveWaterIndex + 1) % 3];
-            vec3 v2 = VertexPositionsWorldSpace[(aboveWaterIndex + 2) % 3];
+            const  vec3 v0 = VertexPositionsWorldSpace[aboveWaterIndex];// above water vertex
+            const  vec3 v1 = VertexPositionsWorldSpace[(aboveWaterIndex + 1) % 3];
+            const  vec3 v2 = VertexPositionsWorldSpace[(aboveWaterIndex + 2) % 3];
 
-            float d0 = vertexDepths[aboveWaterIndex];
-            float d1 = vertexDepths[(aboveWaterIndex + 1) % 3];
-            float d2 = vertexDepths[(aboveWaterIndex + 2) % 3];
+            const  float d0 = vertexDepths[aboveWaterIndex];
+            const  float d1 = vertexDepths[(aboveWaterIndex + 1) % 3];
+            const  float d2 = vertexDepths[(aboveWaterIndex + 2) % 3];
 
             // Compute intersection points using linear interpolation
-            float alpha1 = d0 / (d0 - d1);
-            float alpha2 = d0 / (d0 - d2);
+            const float alpha1 = d0 / (d0 - d1);
+            const  float alpha2 = d0 / (d0 - d2);
             P0 = v0 + alpha1 * (v1 - v0);
             P1 = v0 + alpha2 * (v2 - v0);
 
             // The submerged area is formed by two triangles: P0-v1-v2 and P0-v2-P1
-            float areaTriangle1 = 0.5 * length(cross(v1 - P0, v2 - P0));
-            float areaTriangle2 = 0.5 * length(cross(v2 - P0, P1 - P0));
+            const float areaTriangle1 = 0.5 * length(cross(v1 - P0, v2 - P0));
+            const float areaTriangle2 = 0.5 * length(cross(v2 - P0, P1 - P0));
 
             // Create submerged sub-triangle P0-v0-P1
             SubmergedArea = areaTriangle1 + areaTriangle2;
@@ -170,17 +170,17 @@ out vec3 P0, out vec3 P1)
                     underwaterIndex = i;
                 }
             }
-            vec3 v0 = VertexPositionsWorldSpace[underwaterIndex];// underwater vertex
-            vec3 v1 = VertexPositionsWorldSpace[(underwaterIndex + 1) % 3];
-            vec3 v2 = VertexPositionsWorldSpace[(underwaterIndex + 2) % 3];
+            const vec3 v0 = VertexPositionsWorldSpace[underwaterIndex];// underwater vertex
+            const vec3 v1 = VertexPositionsWorldSpace[(underwaterIndex + 1) % 3];
+            const vec3 v2 = VertexPositionsWorldSpace[(underwaterIndex + 2) % 3];
 
-            float d0 = vertexDepths[underwaterIndex];
-            float d1 = vertexDepths[(underwaterIndex + 1) % 3];
-            float d2 = vertexDepths[(underwaterIndex + 2) % 3];
+            const float d0 = vertexDepths[underwaterIndex];
+            const float d1 = vertexDepths[(underwaterIndex + 1) % 3];
+            const float d2 = vertexDepths[(underwaterIndex + 2) % 3];
 
             // Compute intersection points using linear interpolation
-            float alpha1 = d0 / (d0 - d1);
-            float alpha2 = d0 / (d0 - d2);
+            const float alpha1 = d0 / (d0 - d1);
+            const  float alpha2 = d0 / (d0 - d2);
             P0 = v0 + alpha1 * (v1 - v0);
             P1 = v0 + alpha2 * (v2 - v0);
 
@@ -201,24 +201,24 @@ void main()
         return;
     }
 
-    uint index0 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3];
-    uint index1 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3 + 1];
-    uint index2 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3 + 2];
+    const uint index0 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3];
+    const uint index1 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3 + 1];
+    const uint index2 = VertexIndices[MeshData.IndicesIndex + triangleIndex * 3 + 2];
 
-    uint vertexTrueIndices[3];
-    vertexTrueIndices[0] = (MeshData.VerticesIndex + index0) * 3;
-    vertexTrueIndices[1] = (MeshData.VerticesIndex + index1) * 3;
-    vertexTrueIndices[2] = (MeshData.VerticesIndex + index2) * 3;
+    const uint vertexTrueIndices[3]=
+    { (MeshData.VerticesIndex + index0) * 3,
+    (MeshData.VerticesIndex + index1) * 3,
+    (MeshData.VerticesIndex + index2) * 3 };
 
-    vec3 vertexObjectSpacePositions[3];
-    vertexObjectSpacePositions[0] = vec3(VertexPositions[vertexTrueIndices[0]], VertexPositions[vertexTrueIndices[0] + 1], VertexPositions[vertexTrueIndices[0] + 2]);
-    vertexObjectSpacePositions[1] = vec3(VertexPositions[vertexTrueIndices[1]], VertexPositions[vertexTrueIndices[1] + 1], VertexPositions[vertexTrueIndices[1] + 2]);
-    vertexObjectSpacePositions[2] = vec3(VertexPositions[vertexTrueIndices[2]], VertexPositions[vertexTrueIndices[2] + 1], VertexPositions[vertexTrueIndices[2] + 2]);
+    const vec3 vertexObjectSpacePositions[3] =
+    { vec3(VertexPositions[vertexTrueIndices[0]], VertexPositions[vertexTrueIndices[0] + 1], VertexPositions[vertexTrueIndices[0] + 2]),
+    vec3(VertexPositions[vertexTrueIndices[1]], VertexPositions[vertexTrueIndices[1] + 1], VertexPositions[vertexTrueIndices[1] + 2]),
+    vec3(VertexPositions[vertexTrueIndices[2]], VertexPositions[vertexTrueIndices[2] + 1], VertexPositions[vertexTrueIndices[2] + 2]) };
 
-    vec3 vertexPositionsWorldSpace[3];
-    vertexPositionsWorldSpace[0] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[0], 1.0)).xyz;
-    vertexPositionsWorldSpace[1] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[1], 1.0)).xyz;
-    vertexPositionsWorldSpace[2] = (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[2], 1.0)).xyz;
+    const vec3 vertexPositionsWorldSpace[3] =
+    { (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[0], 1.0)).xyz,
+    (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[1], 1.0)).xyz,
+    (MeshData.ObjectToWorldMatrix * vec4(vertexObjectSpacePositions[2], 1.0)).xyz };
 
     const vec3 triangleNormal = normalize(cross(vertexPositionsWorldSpace[1] - vertexPositionsWorldSpace[0], vertexPositionsWorldSpace[2] - vertexPositionsWorldSpace[0]));
     float triangleArea;
@@ -255,7 +255,7 @@ void main()
     if (isOnWaterIntersetion)
     {
         intersectionSegment segment = intersectionSegment(vec2(P0.x, P0.z), vec2(P1.x, P1.z));
-        int intersectionBufferIndex = atomicAdd(IntersectionBuffer.Count, 1);
+        const uint intersectionBufferIndex = atomicAdd(IntersectionBuffer.Count, 1);
         IntersectionBuffer.IntersectingTriangles[intersectionBufferIndex] = segment;
     }
 }
