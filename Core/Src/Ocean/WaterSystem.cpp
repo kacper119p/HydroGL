@@ -33,7 +33,7 @@ namespace Core
 
         constexpr glm::vec3 DefaultSurfaceColor{0.005f, 0.1f, 0.2f};
         constexpr float DefaultMetallic = 0.05f;
-        constexpr glm::vec3 DefaultAbsorption{0.5f, 0.2f, 0.05f};
+        constexpr glm::vec3 DefaultAbsorption{0.5f, 0.2f, 0.1f};
         constexpr float DefaultRoughness = 0.5f;
         constexpr glm::vec3 DefaultFoamColor{1.0f, 1.0f, 1.0f};
         constexpr float DefaultFoamMetallic = 0.0f;
