@@ -63,7 +63,6 @@ namespace Core
                                                           const glm::vec3& SssColor,
                                                           const float SssThreshold): ViewMatrix(),
         ProjectionMatrix(),
-        GridOrigin(),
         CameraNearPlane(0.0f),
         CameraFarPlane(0.0f),
         CameraPosition(),
@@ -98,7 +97,7 @@ namespace Core
     }
 
     WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
-        : _oceanGrid(3000.0f, 100, 10),
+        : _oceanGrid(10000.0f, 100, 10),
           _sprayManager(WindowSize, MainDepthBuffer),
           _waterShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
@@ -274,13 +273,8 @@ namespace Core
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
-        const float quadSize = _oceanGrid.GetQuadSize();
-        const glm::vec2 gridOrigin =
-                glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
-
         _waterShaderUniforms.ViewMatrix = viewMatrix;
         _waterShaderUniforms.ProjectionMatrix = Camera.GetProjectionMatrix();
-        _waterShaderUniforms.GridOrigin = gridOrigin;
         _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
         _waterShaderUniforms.CameraFarPlane = Camera.GetFarPlane();
         _waterShaderUniforms.CameraPosition = cameraPosition;

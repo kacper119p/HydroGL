@@ -139,7 +139,7 @@ int32_t Application::Application::Run(Platform::Window* Window)
         cameraEntity, 70.0f,
         static_cast<float>(Window->GetWindowWidth())
         / static_cast<float>(Window->GetWindowHeight()),
-        0.1f, 3000.0f);
+        0.1f, 14142.1356f);
 
 
     CreateShip(entityRegistry, engine->GetMaterialManager(), engine->GetPhysicsSystem());

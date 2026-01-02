@@ -30,7 +30,6 @@ layout(std140, binding = binding_point) uniform waterParameters \
         mat4 ViewMatrix;\
         mat4 ProjectionMatrix;\
         \
-        vec2 GridOrigin;\
         float CameraNearPlane;\
         float CameraFarPlane;\
         \

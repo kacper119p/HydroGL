@@ -83,7 +83,6 @@ namespace Core
             alignas(16) glm::mat4 ViewMatrix;
             alignas(16) glm::mat4 ProjectionMatrix;
 
-            alignas(16) glm::vec2 GridOrigin;
             alignas(4) float CameraNearPlane;
             alignas(4) float CameraFarPlane;
             alignas(16) glm::vec3 CameraPosition;

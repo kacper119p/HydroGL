@@ -1,25 +1,28 @@
 #include "OceanGrid.h"
 
 #include <array>
-#include <vector>
 #include <glad/glad.h>
 #include <glm/common.hpp>
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "spdlog/spdlog.h"
+
+namespace
+{
+    constexpr float PatchSize = 1.0f;
+    constexpr float HalfPatchSize = 0.5f;
+}
+
 namespace Core
 {
     OceanGrid::OceanGrid(const float HalfWidth, const uint32_t PatchCount, const uint32_t PatchSubdivisions)
+        : _gridSize(HalfWidth * 2.0f)
     {
-        const float patchSize = (HalfWidth * 2.0f) / static_cast<float>(PatchCount);
-        const float halfPatchSize = patchSize * 0.5f;
-        _quadSize = patchSize / static_cast<float>(PatchSubdivisions);
+        _quadSize = PatchSize / static_cast<float>(PatchSubdivisions);
 
         constexpr float verticalExtent = 100.0f;
         constexpr float horizontalMargin = 30.0f;
-
-        _patchExtent = glm::vec3(halfPatchSize + horizontalMargin, verticalExtent,
-                                 halfPatchSize + horizontalMargin);
 
         const uint32_t verticesOnEdge = PatchSubdivisions + 1;
 
@@ -38,9 +41,9 @@ namespace Core
             for (uint32_t x = 0; x < verticesOnEdge; ++x)
             {
                 vertexPositions[y * verticesOnEdge + x] = glm::vec3(
-                    -halfPatchSize + static_cast<float>(x) * _quadSize,
+                    -HalfPatchSize + static_cast<float>(x) * _quadSize,
                     0.0f,
-                    -halfPatchSize + static_cast<float>(y) * _quadSize);
+                    -HalfPatchSize + static_cast<float>(y) * _quadSize);
             }
         }
         for (uint32_t y = 0; y < PatchSubdivisions; ++y)
@@ -63,9 +66,9 @@ namespace Core
             for (uint32_t x = 0; x < PatchCount; ++x)
             {
                 _allPatchPositions[y * PatchCount + x] = glm::vec3(
-                    -HalfWidth + static_cast<float>(x) * patchSize + halfPatchSize,
+                    -HalfWidth + static_cast<float>(x) * PatchSize + HalfPatchSize,
                     0.0f,
-                    -HalfWidth + static_cast<float>(y) * patchSize + halfPatchSize);
+                    -HalfWidth + static_cast<float>(y) * PatchSize + HalfPatchSize);
             }
         }
 
@@ -98,6 +101,18 @@ namespace Core
         _elementCount = static_cast<int>(indexCount);
         delete[] vertexPositions;
         delete[] indices;
+
+
+        for (int32_t i = 0; i < LodLevels; i++)
+        {
+            _lodDistances[i] = _minLodDistance * static_cast<float>(std::pow(2, i));
+        }
+        float minPatchSize = _gridSize;
+        for (int32_t i = 0; i < LodLevels / 2; i++)
+        {
+            minPatchSize *= 0.5f;
+        }
+        _quadSize = 1.0f / static_cast<float>(PatchSubdivisions) * minPatchSize;
     }
 
     OceanGrid::~OceanGrid()
@@ -110,7 +125,15 @@ namespace Core
                          const glm::vec3& CameraPosition) const
     {
         const glm::mat4 viewProjection = ProjectionMatrix * ViewMatrix;
-        const uint32_t visiblePatchCount = FrustumCulling(viewProjection, CameraPosition);
+        //const uint32_t visiblePatchCount = FrustumCulling(viewProjection, CameraPosition);
+
+        const glm::vec2 gridOrigin =
+                glm::floor(glm::vec2(CameraPosition.x, CameraPosition.z) / _quadSize) * _quadSize;
+
+        int32_t visiblePatchCount = 0;
+        SelectNode(CameraPosition, gridOrigin, _gridSize, LodLevels - 1,
+                   visiblePatchCount);
+        spdlog::info(visiblePatchCount);
 
         if (visiblePatchCount > 0)
         {
@@ -122,11 +145,13 @@ namespace Core
             glBindVertexArray(_vao);
             glPatchParameteri(GL_PATCH_VERTICES, 4);
 
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDrawElementsInstanced(GL_PATCHES,
                                     _elementCount,
                                     GL_UNSIGNED_INT,
                                     nullptr,
                                     static_cast<int32_t>(visiblePatchCount));
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     }
 
@@ -151,7 +176,7 @@ namespace Core
         for (int i = 0; i < 6; ++i)
         {
             glm::vec3 absNormal = glm::abs(glm::vec3(planes[i]));
-            planeBoxProjections[i] = glm::dot(absNormal, _patchExtent);
+            // planeBoxProjections[i] = glm::dot(absNormal, _patchExtent);
         }
 
         uint32_t visiblePatchCount = 0;
@@ -176,5 +201,68 @@ namespace Core
             }
         }
         return visiblePatchCount;
+    }
+
+    bool OceanGrid::SelectNode(const glm::vec3& CameraPosition, const glm::vec2 NodePosition, const float NodeSize,
+                               const int32_t Level, int32_t& BufferHead) const
+    {
+        if (!IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level))
+        {
+            return false;
+        }
+
+        // if(!node->_boundingBox.frustumIntersect(_cameraFrustum)){
+        //     // Skip nodes node not visible to camera.
+        //     return true;
+        // }
+
+        if (Level == 0 || !IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level - 1))
+        {
+            _visiblePatches[BufferHead] = glm::vec3(NodePosition.x, NodePosition.y, NodeSize);
+            ++BufferHead;
+            return true;
+        }
+
+        const float childSize = NodeSize * 0.5f;
+        const float quarter = NodeSize * 0.25f;
+
+        const glm::vec2 childOffsets[4] = {
+            {-quarter, -quarter},
+            {quarter, -quarter},
+            {quarter, quarter},
+            {-quarter, quarter}
+        };
+
+        for (auto childOffset : childOffsets)
+        {
+            if (!SelectNode(CameraPosition, NodePosition + childOffset, childSize, Level - 1, BufferHead))
+            {
+                _visiblePatches[BufferHead] = glm::vec3(NodePosition.x + childOffset.x,
+                                                        NodePosition.y + childOffset.y,
+                                                        childSize);
+                ++BufferHead;
+            }
+        }
+
+        return true;
+    }
+
+    bool OceanGrid::IsNodeInRange(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize,
+                                  const int32_t Level) const
+    {
+        const float halfSide = NodeSize * 0.5f;
+        const float minX = NodePosition.x - halfSide;
+        const float maxX = NodePosition.x + halfSide;
+        const float minZ = NodePosition.y - halfSide;
+        const float maxZ = NodePosition.y + halfSide;
+        const float closestX = glm::max(minX, glm::min(CameraPosition.x, maxX));
+        const float closestZ = glm::max(minZ, glm::min(CameraPosition.z, maxZ));
+
+        const glm::vec3 closestPoint(closestX, 0.0f, closestZ);
+
+        const glm::vec3 difference = CameraPosition - closestPoint;
+        const float distanceSquared = glm::dot(difference, difference);
+
+        return distanceSquared <= (_lodDistances[Level] * _lodDistances[Level]);
     }
 }
