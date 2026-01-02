@@ -1,7 +1,6 @@
 #pragma once
-#include <cstdint>
-#include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
 
 namespace Core
 {
@@ -11,10 +10,7 @@ namespace Core
     class Frustum
     {
     private:
-        static constexpr uint32_t PlaneCount = 6;
-
-    private:
-        glm::vec4 _planes[PlaneCount];
+        glm::vec4 _planes[6];
 
     public:
         Frustum(const glm::mat4& ViewMatrix, const glm::mat4& ProjectionMatrix);
