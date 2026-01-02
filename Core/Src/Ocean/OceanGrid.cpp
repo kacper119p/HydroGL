@@ -194,7 +194,7 @@ namespace Core
         return true;
     }
 
-    bool OceanGrid::IsNodeInRange(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize,
+    bool OceanGrid::IsNodeInRange(const glm::vec3& CameraPosition, const glm::vec2 NodePosition, const float NodeSize,
                                   const int32_t Level) const
     {
         const float halfSide = NodeSize * 0.5f;

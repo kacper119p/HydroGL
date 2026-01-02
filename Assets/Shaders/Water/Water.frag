@@ -96,7 +96,9 @@ void main()
     const vec3 normal = NormalFromSlope(slope + dynamicSlope);
 
     const vec3 ViewDirection = normalize(WaterParameters.CameraPosition - WorldPosition);
-    const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, WorldPosition, ViewDirection, 1.0);
+
+    float sunAttenuation;
+    const vec3 surfaceColor = CalculateLight(baseSurfaceColor, metallic, roughness, normal, WorldPosition, ViewDirection, 1.0, sunAttenuation);
 
     // ------------------------------------------------------------------
     // Refraction
@@ -136,7 +138,7 @@ void main()
 
     const float finalBackgroundDepth = texture(SceneDepth, screenUV).r;
     vec3 refractedColor;
-    if(finalBackgroundDepth == 1.0)
+    if (finalBackgroundDepth == 1.0)
     {
         refractedColor = vec3(0.0);
     }
@@ -158,7 +160,7 @@ void main()
 
     const vec3 sssLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * WaterParameters.SssDistortion));
     const float sssDot = pow(clamp(dot(ViewDirection, -sssLight), 0.0, 1.0), WaterParameters.SssPower) * WaterParameters.SssScale;
-    const float sssStrength = sssDot * sssMask;
+    const float sssStrength = sssDot * sssMask * sunAttenuation;
     const vec3 sssColor = WaterParameters.SssColor * sssStrength * (1.0 - foamMask);
     // ------------------------------------------------------------------
     // Final color

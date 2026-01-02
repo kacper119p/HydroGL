@@ -62,10 +62,10 @@ layout (std430, binding = 3) buffer lightsBuffer {
 const float SHADOW_BIAS = 0.00005;
 const float MAX_REFLECTION_LOD = 4.0;
 
-float FastPow5(float x)
+float FastPow5(const float X)
 {
-    float x2 = x * x;
-    return x * x2 * x2;
+    float x2 = X * X;
+    return X * x2 * x2;
 }
 
 /**
@@ -116,7 +116,7 @@ float CalculateDirectionalLightShadowAttenuation(const directionalLight Light, c
     return shadow / 25.0;
 }
 
-light CalculateDirectionalLight(directionalLight Light, vec3 Position, vec3 Normal)
+light CalculateDirectionalLight(const directionalLight Light, const  vec3 Position, const  vec3 Normal)
 {
     light result;
     result.Direction = Light.Direction;
@@ -126,7 +126,7 @@ light CalculateDirectionalLight(directionalLight Light, vec3 Position, vec3 Norm
     return result;
 }
 
-light CalculatePointLight(pointLight Light, vec3 Position)
+light CalculatePointLight(const pointLight Light, const  vec3 Position)
 {
     light result;
     result.Color = Light.Color;
@@ -141,7 +141,7 @@ light CalculatePointLight(pointLight Light, vec3 Position)
     return result;
 }
 
-light CalculatePointLightShadowed(pointLight Light, samplerCubeShadow ShadowMap, vec3 Position)
+light CalculatePointLightShadowed(const pointLight Light, const  samplerCubeShadow ShadowMap, const  vec3 Position)
 {
     light result;
     result.Color = Light.Color;
@@ -159,7 +159,7 @@ light CalculatePointLightShadowed(pointLight Light, samplerCubeShadow ShadowMap,
     return result;
 }
 
-light CalculateSpotLight(spotLight Light, vec3 Position)
+light CalculateSpotLight(const spotLight Light, const  vec3 Position)
 {
     light result;
     result.Color = Light.Color;
@@ -181,7 +181,7 @@ light CalculateSpotLight(spotLight Light, vec3 Position)
     return result;
 }
 
-light CalculateSpotLightShadowed(spotLight Light, samplerCubeShadow ShadowMap, vec3 Position)
+light CalculateSpotLightShadowed(const spotLight Light, const samplerCubeShadow ShadowMap, const  vec3 Position)
 {
     light result;
     result.Color = Light.Color;
@@ -204,20 +204,20 @@ light CalculateSpotLightShadowed(spotLight Light, samplerCubeShadow ShadowMap, v
     return result;
 }
 
-vec3 FresnelSchlickRoughness(float CosTheta, vec3 F0, float Roughness)
+vec3 FresnelSchlickRoughness(const float CosTheta, const  vec3 F0, const  float Roughness)
 {
     return F0 + (max(vec3(1.0 - Roughness), F0) - F0) *
     FastPow5(1.0 - CosTheta);
 }
 
-vec3 FresnelSchlick(float CosTheta, vec3 F0)
+vec3 FresnelSchlick(const float CosTheta, const  vec3 F0)
 {
     return F0 + (1.0 - F0) * FastPow5(1.0 - CosTheta);
 }
 
-float DistributionGGX(vec3 N, vec3 H, float roughness)
+float DistributionGGX(const vec3 N, const  vec3 H, const  float Roughness)
 {
-    float a = roughness * roughness;
+    float a = Roughness * Roughness;
     float a2 = a * a;
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH * NdotH;
@@ -226,24 +226,25 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
     denom = PI * denom * denom;
     return num / denom;
 }
-float GeometrySchlickGGX(float NdotV, float roughness)
+float GeometrySchlickGGX(const float NdotV, const  float Roughness)
 {
-    float r = (roughness + 1.0);
+    float r = (Roughness + 1.0);
     float k = (r * r) / 8.0;
     float num = NdotV;
     float denom = NdotV * (1.0 - k) + k;
     return num / denom;
 }
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+float GeometrySmith(const vec3 N, const  vec3 V, const  vec3 L, float Roughness)
 {
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
-    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+    float ggx2 = GeometrySchlickGGX(NdotV, Roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, Roughness);
     return ggx1 * ggx2;
 }
 
-vec3 CalculateLightInfluence(light Light, vec3 BaseColor, vec3 Normal, vec3 ViewDirection, float Roughness, float Metallic, vec3 F0)
+vec3 CalculateLightInfluence(const light Light, const  vec3 BaseColor, const  vec3 Normal, const  vec3 ViewDirection,
+const  float Roughness, const  float Metallic, const  vec3 F0)
 {
     vec3 H = normalize(Light.Direction + ViewDirection);
     vec3 radiance = Light.Color * Light.Attenuation;
@@ -265,7 +266,8 @@ vec3 CalculateLightInfluence(light Light, vec3 BaseColor, vec3 Normal, vec3 View
     return (kD * BaseColor / PI + specular) * radiance * NdotL;
 }
 
-vec3 CalculateEnvironmentInfluence(vec3 BaseColor, vec3 Normal, vec3 ViewDirection, float Roughness, float Metallic, vec3 F0, float AmbientOcclusion)
+vec3 CalculateEnvironmentInfluence(const vec3 BaseColor, const  vec3 Normal, const  vec3 ViewDirection,
+const  float Roughness, const  float Metallic, const vec3 F0, const  float AmbientOcclusion)
 {
     vec3 R = reflect(-ViewDirection, Normal);
 
@@ -283,7 +285,8 @@ vec3 CalculateEnvironmentInfluence(vec3 BaseColor, vec3 Normal, vec3 ViewDirecti
     return (kD * diffuse + specular) * AmbientOcclusion;
 }
 
-vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal, vec3 Position, vec3 ViewDirection, float AmbientOcclusion)
+vec3 CalculateLight(const vec3 BaseColor, const float Metallic, const float Roughness, const vec3 Normal,
+const vec3 Position, const vec3 ViewDirection, const float AmbientOcclusion, out float SunAttenuation)
 {
     vec3 Light = vec3(0.0, 0.0, 0.0);
 
@@ -292,13 +295,19 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
 
     if (LightsBuffer.DirectionalLightCount > 0)
     {
-        Light += CalculateLightInfluence(CalculateDirectionalLight(LightsBuffer.DirectionalLight, Position, Normal),
+        light directionalLight = CalculateDirectionalLight(LightsBuffer.DirectionalLight, Position, Normal);
+        Light += CalculateLightInfluence(directionalLight,
         BaseColor,
         Normal,
         ViewDirection,
         Roughness,
         Metallic,
         F0);
+        SunAttenuation = directionalLight.Attenuation;
+    }
+    else
+    {
+        SunAttenuation = 0.0;
     }
 
     for (uint i = 0; i < LightsBuffer.PointLightCount; ++i)
@@ -331,4 +340,11 @@ vec3 CalculateLight(vec3 BaseColor, float Metallic, float Roughness, vec3 Normal
     F0,
     AmbientOcclusion);
     return Color;
+}
+
+vec3 CalculateLight(const vec3 BaseColor, const float Metallic, const float Roughness, const vec3 Normal,
+const vec3 Position, const vec3 ViewDirection, const float AmbientOcclusion)
+{
+    float dummyVariable;
+    return CalculateLight(BaseColor, Metallic, Roughness, Normal, Position, ViewDirection, AmbientOcclusion, dummyVariable);
 }
