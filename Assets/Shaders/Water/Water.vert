@@ -3,7 +3,7 @@
 #include "Water/WaterCommon.glsl"
 
 layout (location = 0) in vec3 inputLocalPosition;
-layout (location = 1) in vec3 inputInstanceData;
+layout (location = 1) in vec4 inputInstanceData;
 
 out vec3 Position;
 

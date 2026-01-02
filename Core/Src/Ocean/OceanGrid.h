@@ -11,7 +11,7 @@ namespace Core
     class OceanGrid
     {
     private:
-        struct CDLODNodeData
+        struct QuadtreeNode
         {
             glm::vec2 Position;
             float Scale;
@@ -19,39 +19,37 @@ namespace Core
         };
 
     private:
-        static constexpr int32_t LodLevels = 10;
+        static constexpr int32_t LodLevels = 7;
 
     private:
         float _lodDistances[LodLevels];
-        float _minLodDistance = 300.0f;
+        float _minLodDistance = 100.0f;
 
         GlVertexArrayUnique _vao;
         GlBufferUnique _vbo;
-        GlBufferUnique _patchPositionsVbo;
+        GlBufferUnique _patchinstanceDataVbo;
+        uint32_t _patchinstanceDataVboSize;
         GlBufferUnique _ebo;
-        uint32_t _patchCount = 0;
         int32_t _elementCount = 0;
-        float _quadSize;
+        float _quantizationSize;
         float _gridSize;
 
-        glm::vec3* _allPatchPositions;
-        glm::vec3* _visiblePatches;
+        std::vector<glm::vec4> _visiblePatches;
 
     public:
-        OceanGrid(float HalfWidth, uint32_t PatchCount, uint32_t PatchSubdivisions);
+        explicit OceanGrid(float HalfWidth);
 
     public:
         ~OceanGrid();
 
     public:
         void Draw(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
-                  const glm::vec3& CameraPosition) const;
+                  const glm::vec3& CameraPosition);
 
     private:
         [[nodiscard]] uint32_t FrustumCulling(const glm::mat4& ViewProjection, const glm::vec3& GridOffset) const;
 
-        bool SelectNode(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize, int32_t Level,
-                        int32_t& BufferHead) const;
+        bool SelectNode(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize, int32_t Level);
 
         [[nodiscard]] bool IsNodeInRange(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize,
                                          int32_t Level) const;
