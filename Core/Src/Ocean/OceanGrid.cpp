@@ -60,7 +60,7 @@ namespace Core
 
         _vao = GlVertexArrayUnique::Create();
         _vbo = GlBufferUnique::Create();
-        _patchinstanceDataVbo = GlBufferUnique::Create();
+        _patchInstanceDataVbo = GlBufferUnique::Create();
         _ebo = GlBufferUnique::Create();
 
         glNamedBufferData(_vbo, static_cast<GLsizeiptr>(sizeof(glm::vec3) * vertexCount), vertexPositions,
@@ -71,8 +71,8 @@ namespace Core
         glVertexArrayAttribBinding(_vao, 0, 0);
         glVertexArrayVertexBuffer(_vao, 0, _vbo, 0, sizeof(glm::vec3));
 
-        _patchinstanceDataVboSize = DefaultInstanceDataBufferSize;
-        glNamedBufferStorage(_patchinstanceDataVbo,
+        _patchInstanceDataVboSize = DefaultInstanceDataBufferSize;
+        glNamedBufferStorage(_patchInstanceDataVbo,
                              static_cast<GLsizeiptr>(sizeof(glm::vec4) * DefaultInstanceDataBufferSize), nullptr,
                              GL_DYNAMIC_STORAGE_BIT);
 
@@ -80,7 +80,7 @@ namespace Core
         glVertexArrayAttribFormat(_vao, 1, 4, GL_FLOAT, GL_FALSE, 0);
         glVertexArrayAttribBinding(_vao, 1, 1);
         glVertexArrayBindingDivisor(_vao, 1, 1);
-        glVertexArrayVertexBuffer(_vao, 1, _patchinstanceDataVbo, 0, sizeof(glm::vec4));
+        glVertexArrayVertexBuffer(_vao, 1, _patchInstanceDataVbo, 0, sizeof(glm::vec4));
 
         glNamedBufferStorage(_ebo, static_cast<GLsizeiptr>(sizeof(uint32_t) * indexCount), indices, GL_NONE);
         glVertexArrayElementBuffer(_vao, _ebo);
@@ -107,29 +107,29 @@ namespace Core
     void OceanGrid::Draw(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
                          const glm::vec3& CameraPosition)
     {
-        const glm::mat4 viewProjection = ProjectionMatrix * ViewMatrix;
         _visiblePatches.clear();
 
         const glm::vec2 gridOrigin =
                 glm::floor(glm::vec2(CameraPosition.x, CameraPosition.z) / _quantizationSize) * _quantizationSize;
+        Frustum cameraFrustum(ViewMatrix, ProjectionMatrix);
 
-        SelectNode(CameraPosition, gridOrigin, _gridSize, LodLevels - 1);
+        SelectNode(CameraPosition, gridOrigin, _gridSize, LodLevels - 1, cameraFrustum);
         spdlog::info(_visiblePatches.size());
 
         if (!_visiblePatches.empty())
         {
-            if (_visiblePatches.size() > static_cast<int32_t>(_patchinstanceDataVboSize))
+            if (_visiblePatches.size() > static_cast<int32_t>(_patchInstanceDataVboSize))
             {
-                _patchinstanceDataVboSize = _visiblePatches.size();
-                _patchinstanceDataVbo = GlBufferUnique::Create();
-                glNamedBufferStorage(_patchinstanceDataVbo,
+                _patchInstanceDataVboSize = _visiblePatches.size();
+                _patchInstanceDataVbo = GlBufferUnique::Create();
+                glNamedBufferStorage(_patchInstanceDataVbo,
                                      static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
                                      _visiblePatches.data(),
                                      GL_DYNAMIC_STORAGE_BIT);
-                glVertexArrayVertexBuffer(_vao, 1, _patchinstanceDataVbo, 0, sizeof(glm::vec4));
+                glVertexArrayVertexBuffer(_vao, 1, _patchInstanceDataVbo, 0, sizeof(glm::vec4));
             } else
             {
-                glNamedBufferSubData(_patchinstanceDataVbo,
+                glNamedBufferSubData(_patchInstanceDataVbo,
                                      0,
                                      static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
                                      _visiblePatches.data());
@@ -149,66 +149,20 @@ namespace Core
         }
     }
 
-    uint32_t OceanGrid::FrustumCulling(const glm::mat4& ViewProjection, const glm::vec3& GridOffset) const
-    {
-        const float* const m = glm::value_ptr(ViewProjection);
-        glm::vec4 planes[6]{
-            glm::vec4(m[3] + m[0], m[7] + m[4], m[11] + m[8], m[15] + m[12]), // Left
-            glm::vec4(m[3] - m[0], m[7] - m[4], m[11] - m[8], m[15] - m[12]), // Right
-            glm::vec4(m[3] + m[1], m[7] + m[5], m[11] + m[9], m[15] + m[13]), // Bottom
-            glm::vec4(m[3] - m[1], m[7] - m[5], m[11] - m[9], m[15] - m[13]), // Top
-            glm::vec4(m[3] + m[2], m[7] + m[6], m[11] + m[10], m[15] + m[14]), // Near
-            glm::vec4(m[3] - m[2], m[7] - m[6], m[11] - m[10], m[15] - m[14]) // Far
-        };
-        for (auto& plane : planes)
-        {
-            const float length = glm::length(glm::vec3(plane));
-            plane /= length;
-        }
-
-        float planeBoxProjections[6];
-        for (int i = 0; i < 6; ++i)
-        {
-            glm::vec3 absNormal = glm::abs(glm::vec3(planes[i]));
-            // planeBoxProjections[i] = glm::dot(absNormal, _patchExtent);
-        }
-
-        uint32_t visiblePatchCount = 0;
-        for (uint32_t i = 0; i < 0; ++i)
-        {
-            bool inside = true;
-            const glm::vec3 worldPatchPos = /*_allPatchPositions[i]*/ +glm::vec3(GridOffset.x, 0.0f, GridOffset.z);
-
-            for (uint32_t j = 0; j < 6; ++j)
-            {
-                const float distance = glm::dot(glm::vec3(planes[j]), worldPatchPos) + planes[j].w;
-                if (distance < -planeBoxProjections[j])
-                {
-                    inside = false;
-                    break;
-                }
-            }
-
-            if (inside)
-            {
-                // _visiblePatches[visiblePatchCount++] = _allPatchPositions[i];
-            }
-        }
-        return visiblePatchCount;
-    }
-
     bool OceanGrid::SelectNode(const glm::vec3& CameraPosition, const glm::vec2 NodePosition, const float NodeSize,
-                               const int32_t Level)
+                               const int32_t Level, const Frustum& Frustum)
     {
         if (!IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level))
         {
             return false;
         }
 
-        // if(!node->_boundingBox.frustumIntersect(_cameraFrustum)){
-        //     // Skip nodes node not visible to camera.
-        //     return true;
-        // }
+        const float horizontalExtent = NodeSize / 2.0f + HorizontalMargin;
+        if (!Frustum.IntersectsAabb(glm::vec3(NodePosition.x, 0.0f, NodePosition.y),
+                                    glm::vec3(horizontalExtent, VerticalExtent, horizontalExtent)))
+        {
+            return true;
+        }
 
         if (Level == 0 || !IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level - 1))
         {
@@ -228,7 +182,7 @@ namespace Core
 
         for (auto childOffset : childOffsets)
         {
-            if (!SelectNode(CameraPosition, NodePosition + childOffset, childSize, Level - 1))
+            if (!SelectNode(CameraPosition, NodePosition + childOffset, childSize, Level - 1, Frustum))
             {
                 _visiblePatches.emplace_back(NodePosition.x + childOffset.x,
                                              NodePosition.y + childOffset.y,

@@ -4,6 +4,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
+#include "Camera/Frustum.h"
 #include "Utility/GlResourceUnique.h"
 
 namespace Core
@@ -27,8 +28,8 @@ namespace Core
 
         GlVertexArrayUnique _vao;
         GlBufferUnique _vbo;
-        GlBufferUnique _patchinstanceDataVbo;
-        uint32_t _patchinstanceDataVboSize;
+        GlBufferUnique _patchInstanceDataVbo;
+        uint32_t _patchInstanceDataVboSize;
         GlBufferUnique _ebo;
         int32_t _elementCount = 0;
         float _quantizationSize;
@@ -47,9 +48,8 @@ namespace Core
                   const glm::vec3& CameraPosition);
 
     private:
-        [[nodiscard]] uint32_t FrustumCulling(const glm::mat4& ViewProjection, const glm::vec3& GridOffset) const;
-
-        bool SelectNode(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize, int32_t Level);
+        bool SelectNode(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize, int32_t Level,
+                        const Frustum& Frustum);
 
         [[nodiscard]] bool IsNodeInRange(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize,
                                          int32_t Level) const;
