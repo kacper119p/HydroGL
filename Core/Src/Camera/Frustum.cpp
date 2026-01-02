@@ -39,7 +39,7 @@ namespace Core
         return true;
     }
 
-    bool Frustum::IntersectsSphere(const glm::vec3& Center, float Radius) const
+    bool Frustum::IntersectsSphere(const glm::vec3& Center, const float Radius) const
     {
         for (const glm::vec4& plane : _planes)
         {
