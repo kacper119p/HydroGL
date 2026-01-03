@@ -66,12 +66,13 @@ namespace Core
           ProjectionMatrix(),
           CameraNearPlane(0.0f),
           CameraFarPlane(0.0f),
+          MinLodDistance(0.0f),
+          PatchSubdivisions(0),
           CameraPosition(),
           TesselationMaxDistance(TesselationMaxDistance),
           TesselationMinDistance(TesselationMinDistance),
           MaxTesselationLevel(MaxTesselationLevel),
           MinTesselationLevel(MinTesselationLevel),
-          MinLodDistance(0.0f),
           SurfaceColor(SurfaceColor),
           Metallic(Metallic),
           Absorption(Absorption),
@@ -280,8 +281,9 @@ namespace Core
         _waterShaderUniforms.ProjectionMatrix = Camera.GetProjectionMatrix();
         _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
         _waterShaderUniforms.CameraFarPlane = Camera.GetFarPlane();
-        _waterShaderUniforms.CameraPosition = cameraPosition;
         _waterShaderUniforms.MinLodDistance = _oceanGrid.GetMinLodDistance();
+        _waterShaderUniforms.PatchSubdivisions = OceanGrid::GetPatchSubdivisions();
+        _waterShaderUniforms.CameraPosition = cameraPosition;
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
 

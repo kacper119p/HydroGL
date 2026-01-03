@@ -12,8 +12,9 @@ namespace Core
     class OceanGrid
     {
     private:
-        static constexpr int32_t LodLevels = 8;
-        static constexpr float MinLodDistance = 600.0f;
+        static constexpr uint32_t PatchSubdivisions = 8;
+        static constexpr int32_t LodLevels = 10;
+        static constexpr float MinLodDistance = 150.0f;
         static constexpr float GridSize = 20000.0f;
 
     private:
@@ -32,6 +33,11 @@ namespace Core
         bool _renderAsWireframe = false;
 
     public:
+        [[nodiscard]] static constexpr uint32_t GetPatchSubdivisions()
+        {
+            return PatchSubdivisions;
+        }
+
         [[nodiscard]] float GetMinLodDistance() const
         {
             return _lodDistances[0];

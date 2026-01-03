@@ -11,7 +11,7 @@ DEFINE_WATER_PARAMETERS_BUFFER(1);
 
 vec2 MorphVertex(const vec2 localSpacePostion, const vec2 worldSpacePostion, const  float morpFactor)
 {
-    const vec2 fraction = fract(localSpacePostion * float(GRID_PATCH_SIZE) * 0.5) * 2.0 / float(GRID_PATCH_SIZE);
+    const vec2 fraction = fract(localSpacePostion * float(WaterParameters.PatchSubdivisions) * 0.5) * 2.0 / float(WaterParameters.PatchSubdivisions);
     return worldSpacePostion - fraction * inputInstanceData.z * morpFactor;
 }
 
@@ -30,7 +30,7 @@ void main()
     float lodRangeLow = 0.0;
     float lodRangeHigh = WaterParameters.MinLodDistance;
 
-    if (lodLevel != 0.0)
+    if (lodLevel != 0)
     {
         lodRangeLow = WaterParameters.MinLodDistance * pow(2.0, float(lodLevel - 1));
         lodRangeHigh = lodRangeLow * 2.0;

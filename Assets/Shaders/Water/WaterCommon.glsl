@@ -4,8 +4,6 @@ const float GAMMA = 3.3;
 const float G = 9.80665;
 const float G2 = G * G;
 
-const uint GRID_PATCH_SIZE = 32u;
-
 #define DEFINE_CASCADE_SETTINGS_BUFFER(binding_point) \
     layout(std430, binding = binding_point) readonly restrict buffer cascadeSettingsBuffer \
     { \
@@ -34,15 +32,14 @@ layout(std140, binding = binding_point) uniform waterParameters \
         \
         float CameraNearPlane;\
         float CameraFarPlane;\
-        \
+        float MinLodDistance;\
+        uint PatchSubdivisions;\
         vec3 CameraPosition;\
         \
         float TesselationMaxDistance;\
         float TesselationMinDistance;\
         float MaxTesselationLevel;\
         float MinTesselationLevel;\
-        \
-        float MinLodDistance;\
         \
         vec3 SurfaceColor;\
         float Metallic;\

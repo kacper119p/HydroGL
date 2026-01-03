@@ -85,14 +85,14 @@ namespace Core
 
             alignas(4) float CameraNearPlane;
             alignas(4) float CameraFarPlane;
+            alignas(4) float MinLodDistance;
+            alignas(4) uint32_t PatchSubdivisions;
             alignas(16) glm::vec3 CameraPosition;
 
             alignas(4) float TesselationMaxDistance;
             alignas(4) float TesselationMinDistance;
             alignas(4) float MaxTesselationLevel;
             alignas(4) float MinTesselationLevel;
-
-            alignas(4) float MinLodDistance;
 
             alignas(16) glm::vec3 SurfaceColor;
             alignas(4) float Metallic;
