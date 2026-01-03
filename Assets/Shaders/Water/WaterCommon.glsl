@@ -4,7 +4,7 @@ const float GAMMA = 3.3;
 const float G = 9.80665;
 const float G2 = G * G;
 
-const uint GRID_PATCH_SIZE = 64u;
+const uint GRID_PATCH_SIZE = 32u;
 
 #define DEFINE_CASCADE_SETTINGS_BUFFER(binding_point) \
     layout(std430, binding = binding_point) readonly restrict buffer cascadeSettingsBuffer \

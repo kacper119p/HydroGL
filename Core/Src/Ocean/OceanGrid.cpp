@@ -10,7 +10,7 @@ namespace
 {
     constexpr float PatchSize = 1.0f;
     constexpr float HalfPatchSize = 0.5f;
-    constexpr uint32_t PatchSubdivisions = 64;
+    constexpr uint32_t PatchSubdivisions = 32;
     constexpr uint32_t DefaultInstanceDataBufferSize = 1024;
     constexpr float VerticalExtent = 100.0f;
     constexpr float HorizontalMargin = 30.0f;
