@@ -6,8 +6,6 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "spdlog/spdlog.h"
-
 namespace
 {
     constexpr float PatchSize = 1.0f;
@@ -20,11 +18,9 @@ namespace
 
 namespace Core
 {
-    OceanGrid::OceanGrid(const float HalfWidth)
-        : _gridSize(HalfWidth * 2.0f)
+    OceanGrid::OceanGrid()
     {
-        _quantizationSize = PatchSize / static_cast<float>(PatchSubdivisions);
-
+        constexpr float quadSize = PatchSize / static_cast<float>(PatchSubdivisions);
         constexpr uint32_t verticesOnEdge = PatchSubdivisions + 1;
         constexpr uint32_t vertexCount = verticesOnEdge * verticesOnEdge;
         constexpr uint32_t indexCount = PatchSubdivisions * PatchSubdivisions * 4;
@@ -38,9 +34,9 @@ namespace Core
             for (uint32_t x = 0; x < verticesOnEdge; ++x)
             {
                 vertexPositions[y * verticesOnEdge + x] = glm::vec3(
-                    -HalfPatchSize + static_cast<float>(x) * _quantizationSize,
+                    -HalfPatchSize + static_cast<float>(x) * quadSize,
                     0.0f,
-                    -HalfPatchSize + static_cast<float>(y) * _quantizationSize);
+                    -HalfPatchSize + static_cast<float>(y) * quadSize);
             }
         }
         for (uint32_t y = 0; y < PatchSubdivisions; ++y)
@@ -92,14 +88,14 @@ namespace Core
 
         for (int32_t i = 0; i < LodLevels; i++)
         {
-            _lodDistances[i] = _minLodDistance * static_cast<float>(std::pow(2, i));
+            _lodDistances[i] = MinLodDistance * static_cast<float>(std::pow(2, i));
         }
-        float minPatchSize = _gridSize;
+        float quantizationPatchSize = GridSize;
         for (int32_t i = 0; i < LodLevels / 2; i++)
         {
-            minPatchSize *= 0.5f;
+            quantizationPatchSize *= 0.5f;
         }
-        _quantizationSize = 1.0f / static_cast<float>(PatchSubdivisions) * minPatchSize;
+        _quantizationSize = 1.0f / static_cast<float>(PatchSubdivisions) * quantizationPatchSize;
     }
 
     OceanGrid::~OceanGrid() = default;
@@ -113,39 +109,48 @@ namespace Core
                 glm::floor(glm::vec2(CameraPosition.x, CameraPosition.z) / _quantizationSize) * _quantizationSize;
         Frustum cameraFrustum(ViewMatrix, ProjectionMatrix);
 
-        SelectNode(CameraPosition, gridOrigin, _gridSize, LodLevels - 1, cameraFrustum);
-        spdlog::info(_visiblePatches.size());
+        SelectNode(CameraPosition, gridOrigin, GridSize, LodLevels - 1, cameraFrustum);
 
-        if (!_visiblePatches.empty())
+        if (_visiblePatches.empty())
         {
-            if (_visiblePatches.size() > static_cast<int32_t>(_patchInstanceDataVboSize))
-            {
-                _patchInstanceDataVboSize = _visiblePatches.size();
-                _patchInstanceDataVbo = GlBufferUnique::Create();
-                glNamedBufferStorage(_patchInstanceDataVbo,
-                                     static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
-                                     _visiblePatches.data(),
-                                     GL_DYNAMIC_STORAGE_BIT);
-                glVertexArrayVertexBuffer(_vao, 1, _patchInstanceDataVbo, 0, sizeof(glm::vec4));
-            } else
-            {
-                glNamedBufferSubData(_patchInstanceDataVbo,
-                                     0,
-                                     static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
-                                     _visiblePatches.data());
-            }
+            return;
+        }
+
+        if (_visiblePatches.size() > static_cast<int32_t>(_patchInstanceDataVboSize))
+        {
+            _patchInstanceDataVboSize = _visiblePatches.size();
+            _patchInstanceDataVbo = GlBufferUnique::Create();
+            glNamedBufferStorage(_patchInstanceDataVbo,
+                                 static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
+                                 _visiblePatches.data(),
+                                 GL_DYNAMIC_STORAGE_BIT);
+            glVertexArrayVertexBuffer(_vao, 1, _patchInstanceDataVbo, 0, sizeof(glm::vec4));
+        } else
+        {
+            glNamedBufferSubData(_patchInstanceDataVbo,
+                                 0,
+                                 static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
+                                 _visiblePatches.data());
+        }
 
 
-            glBindVertexArray(_vao);
-            glPatchParameteri(GL_PATCH_VERTICES, 4);
+        glBindVertexArray(_vao);
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glDrawElementsInstanced(GL_PATCHES,
-                                    _elementCount,
-                                    GL_UNSIGNED_INT,
-                                    nullptr,
-                                    static_cast<int32_t>(_visiblePatches.size()));
-            //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (_renderAsWireframe)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
+        glDrawElementsInstanced(GL_PATCHES,
+                                _elementCount,
+                                GL_UNSIGNED_INT,
+                                nullptr,
+                                static_cast<int32_t>(_visiblePatches.size()));
+
+        if (_renderAsWireframe)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     }
 
@@ -198,14 +203,12 @@ namespace Core
                                   const int32_t Level) const
     {
         const float halfSide = NodeSize * 0.5f;
-        const float minX = NodePosition.x - halfSide;
-        const float maxX = NodePosition.x + halfSide;
-        const float minZ = NodePosition.y - halfSide;
-        const float maxZ = NodePosition.y + halfSide;
-        const float closestX = glm::max(minX, glm::min(CameraPosition.x, maxX));
-        const float closestZ = glm::max(minZ, glm::min(CameraPosition.z, maxZ));
+        const glm::vec2 minBounds = NodePosition - halfSide;
+        const glm::vec2 maxBounds = NodePosition + halfSide;
+        const glm::vec2 camera2D(CameraPosition.x, CameraPosition.z);
+        const glm::vec2 closest2D = glm::clamp(camera2D, minBounds, maxBounds);
 
-        const glm::vec3 closestPoint(closestX, 0.0f, closestZ);
+        const glm::vec3 closestPoint(closest2D.x, 0.0f, closest2D.y);
 
         const glm::vec3 difference = CameraPosition - closestPoint;
         const float distanceSquared = glm::dot(difference, difference);

@@ -92,6 +92,8 @@ namespace Core
             alignas(4) float MaxTesselationLevel;
             alignas(4) float MinTesselationLevel;
 
+            alignas(4) float MinLodDistance;
+
             alignas(16) glm::vec3 SurfaceColor;
             alignas(4) float Metallic;
             alignas(16) glm::vec3 Absorption;
@@ -583,6 +585,16 @@ namespace Core
         [[nodiscard]] uint32_t GetCascadeSettingsSsbo() const
         {
             return _cascadeSettingsSsbo;
+        }
+
+        void SetRenderWaterAsWireframe(const bool RenderAsWireframe)
+        {
+            _oceanGrid.SetRenderAsWireframe(RenderAsWireframe);
+        }
+
+        [[nodiscard]] bool GetRenderWaterAsWireframe() const
+        {
+            return _oceanGrid.GetRenderAsWireframe();
         }
 
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,

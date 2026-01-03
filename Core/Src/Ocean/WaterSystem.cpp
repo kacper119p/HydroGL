@@ -61,27 +61,29 @@ namespace Core
                                                           const float SssPower,
                                                           const float SssScale,
                                                           const glm::vec3& SssColor,
-                                                          const float SssThreshold): ViewMatrix(),
-        ProjectionMatrix(),
-        CameraNearPlane(0.0f),
-        CameraFarPlane(0.0f),
-        CameraPosition(),
-        TesselationMaxDistance(TesselationMaxDistance),
-        TesselationMinDistance(TesselationMinDistance),
-        MaxTesselationLevel(MaxTesselationLevel),
-        MinTesselationLevel(MinTesselationLevel),
-        SurfaceColor(SurfaceColor),
-        Metallic(Metallic),
-        Absorption(Absorption),
-        Roughness(Roughness),
-        FoamColor(FoamColor),
-        FoamMetallic(FoamMetallic),
-        FoamRoughness(FoamRoughness),
-        SssDistortion(SssDistortion),
-        SssPower(SssPower),
-        SssScale(SssScale),
-        SssColor(SssColor),
-        SssThreshold(SssThreshold)
+                                                          const float SssThreshold)
+        : ViewMatrix(),
+          ProjectionMatrix(),
+          CameraNearPlane(0.0f),
+          CameraFarPlane(0.0f),
+          CameraPosition(),
+          TesselationMaxDistance(TesselationMaxDistance),
+          TesselationMinDistance(TesselationMinDistance),
+          MaxTesselationLevel(MaxTesselationLevel),
+          MinTesselationLevel(MinTesselationLevel),
+          MinLodDistance(0.0f),
+          SurfaceColor(SurfaceColor),
+          Metallic(Metallic),
+          Absorption(Absorption),
+          Roughness(Roughness),
+          FoamColor(FoamColor),
+          FoamMetallic(FoamMetallic),
+          FoamRoughness(FoamRoughness),
+          SssDistortion(SssDistortion),
+          SssPower(SssPower),
+          SssScale(SssScale),
+          SssColor(SssColor),
+          SssThreshold(SssThreshold)
     {
     }
 
@@ -97,7 +99,7 @@ namespace Core
     }
 
     WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
-        : _oceanGrid(10000.0f),
+        : _oceanGrid(),
           _sprayManager(WindowSize, MainDepthBuffer),
           _waterShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
@@ -115,7 +117,8 @@ namespace Core
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Assemble.comp", ShaderStage::ComputeShader)
               .Build()),
           _initialSpectrumComputeShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/InitialSpectrum.comp", ShaderStage::ComputeShader)
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/InitialSpectrum.comp",
+                                       ShaderStage::ComputeShader)
               .Build()),
           _spectrumComputeShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Spectrum.comp", ShaderStage::ComputeShader)
@@ -278,6 +281,7 @@ namespace Core
         _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
         _waterShaderUniforms.CameraFarPlane = Camera.GetFarPlane();
         _waterShaderUniforms.CameraPosition = cameraPosition;
+        _waterShaderUniforms.MinLodDistance = _oceanGrid.GetMinLodDistance();
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
 

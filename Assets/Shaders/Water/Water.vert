@@ -9,8 +9,37 @@ out vec3 Position;
 
 DEFINE_WATER_PARAMETERS_BUFFER(1);
 
+vec2 MorphVertex(const vec2 localSpacePostion, const vec2 worldSpacePostion, const  float morpFactor)
+{
+    const vec2 fraction = fract(localSpacePostion * float(GRID_PATCH_SIZE) * 0.5) * 2.0 / float(GRID_PATCH_SIZE);
+    return worldSpacePostion - fraction * inputInstanceData.z * morpFactor;
+}
+
 void main()
 {
-    Position = inputLocalPosition * inputInstanceData.z + vec3(inputInstanceData.x, 0.0, inputInstanceData.y);
-    gl_Position = vec4(Position, 1.0);
+    const vec2 patchPosition = inputInstanceData.xy;
+    const float patchScale = inputInstanceData.z;
+    const  uint lodLevel = uint(inputInstanceData.w);
+
+    const vec3 localPosition = inputLocalPosition;
+
+    const vec2 worldPosition2D = patchPosition + (localPosition.xz * patchScale);
+
+    const float distanceToCamera = distance(WaterParameters.CameraPosition, vec3(worldPosition2D.x, 0.0, worldPosition2D.y));
+
+    float lodRangeLow = 0.0;
+    float lodRangeHigh = WaterParameters.MinLodDistance;
+
+    if (lodLevel != 0.0)
+    {
+        lodRangeLow = WaterParameters.MinLodDistance * pow(2.0, float(lodLevel - 1));
+        lodRangeHigh = lodRangeLow * 2.0;
+    }
+
+    const float factor = (distanceToCamera - lodRangeLow) / (lodRangeHigh - lodRangeLow);
+    const float morphFactor = clamp((factor - 0.7) / 0.3, 0.0, 1.0);
+
+    const vec2 morphedWorldPosition = MorphVertex(localPosition.xz + vec2(0.5), worldPosition2D, morphFactor);
+
+    Position = vec3(morphedWorldPosition.x, 0.0, morphedWorldPosition.y);
 }

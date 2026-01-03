@@ -12,19 +12,12 @@ namespace Core
     class OceanGrid
     {
     private:
-        struct QuadtreeNode
-        {
-            glm::vec2 Position;
-            float Scale;
-            float Level;
-        };
-
-    private:
-        static constexpr int32_t LodLevels = 7;
+        static constexpr int32_t LodLevels = 8;
+        static constexpr float MinLodDistance = 600.0f;
+        static constexpr float GridSize = 20000.0f;
 
     private:
         float _lodDistances[LodLevels];
-        float _minLodDistance = 100.0f;
 
         GlVertexArrayUnique _vao;
         GlBufferUnique _vbo;
@@ -33,12 +26,29 @@ namespace Core
         GlBufferUnique _ebo;
         int32_t _elementCount = 0;
         float _quantizationSize;
-        float _gridSize;
 
         std::vector<glm::vec4> _visiblePatches;
 
+        bool _renderAsWireframe = false;
+
     public:
-        explicit OceanGrid(float HalfWidth);
+        [[nodiscard]] float GetMinLodDistance() const
+        {
+            return _lodDistances[0];
+        }
+
+        [[nodiscard]] bool GetRenderAsWireframe() const
+        {
+            return _renderAsWireframe;
+        }
+
+        void SetRenderAsWireframe(const bool RenderAsWireframe)
+        {
+            _renderAsWireframe = RenderAsWireframe;
+        }
+
+    public:
+        explicit OceanGrid();
 
     public:
         ~OceanGrid();
