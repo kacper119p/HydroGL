@@ -12,7 +12,7 @@ namespace
 namespace Core
 {
     DirectionalShadowsRenderer::DirectionalShadowsRenderer()
-        : _directionalLightSamplingData({}, {}, {0.067f * 200.0f, 0.133f * 200.0f, 0.267f * 200.0f, 200.0f}),
+        : _directionalLightSamplingData({}, {}, {0.067f * 200.0f, 0.201f * 200.0f, 0.603f * 200.0f, 200.0f}),
           _shadowPassUbo(CreateShadowPassUbo()),
           _shadowPassShader(ShaderBuilder()
               .SetStage("Assets/Shaders/Shadows/Directional/DirectionalShadow.vert", ShaderStage::VertexShader)
