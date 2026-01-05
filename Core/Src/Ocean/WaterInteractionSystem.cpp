@@ -342,22 +342,27 @@ namespace Core
         glDeleteSync(fence);
 
         const TriangleProperties& properties = *_triangleBuffer.MappedOutputBuffer;
-        if (properties.SubmergedVolume <= 1e-3f)
+
+        constexpr float volumeEpsilon = 1e-3f;
+
+        SubmergedVolume = 0.0f;
+        if (properties.SubmergedVolume > volumeEpsilon)
         {
-            SubmergedVolume = 0.0f;
-            PhysicsSystem.AddForce(Rigidbody, properties.AirDrag, WorldPosition);
+            SubmergedVolume = properties.SubmergedVolume;
 
-            return;
+            const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
+            const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
+                LocalToWorldMatrix * glm::vec4(properties.CenterOfImmersion, 1.0f));
+
+            PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.WaterDrag, centerOfImmersionWorldSpace);
         }
-        const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
-        const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
-            LocalToWorldMatrix * glm::vec4(properties.CenterOfImmersion, 1.0f));
-        const glm::vec3 centerOfAirWorldSpace = glm::vec3(
-            LocalToWorldMatrix * glm::vec4(properties.CenterOfAir, 1.0f));
-        PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.WaterDrag, centerOfImmersionWorldSpace);
-        PhysicsSystem.AddForce(Rigidbody, properties.AirDrag, centerOfAirWorldSpace);
 
-        SubmergedVolume = properties.SubmergedVolume;
+        if (properties.AirVolume > volumeEpsilon)
+        {
+            const glm::vec3 centerOfAirWorldSpace = glm::vec3(
+                LocalToWorldMatrix * glm::vec4(properties.CenterOfAir, 1.0f));
+            PhysicsSystem.AddForce(Rigidbody, properties.AirDrag, centerOfAirWorldSpace);
+        }
     }
 
     void WaterInteractionSystem::ResizeTriangleBuffers(const uint32_t TriangleCount)
