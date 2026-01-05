@@ -230,30 +230,47 @@ if __name__ == "__main__":
     omega_range = np.linspace(0.5, 4.0, 1000)
     S_omega = np.array([jonswap(w) for w in omega_range])
 
-    plt.figure(figsize=(8, 5), dpi=150)
-    plt.plot(omega_range, S_omega)
-    plt.xlabel(r'Dispersion $\omega\ \left[\frac{rad}{s}\right]$')
-    plt.ylabel(r'$S(\omega)\ \left[\frac{m^2 s}{rad}\right]$', labelpad=2)
-    plt.title('JONSWAP Frequency Spectrum (1D)')
-    plt.grid(True)
+    # Calculate exact S(w) at the peak frequency for the marker
+    S_peak_val = jonswap(PEAK_WAVE_FREQUENCY)
+
+    plt.figure(figsize=(8, 5), dpi=300)
+    plt.plot(omega_range, S_omega, label=r'$S(\omega)$', zorder=2)
+
+    plt.axvline(x=PEAK_WAVE_FREQUENCY, color='red', linestyle='--', alpha=0.7, linewidth=1.2, label=r'$\omega_p$')
+
+    plt.scatter([PEAK_WAVE_FREQUENCY], [S_peak_val], color='red', s=0, zorder=3)
+
+    plt.text(PEAK_WAVE_FREQUENCY, S_peak_val * 0.95,
+             r'  $\omega_p \approx {:.2f}$'.format(PEAK_WAVE_FREQUENCY),
+             color='red',
+             verticalalignment='top',
+             horizontalalignment='left',
+             fontsize=12)
+
+    plt.xlabel(r'$\omega\ \left[\frac{rad}{s}\right]$', fontsize=12)
+    plt.ylabel(r'$S(\omega)\ \left[\frac{m^2 s}{rad}\right]$', labelpad=2, fontsize=12)
+    plt.title('JONSWAP')
+    plt.legend(loc='upper right')
+    plt.grid(True, alpha=0.5, linestyle=':')
     plt.show()
 
     # --- Plot 4: Segmented Frequency Spectrum ---
-    freq_hz = omega_range / (2.0 * PI)
-    S_f = np.array([jonswap(w) * (2.0 * PI) for w in omega_range])
 
-    # Thresholds
+    # Thresholds calculation
     k_t1 = 12.0 / (16.0 * PI)
     k_t2 = 12.0 / (4.0 * PI)
-    f_t1 = np.sqrt(GRAVITY * k_t1) / (2.0 * PI)
-    f_t2 = np.sqrt(GRAVITY * k_t2) / (2.0 * PI)
+
+    # Omega = sqrt(g * k)
+    w_t1 = np.sqrt(GRAVITY * k_t1)
+    w_t2 = np.sqrt(GRAVITY * k_t2)
 
     colors = ['#2b91c4', '#00c39a', '#ebcb00']
     hatch = '///'
+
     masks = [
-        freq_hz <= f_t1,
-        (freq_hz > f_t1) & (freq_hz <= f_t2),
-        freq_hz > f_t2
+        omega_range <= w_t1,
+        (omega_range > w_t1) & (omega_range <= w_t2),
+        omega_range > w_t2
     ]
 
     plt.figure(figsize=(8, 5), dpi=150)
@@ -261,17 +278,20 @@ if __name__ == "__main__":
     labels = ['Cascade 0', 'Cascade 1', 'Cascade 2']
 
     for i, mask in enumerate(masks):
-        x_seg = freq_hz[mask]
-        y_seg = S_f[mask]
+        x_seg = omega_range[mask]
+        y_seg = S_omega[mask]  # Using S_omega directly
+
         if x_seg.size == 0: continue
+
         col = colors[i % len(colors)]
         plt.plot(x_seg, y_seg, color=col, linewidth=1.5, zorder=3)
         plt.fill_between(x_seg, y_seg, color=col, alpha=0.25, zorder=1)
         plt.fill_between(x_seg, y_seg, facecolor='none', edgecolor=col, hatch=hatch, linewidth=0.0, zorder=2)
         handles.append(mpatches.Patch(facecolor=col, edgecolor=col, hatch=hatch, alpha=0.25))
 
-    plt.xlabel(r'Frequency $f\ [Hz]$')
-    plt.ylabel(r'Wave Spectral Density $S(f)\ \left[\frac{m^{2}}{Hz}\right]$')
+    # Labels matching Plot 3
+    plt.xlabel(r'$\omega\ \left[\frac{rad}{s}\right]$', fontsize=12)
+    plt.ylabel(r'$S(\omega)\ \left[\frac{m^2 s}{rad}\right]$', labelpad=2, fontsize=12)
     plt.title('JONSWAP Frequency Spectrum (Segmented)')
     plt.grid(True, alpha=0.3)
     plt.legend(handles, labels[:len(handles)], loc='upper right')
