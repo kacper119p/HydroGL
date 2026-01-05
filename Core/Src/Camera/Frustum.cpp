@@ -52,13 +52,13 @@ namespace Core
         return true;
     }
 
-    bool Frustum::IntersectsAabb(const glm::vec3& Position, const glm::vec3& Extends) const
+    bool Frustum::IntersectsAabb(const glm::vec3& Position, const glm::vec3& Extents) const
     {
         for (const glm::vec4& plane : _planes)
         {
             const glm::vec3 planeNormal = glm::vec3(plane);
             const float distance = glm::dot(planeNormal, Position) + plane.w;
-            const float radius = glm::dot(glm::abs(planeNormal), Extends);
+            const float radius = glm::dot(glm::abs(planeNormal), Extents);
 
             if (distance < -radius)
             {

@@ -9,17 +9,17 @@ out vec3 Position;
 
 DEFINE_WATER_PARAMETERS_BUFFER(1);
 
-vec2 MorphVertex(const vec2 localSpacePostion, const vec2 worldSpacePostion, const  float morpFactor)
+vec2 MorphVertex(const vec2 LocalSpacePosition, const vec2 WorldSpacePosition, const float MorphFactor)
 {
-    const vec2 fraction = fract(localSpacePostion * float(WaterParameters.PatchSubdivisions) * 0.5) * 2.0 / float(WaterParameters.PatchSubdivisions);
-    return worldSpacePostion - fraction * inputInstanceData.z * morpFactor;
+    const vec2 fraction = fract(LocalSpacePosition * float(WaterParameters.PatchSubdivisions) * 0.5) * 2.0 / float(WaterParameters.PatchSubdivisions);
+    return WorldSpacePosition - fraction * inputInstanceData.z * MorphFactor;
 }
 
 void main()
 {
     const vec2 patchPosition = inputInstanceData.xy;
     const float patchScale = inputInstanceData.z;
-    const  uint lodLevel = uint(inputInstanceData.w);
+    const uint lodLevel = uint(inputInstanceData.w);
 
     const vec3 localPosition = inputLocalPosition;
 

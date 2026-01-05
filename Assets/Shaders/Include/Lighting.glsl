@@ -345,6 +345,6 @@ const vec3 Position, const vec3 ViewDirection, const float AmbientOcclusion, out
 vec3 CalculateLight(const vec3 BaseColor, const float Metallic, const float Roughness, const vec3 Normal,
 const vec3 Position, const vec3 ViewDirection, const float AmbientOcclusion)
 {
-    float dummyVariable;
-    return CalculateLight(BaseColor, Metallic, Roughness, Normal, Position, ViewDirection, AmbientOcclusion, dummyVariable);
+    float _;
+    return CalculateLight(BaseColor, Metallic, Roughness, Normal, Position, ViewDirection, AmbientOcclusion, _);
 }

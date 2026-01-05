@@ -36,9 +36,9 @@ namespace Core
         /**
          * @brief Checks whether the frustum intersects with the given axis-aligned bounding box.
          * @param Position Center position of the AABB.
-         * @param Extends Extends of the AABB.
+         * @param Extents Extents of the AABB.
          * @return True if the frustum intersects with the AABB, false otherwise.
          */
-        [[nodiscard]] bool IntersectsAabb(const glm::vec3& Position, const glm::vec3& Extends) const;
+        [[nodiscard]] bool IntersectsAabb(const glm::vec3& Position, const glm::vec3& Extents) const;
     };
 }
