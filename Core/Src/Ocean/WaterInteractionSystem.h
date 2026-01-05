@@ -20,12 +20,15 @@ namespace Core
             TransformComponent>, entt::basic_registry<>>, entt::basic_sigh_mixin<entt::basic_storage<RigidbodyComponent>
             , entt::basic_registry<>>>, entt::exclude_t<>>;
 
-        struct alignas(sizeof(float) * 4) TriangleProperties
+        struct alignas(16) TriangleProperties
         {
-            glm::vec3 Drag;
-            float SubmergedArea;
-            glm::vec3 CenterOfImmersion;
-            float SubmergedVolume;
+            alignas(16) glm::vec3 WaterDrag;
+            alignas(4) float SubmergedArea;
+            alignas(16) glm::vec3 CenterOfImmersion;
+            alignas(4) float SubmergedVolume;
+            alignas(16) glm::vec3 CenterOfAir;
+            alignas(4) float AirVolume;
+            alignas(16) glm::vec3 AirDrag;
         };
 
         struct TriangleBuffer

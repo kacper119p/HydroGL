@@ -242,15 +242,19 @@ void main()
     const vec3 windVelocity = vec3(WindVelocity.x, 0.0, WindVelocity.y);
     const vec3 relativeWindVelocity = windVelocity - MeshData.ObjectVelocity;
     const float relativeWindSpeed = max(EPSILON, length(relativeWindVelocity));
-    const float windProjectedArea = clamp(dot(triangleNormal, relativeWindVelocity / relativeWindSpeed), 0.0, 1.0) * submergedArea;
+    const float airArea = triangleArea - submergedArea;
+    const float windProjectedArea = clamp(dot(triangleNormal, relativeWindVelocity / relativeWindSpeed), 0.0, 1.0) * airArea;
     const vec3 AirDrag = -0.5 * MeshData.DragCoefficient * AIR_DENSITY * windProjectedArea * relativeWindSpeed * relativeWindVelocity;
 
     const vec3 triangleNormalObjectSpace = normalize(cross(vertexObjectSpacePositions[1] - vertexObjectSpacePositions[0], vertexObjectSpacePositions[2] - vertexObjectSpacePositions[0]));
 
-    TriangleProperties[triangleIndex].Drag = WaterDrag + AirDrag;
+    TriangleProperties[triangleIndex].Drag = WaterDrag;
     TriangleProperties[triangleIndex].SubmergedArea = submergedArea;
     TriangleProperties[triangleIndex].CenterOfImmersion = triangleCenterObjectSpace * triangleCenterObjectSpace * triangleNormalObjectSpace * submergedArea * 0.5;
     TriangleProperties[triangleIndex].SubmergedVolume = volumeContribution;
+    TriangleProperties[triangleIndex].CenterOfAir = triangleCenterObjectSpace * triangleCenterObjectSpace * triangleNormalObjectSpace * airArea * 0.5;
+    TriangleProperties[triangleIndex].AirVolume = airArea * triangleDepth;
+    TriangleProperties[triangleIndex].AirDrag = AirDrag;
 
     if (isOnWaterIntersetion)
     {

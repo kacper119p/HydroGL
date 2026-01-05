@@ -27,7 +27,7 @@ void main() {
 
     uint base = groupId * GROUP_SIZE;
 
-    triangleProperties sum = { vec3(0.0), 0.0, vec3(0.0), 0.0 };
+    triangleProperties sum = { vec3(0.0), 0.0, vec3(0.0), 0.0, vec3(0.0), 0.0, vec3(0.0) };
 
     for (uint k = 0; k < ELEMENTS_PER_THREAD; ++k)
     {
@@ -37,7 +37,10 @@ void main() {
             sum.Drag += InputData[idx].Drag;
             sum.SubmergedArea += InputData[idx].SubmergedArea;
             sum.CenterOfImmersion += InputData[idx].CenterOfImmersion;
+            sum.CenterOfAir += InputData[idx].CenterOfAir;
             sum.SubmergedVolume += InputData[idx].SubmergedVolume;
+            sum.AirVolume += InputData[idx].AirVolume;
+            sum.Drag += InputData[idx].AirDrag;
         }
     }
 
@@ -53,7 +56,11 @@ void main() {
             sharedBuffer[localId].Drag += sharedBuffer[localId + offset].Drag;
             sharedBuffer[localId].SubmergedArea += sharedBuffer[localId + offset].SubmergedArea;
             sharedBuffer[localId].CenterOfImmersion += sharedBuffer[localId + offset].CenterOfImmersion;
+            sharedBuffer[localId].CenterOfAir += sharedBuffer[localId + offset].CenterOfAir;
             sharedBuffer[localId].SubmergedVolume += sharedBuffer[localId + offset].SubmergedVolume;
+            sharedBuffer[localId].AirVolume += sharedBuffer[localId + offset].AirVolume;
+            sharedBuffer[localId].AirDrag += sharedBuffer[localId + offset].AirDrag;
+
         }
         memoryBarrierShared();
         barrier();

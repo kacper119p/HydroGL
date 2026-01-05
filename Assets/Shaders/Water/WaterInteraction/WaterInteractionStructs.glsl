@@ -4,6 +4,9 @@ struct triangleProperties
     float SubmergedArea;
     vec3 CenterOfImmersion;
     float SubmergedVolume;
+    vec3 CenterOfAir;
+    float AirVolume;
+    vec3 AirDrag;
 };
 
 struct intersectionSegment

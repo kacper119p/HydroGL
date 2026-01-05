@@ -345,14 +345,17 @@ namespace Core
         if (properties.SubmergedVolume <= 1e-3f)
         {
             SubmergedVolume = 0.0f;
-            PhysicsSystem.AddForce(Rigidbody, properties.Drag, WorldPosition);
+            PhysicsSystem.AddForce(Rigidbody, properties.AirDrag, WorldPosition);
 
             return;
         }
         const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
         const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
             LocalToWorldMatrix * glm::vec4(properties.CenterOfImmersion, 1.0f));
-        PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.Drag, centerOfImmersionWorldSpace);
+        const glm::vec3 centerOfAirWorldSpace = glm::vec3(
+            LocalToWorldMatrix * glm::vec4(properties.CenterOfAir, 1.0f));
+        PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.WaterDrag, centerOfImmersionWorldSpace);
+        PhysicsSystem.AddForce(Rigidbody, properties.AirDrag, centerOfAirWorldSpace);
 
         SubmergedVolume = properties.SubmergedVolume;
     }
