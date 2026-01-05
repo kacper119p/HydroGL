@@ -234,7 +234,7 @@ float GeometrySchlickGGX(const float NdotV, const  float Roughness)
     float denom = NdotV * (1.0 - k) + k;
     return num / denom;
 }
-float GeometrySmith(const vec3 N, const  vec3 V, const  vec3 L, float Roughness)
+float GeometrySmith(const vec3 N, const  vec3 V, const  vec3 L, const float Roughness)
 {
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
