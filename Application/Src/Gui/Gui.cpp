@@ -26,6 +26,7 @@ namespace
     GUI_UNIQUE_ID(WaterSprayId);
     GUI_UNIQUE_ID(WaterLightingId);
     GUI_UNIQUE_ID(WaterSssId);
+    GUI_UNIQUE_ID(WaterDebugId);
     GUI_UNIQUE_ID(SystemInfoWindowId);
     GUI_UNIQUE_ID(CameraSettingsWindowId);
     GUI_UNIQUE_ID(TextureViewerWindowId);
@@ -332,6 +333,21 @@ namespace Application
                 if (ImGui::ColorEdit3("Color", glm::value_ptr(sssColor)))
                 {
                     _waterSystem->SetSssColor(sssColor);
+                }
+                ImGui::PopID();
+            }
+            if (ImGui::CollapsingHeader("Debug"))
+            {
+                ImGui::PushID(WaterDebugId);
+                bool renderWaterAsWireframe = _waterSystem->GetRenderWaterAsWireframe();
+                if (ImGui::Checkbox("Wireframe", &renderWaterAsWireframe))
+                {
+                    _waterSystem->SetRenderWaterAsWireframe(renderWaterAsWireframe);
+                }
+                bool renderWaterEffectors = _waterSystem->GetRenderWaterEffectors();
+                if (ImGui::Checkbox("Show Water Effectors", &renderWaterEffectors))
+                {
+                    _waterSystem->SetRenderWaterEffectors(renderWaterEffectors);
                 }
                 ImGui::PopID();
             }

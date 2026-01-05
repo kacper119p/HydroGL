@@ -2,6 +2,8 @@
 #include "Camera/CameraComponent.h"
 #include "Ocean/OceanGrid.h"
 #include "Ocean/SprayManager.h"
+#include "Ocean/WaterEffectorsRenderer.h"
+#include "Rendering/RendererHelpers/DrawElementsIndirectCommand.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
 #include "Utility/GlResourceUnique.h"
@@ -83,9 +85,10 @@ namespace Core
             alignas(16) glm::mat4 ViewMatrix;
             alignas(16) glm::mat4 ProjectionMatrix;
 
-            alignas(16) glm::vec2 GridOrigin;
             alignas(4) float CameraNearPlane;
             alignas(4) float CameraFarPlane;
+            alignas(4) float MinLodDistance;
+            alignas(4) uint32_t PatchSubdivisions;
             alignas(16) glm::vec3 CameraPosition;
 
             alignas(4) float TesselationMaxDistance;
@@ -251,6 +254,7 @@ namespace Core
     private:
         OceanGrid _oceanGrid;
         SprayManager _sprayManager;
+        WaterEffectorsRenderer _waterEffectorsRenderer;
 
         Shader _waterShader;
         Shader _fftHorizontalShader;
@@ -586,11 +590,34 @@ namespace Core
             return _cascadeSettingsSsbo;
         }
 
+        void SetRenderWaterAsWireframe(const bool RenderAsWireframe)
+        {
+            _oceanGrid.SetRenderAsWireframe(RenderAsWireframe);
+        }
+
+        [[nodiscard]] bool GetRenderWaterAsWireframe() const
+        {
+            return _oceanGrid.GetRenderAsWireframe();
+        }
+
+        [[nodiscard]] bool GetRenderWaterEffectors() const
+        {
+            return _waterEffectorsRenderer.IsRendering();
+        }
+
+        void SetRenderWaterEffectors(const bool RenderDebugInfo)
+        {
+            _waterEffectorsRenderer.SetRender(RenderDebugInfo);
+        }
+
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     const glm::vec3& AmbientLightColor, uint32_t DynamicWavesSampleSsboId, uint32_t SceneColor,
                     uint32_t SceneDepth);
 
         void RenderSpray(uint32_t TargetFrameBuffer) const;
+
+        void RenderWaterEffectorsDebug(const entt::registry& Registry, const glm::mat4& ViewMatrix,
+                                       const glm::mat4& ProjectionMatrix);
 
     private:
         void UpdateInitialSpectrum() const;

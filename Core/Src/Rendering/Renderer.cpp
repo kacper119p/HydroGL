@@ -11,6 +11,12 @@
 #include "Scene/TransformComponent.h"
 #include "Textures/CubeMapGenerator.h"
 
+namespace
+{
+    constexpr int32_t DefaultBufferSize = 1024;
+    constexpr float DefaultFogDensity = 0.001f;
+}
+
 namespace Core
 {
     Renderer::Renderer(const glm::uvec2& Resolution)
@@ -34,22 +40,23 @@ namespace Core
               .Build()),
           _depthPassViewMatrixLocation(_depthPassShader.GetUniformLocation("ViewMatrix")),
           _depthPassProjectionMatrixLocation(_depthPassShader.GetUniformLocation("ProjectionMatrix")),
+          _indirectDrawCommandsSsbo(GlBufferUnique::Create()),
+          _transformsSsbo(GlBufferUnique::Create()),
+          _lightsSsbo(GlBufferUnique::Create()),
           _brdfLut(CubeMapGenerator::CreateBrdfLut()),
           _directionalLightProjectionMatrix(glm::ortho(-150.0f, 150.0f, -150.0f, 150.0f, 0.1f, 300.0f)),
           _frameBuffer(Resolution),
           _bloomPostprocessingEffect(Resolution)
     {
-        constexpr int32_t defaultBufferSize = 1024;
-        _indirectDrawCommandsSsbo = GlBufferUnique::Create();
-        _transformsSsbo = GlBufferUnique::Create();
-        _lightsSsbo = GlBufferUnique::Create();
-        _indirectDrawCommands.resize(defaultBufferSize);
-        _transformMatrices.resize(defaultBufferSize);
+        _indirectDrawCommands.resize(DefaultBufferSize);
+        _transformMatrices.resize(DefaultBufferSize);
         glNamedBufferData(_indirectDrawCommandsSsbo,
-                          static_cast<GLsizeiptr>(defaultBufferSize * sizeof(DrawElementsIndirectCommand)),
+                          static_cast<GLsizeiptr>(DefaultBufferSize * sizeof(DrawElementsIndirectCommand)),
                           _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
-        glNamedBufferData(_transformsSsbo, static_cast<GLsizeiptr>(defaultBufferSize * sizeof(glm::mat4)),
+        glNamedBufferData(_transformsSsbo, static_cast<GLsizeiptr>(DefaultBufferSize * sizeof(glm::mat4)),
                           _transformMatrices.data(), GL_DYNAMIC_DRAW);
+
+        _lightDataBuffer.FogDensity = DefaultFogDensity;
     }
 
     Renderer::~Renderer() = default;
@@ -83,9 +90,9 @@ namespace Core
             _transformMatrices.resize(countHint);
             glNamedBufferData(_indirectDrawCommandsSsbo,
                               static_cast<GLsizeiptr>(countHint * sizeof(DrawElementsIndirectCommand)),
-                              _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+                              nullptr, GL_DYNAMIC_DRAW);
             glNamedBufferData(_transformsSsbo, static_cast<GLsizeiptr>(countHint * sizeof(glm::mat4)),
-                              _transformMatrices.data(), GL_DYNAMIC_DRAW);
+                              nullptr, GL_DYNAMIC_DRAW);
         }
 
         size_t trueCount = 0;
@@ -113,16 +120,13 @@ namespace Core
         glNamedBufferSubData(_transformsSsbo, 0, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
                              _transformMatrices.data());
 
-        MeshManager::BindVao();
-
         // ------------------------ DIRECTIONAL LIGHT SHADOWS ------------------------
 
         const glm::mat4 viewMatrix = glm::inverse(cameraTransform.GetLocalToWorldMatrix());
 
         RenderShadows(entityRegistry, camera, viewMatrix, _transformsSsbo, _indirectDrawCommandsSsbo, trueCount);
 
-        // ------------------------ MAIN RENDERING PASSES SETUP ------------------------
-        materialManager.BindMaterialBuffer();
+        // ------------------------ MAIN RENDERING SETUP ------------------------
 
         glDepthMask(GL_TRUE);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -137,8 +141,15 @@ namespace Core
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // ------------------------ DEBUG ------------------------
+
+        Engine.GetWaterSystem()->RenderWaterEffectorsDebug(*entityRegistry,
+                                                           glm::inverse(cameraTransform.GetLocalToWorldMatrix()),
+                                                           camera.GetProjectionMatrix());
+
+        // ------------------------ MAIN PASSES SETUP ------------------------
+        materialManager.BindMaterialBuffer();
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _transformsSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _indirectDrawCommandsSsbo);
 
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, _indirectDrawCommandsSsbo);
 
@@ -151,8 +162,7 @@ namespace Core
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
         // ------------------------ MAIN PASS ------------------------
-
-        BindLightData(entityRegistry, viewMatrix, scene.GetSkybox());
+        BindLightData(entityRegistry, viewMatrix, scene.GetSkybox(), camera);
 
         _pbrShader.Use();
         _pbrShader.SetUniform(_pbrViewMatrixLocation, viewMatrix);
@@ -172,11 +182,7 @@ namespace Core
         CubeRenderer::Draw();
 
         _frameBuffer.ResolveMultisampling();
-        //_frameBuffer.BindOpaqueFramebuffer();
-
-        _frameBuffer.BlitOpaqueToTransparent();
-        _frameBuffer.BindTransparentFramebuffer();
-
+        //Water is rendered to multisampledBuffer
         Engine.GetWaterSystem()->Render(DeltaTime,
                                         cameraTransform,
                                         camera,
@@ -185,14 +191,23 @@ namespace Core
                                         _frameBuffer.GetOpaqueColorBuffer(),
                                         _frameBuffer.GetOpaqueDepthBuffer());
 
+        _frameBuffer.ResolveMultisampling();
+        _frameBuffer.BlitOpaqueToTransparent();
+        _frameBuffer.BindTransparentFramebuffer();
+
         Engine.GetWaterSystem()->RenderSpray(_frameBuffer.GetTransparentFrameBuffer());
 
         _bloomPostprocessingEffect.Render(_frameBuffer.GetTransparentColorBuffer());
     }
 
     void Renderer::BindLightData(const entt::registry* EntityRegistry, const glm::mat4& ViewMatrix,
-                                 const Skybox& Skybox)
+                                 const Skybox& Skybox,
+                                 const CameraComponent& Camera)
     {
+        _lightDataBuffer.SceneAmbientColor = Skybox.GetEnvironmentColor();
+        _lightDataBuffer.CameraNearPlane = Camera.GetNearPlane();
+        _lightDataBuffer.CameraFarPlane = Camera.GetFarPlane();
+
         if (const auto& directionalLightView = EntityRegistry->view<DirectionalLightComponent, TransformComponent>();
             directionalLightView.begin() != directionalLightView.end())
         {

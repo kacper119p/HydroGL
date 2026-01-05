@@ -55,6 +55,7 @@ void main()
 
     vec3 Emissive = texture(Materials[MaterialIndex].EmissiveMap, TexCoord).rgb * Materials[MaterialIndex].EmissiveColor;
     Color += Emissive;
+    Color = ApplyFog(Color, LinearizeDepth(gl_FragCoord.z), ViewDirection, LightsBuffer.DirectionalLight.Direction);
 
     FragColor = vec4(Color, 1.0);
 }

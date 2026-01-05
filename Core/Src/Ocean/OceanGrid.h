@@ -4,6 +4,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
+#include "Camera/Frustum.h"
 #include "Utility/GlResourceUnique.h"
 
 namespace Core
@@ -11,35 +12,62 @@ namespace Core
     class OceanGrid
     {
     private:
+        static constexpr uint32_t PatchSubdivisions = 8;
+        static constexpr int32_t LodLevels = 10;
+        static constexpr float MinLodDistance = 150.0f;
+        static constexpr float GridSize = 20000.0f;
+
+    private:
+        float _lodDistances[LodLevels];
+
         GlVertexArrayUnique _vao;
         GlBufferUnique _vbo;
-        GlBufferUnique _patchPositionsVbo;
+        GlBufferUnique _patchInstanceDataVbo;
+        uint32_t _patchInstanceDataVboSize;
         GlBufferUnique _ebo;
-        uint32_t _patchCount = 0;
         int32_t _elementCount = 0;
-        float _quadSize;
+        float _quantizationSize;
 
-        glm::vec3* _allPatchPositions;
-        glm::vec3* _visiblePatches;
-        glm::vec3 _patchExtent;
+        std::vector<glm::vec4> _visiblePatches;
+
+        bool _renderAsWireframe = false;
 
     public:
-        [[nodiscard]] float GetQuadSize() const
+        [[nodiscard]] static constexpr uint32_t GetPatchSubdivisions()
         {
-            return _quadSize;
+            return PatchSubdivisions;
+        }
+
+        [[nodiscard]] float GetMinLodDistance() const
+        {
+            return _lodDistances[0];
+        }
+
+        [[nodiscard]] bool GetRenderAsWireframe() const
+        {
+            return _renderAsWireframe;
+        }
+
+        void SetRenderAsWireframe(const bool RenderAsWireframe)
+        {
+            _renderAsWireframe = RenderAsWireframe;
         }
 
     public:
-        OceanGrid(float HalfWidth, uint32_t PatchCount, uint32_t PatchSubdivisions);
+        explicit OceanGrid();
 
     public:
         ~OceanGrid();
 
     public:
         void Draw(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
-                  const glm::vec3& CameraPosition) const;
+                  const glm::vec3& CameraPosition);
 
     private:
-        [[nodiscard]] uint32_t FrustumCulling(const glm::mat4& ViewProjection, const glm::vec3& GridOffset) const;
+        bool SelectNode(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize, int32_t Level,
+                        const Frustum& Frustum);
+
+        [[nodiscard]] bool IsNodeInRange(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize,
+                                         int32_t Level) const;
     };
 }

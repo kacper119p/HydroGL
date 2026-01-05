@@ -270,9 +270,9 @@ namespace Core
         const float objectSpeed = glm::length(ObjectVelocity);
 
         float delta = objectSpeed < 1.0f ? 0.999f * DeltaTime : 0.999f * DeltaTime * objectSpeed;
-        const float waveMaskPhysicalSize = std::clamp(
+        const float waveMaskPhysicalSize = std::max(
             delta * static_cast<float>(WaterEffectorComponent.TexturesResolution),
-            5.0f * boundsDiagonal, MaxDynamicWaveFieldSize);
+            5.0f * boundsDiagonal);
         delta = waveMaskPhysicalSize / static_cast<float>(WaterEffectorComponent.TexturesResolution);
 
         if (WaterEffectorComponent.PreviousInteractiveWavesFieldSizes[0] == 0.0f)
@@ -342,19 +342,27 @@ namespace Core
         glDeleteSync(fence);
 
         const TriangleProperties& properties = *_triangleBuffer.MappedOutputBuffer;
-        if (properties.SubmergedVolume <= 1e-3f)
+
+        constexpr float volumeEpsilon = 1e-3f;
+
+        SubmergedVolume = 0.0f;
+        if (properties.SubmergedVolume > volumeEpsilon)
         {
-            SubmergedVolume = 0.0f;
-            PhysicsSystem.AddForce(Rigidbody, properties.Drag, WorldPosition);
+            SubmergedVolume = properties.SubmergedVolume;
 
-            return;
+            const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
+            const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
+                LocalToWorldMatrix * glm::vec4(properties.CenterOfImmersion, 1.0f));
+
+            PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.WaterDrag, centerOfImmersionWorldSpace);
         }
-        const glm::vec3 buoyancy = glm::vec3(0.0f, 9.80665f * properties.SubmergedVolume * WaterDensity, 0.0f);
-        const glm::vec3 centerOfImmersionWorldSpace = glm::vec3(
-            LocalToWorldMatrix * glm::vec4(properties.CenterOfImmersion, 1.0f));
-        PhysicsSystem.AddForce(Rigidbody, buoyancy + properties.Drag, centerOfImmersionWorldSpace);
 
-        SubmergedVolume = properties.SubmergedVolume;
+        if (properties.AirVolume > volumeEpsilon)
+        {
+            const glm::vec3 centerOfAirWorldSpace = glm::vec3(
+                LocalToWorldMatrix * glm::vec4(properties.CenterOfAir, 1.0f));
+            PhysicsSystem.AddForce(Rigidbody, properties.AirDrag, centerOfAirWorldSpace);
+        }
     }
 
     void WaterInteractionSystem::ResizeTriangleBuffers(const uint32_t TriangleCount)

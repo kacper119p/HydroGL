@@ -7,6 +7,8 @@
 #include <random>
 
 #include "TimeManager.h"
+#include "Meshes/MeshManager.h"
+#include "Ocean/Components/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 
 namespace Core
@@ -33,7 +35,7 @@ namespace Core
 
         constexpr glm::vec3 DefaultSurfaceColor{0.005f, 0.1f, 0.2f};
         constexpr float DefaultMetallic = 0.05f;
-        constexpr glm::vec3 DefaultAbsorption{0.5f, 0.2f, 0.05f};
+        constexpr glm::vec3 DefaultAbsorption{0.5f, 0.2f, 0.1f};
         constexpr float DefaultRoughness = 0.5f;
         constexpr glm::vec3 DefaultFoamColor{1.0f, 1.0f, 1.0f};
         constexpr float DefaultFoamMetallic = 0.0f;
@@ -61,28 +63,30 @@ namespace Core
                                                           const float SssPower,
                                                           const float SssScale,
                                                           const glm::vec3& SssColor,
-                                                          const float SssThreshold): ViewMatrix(),
-        ProjectionMatrix(),
-        GridOrigin(),
-        CameraNearPlane(0.0f),
-        CameraFarPlane(0.0f),
-        CameraPosition(),
-        TesselationMaxDistance(TesselationMaxDistance),
-        TesselationMinDistance(TesselationMinDistance),
-        MaxTesselationLevel(MaxTesselationLevel),
-        MinTesselationLevel(MinTesselationLevel),
-        SurfaceColor(SurfaceColor),
-        Metallic(Metallic),
-        Absorption(Absorption),
-        Roughness(Roughness),
-        FoamColor(FoamColor),
-        FoamMetallic(FoamMetallic),
-        FoamRoughness(FoamRoughness),
-        SssDistortion(SssDistortion),
-        SssPower(SssPower),
-        SssScale(SssScale),
-        SssColor(SssColor),
-        SssThreshold(SssThreshold)
+                                                          const float SssThreshold)
+        : ViewMatrix(),
+          ProjectionMatrix(),
+          CameraNearPlane(0.0f),
+          CameraFarPlane(0.0f),
+          MinLodDistance(0.0f),
+          PatchSubdivisions(0),
+          CameraPosition(),
+          TesselationMaxDistance(TesselationMaxDistance),
+          TesselationMinDistance(TesselationMinDistance),
+          MaxTesselationLevel(MaxTesselationLevel),
+          MinTesselationLevel(MinTesselationLevel),
+          SurfaceColor(SurfaceColor),
+          Metallic(Metallic),
+          Absorption(Absorption),
+          Roughness(Roughness),
+          FoamColor(FoamColor),
+          FoamMetallic(FoamMetallic),
+          FoamRoughness(FoamRoughness),
+          SssDistortion(SssDistortion),
+          SssPower(SssPower),
+          SssScale(SssScale),
+          SssColor(SssColor),
+          SssThreshold(SssThreshold)
     {
     }
 
@@ -98,7 +102,7 @@ namespace Core
     }
 
     WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
-        : _oceanGrid(1000.0f, 100, 10),
+        : _oceanGrid(),
           _sprayManager(WindowSize, MainDepthBuffer),
           _waterShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
@@ -116,7 +120,8 @@ namespace Core
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Assemble.comp", ShaderStage::ComputeShader)
               .Build()),
           _initialSpectrumComputeShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/InitialSpectrum.comp", ShaderStage::ComputeShader)
+              ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/InitialSpectrum.comp",
+                                       ShaderStage::ComputeShader)
               .Build()),
           _spectrumComputeShader(
               ShaderBuilder().SetStage("Assets/Shaders/Water/Spectrum/Spectrum.comp", ShaderStage::ComputeShader)
@@ -274,15 +279,12 @@ namespace Core
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
-        const float quadSize = _oceanGrid.GetQuadSize();
-        const glm::vec2 gridOrigin =
-                glm::floor(glm::vec2(cameraPosition.x, cameraPosition.z) / quadSize) * quadSize;
-
         _waterShaderUniforms.ViewMatrix = viewMatrix;
         _waterShaderUniforms.ProjectionMatrix = Camera.GetProjectionMatrix();
-        _waterShaderUniforms.GridOrigin = gridOrigin;
         _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
         _waterShaderUniforms.CameraFarPlane = Camera.GetFarPlane();
+        _waterShaderUniforms.MinLodDistance = _oceanGrid.GetMinLodDistance();
+        _waterShaderUniforms.PatchSubdivisions = OceanGrid::GetPatchSubdivisions();
         _waterShaderUniforms.CameraPosition = cameraPosition;
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
@@ -318,6 +320,12 @@ namespace Core
     void WaterSystem::RenderSpray(const uint32_t TargetFrameBuffer) const
     {
         _sprayManager.Render(TargetFrameBuffer);
+    }
+
+    void WaterSystem::RenderWaterEffectorsDebug(const entt::registry& Registry, const glm::mat4& ViewMatrix,
+                                                const glm::mat4& ProjectionMatrix)
+    {
+        _waterEffectorsRenderer.RenderDebug(Registry, ViewMatrix, ProjectionMatrix);
     }
 
     void WaterSystem::UpdateSpectrumTexture() const
