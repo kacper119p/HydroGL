@@ -90,9 +90,9 @@ namespace Core
             _transformMatrices.resize(countHint);
             glNamedBufferData(_indirectDrawCommandsSsbo,
                               static_cast<GLsizeiptr>(countHint * sizeof(DrawElementsIndirectCommand)),
-                              _indirectDrawCommands.data(), GL_DYNAMIC_DRAW);
+                              nullptr, GL_DYNAMIC_DRAW);
             glNamedBufferData(_transformsSsbo, static_cast<GLsizeiptr>(countHint * sizeof(glm::mat4)),
-                              _transformMatrices.data(), GL_DYNAMIC_DRAW);
+                              nullptr, GL_DYNAMIC_DRAW);
         }
 
         size_t trueCount = 0;
@@ -120,16 +120,13 @@ namespace Core
         glNamedBufferSubData(_transformsSsbo, 0, static_cast<GLsizeiptr>(trueCount * sizeof(glm::mat4)),
                              _transformMatrices.data());
 
-        MeshManager::BindVao();
-
         // ------------------------ DIRECTIONAL LIGHT SHADOWS ------------------------
 
         const glm::mat4 viewMatrix = glm::inverse(cameraTransform.GetLocalToWorldMatrix());
 
         RenderShadows(entityRegistry, camera, viewMatrix, _transformsSsbo, _indirectDrawCommandsSsbo, trueCount);
 
-        // ------------------------ MAIN RENDERING PASSES SETUP ------------------------
-        materialManager.BindMaterialBuffer();
+        // ------------------------ MAIN RENDERING SETUP ------------------------
 
         glDepthMask(GL_TRUE);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -144,8 +141,15 @@ namespace Core
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // ------------------------ DEBUG ------------------------
+
+        Engine.GetWaterSystem()->RenderWaterEffectorsDebug(*entityRegistry,
+                                                           glm::inverse(cameraTransform.GetLocalToWorldMatrix()),
+                                                           camera.GetProjectionMatrix());
+
+        // ------------------------ MAIN PASSES SETUP ------------------------
+        materialManager.BindMaterialBuffer();
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _transformsSsbo);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _indirectDrawCommandsSsbo);
 
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, _indirectDrawCommandsSsbo);
 
@@ -158,7 +162,6 @@ namespace Core
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(trueCount), 0);
 
         // ------------------------ MAIN PASS ------------------------
-
         BindLightData(entityRegistry, viewMatrix, scene.GetSkybox(), camera);
 
         _pbrShader.Use();

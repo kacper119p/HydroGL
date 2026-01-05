@@ -344,6 +344,11 @@ namespace Application
                 {
                     _waterSystem->SetRenderWaterAsWireframe(renderWaterAsWireframe);
                 }
+                bool renderWaterEffectors = _waterSystem->GetRenderWaterEffectors();
+                if (ImGui::Checkbox("Show Water Effectors", &renderWaterEffectors))
+                {
+                    _waterSystem->SetRenderWaterEffectors(renderWaterEffectors);
+                }
                 ImGui::PopID();
             }
         }

@@ -270,9 +270,9 @@ namespace Core
         const float objectSpeed = glm::length(ObjectVelocity);
 
         float delta = objectSpeed < 1.0f ? 0.999f * DeltaTime : 0.999f * DeltaTime * objectSpeed;
-        const float waveMaskPhysicalSize = std::clamp(
+        const float waveMaskPhysicalSize = std::max(
             delta * static_cast<float>(WaterEffectorComponent.TexturesResolution),
-            5.0f * boundsDiagonal, MaxDynamicWaveFieldSize);
+            5.0f * boundsDiagonal);
         delta = waveMaskPhysicalSize / static_cast<float>(WaterEffectorComponent.TexturesResolution);
 
         if (WaterEffectorComponent.PreviousInteractiveWavesFieldSizes[0] == 0.0f)

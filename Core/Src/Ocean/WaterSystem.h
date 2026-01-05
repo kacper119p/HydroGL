@@ -2,6 +2,8 @@
 #include "Camera/CameraComponent.h"
 #include "Ocean/OceanGrid.h"
 #include "Ocean/SprayManager.h"
+#include "Ocean/WaterEffectorsRenderer.h"
+#include "Rendering/RendererHelpers/DrawElementsIndirectCommand.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
 #include "Utility/GlResourceUnique.h"
@@ -252,6 +254,7 @@ namespace Core
     private:
         OceanGrid _oceanGrid;
         SprayManager _sprayManager;
+        WaterEffectorsRenderer _waterEffectorsRenderer;
 
         Shader _waterShader;
         Shader _fftHorizontalShader;
@@ -597,11 +600,24 @@ namespace Core
             return _oceanGrid.GetRenderAsWireframe();
         }
 
+        [[nodiscard]] bool GetRenderWaterEffectors() const
+        {
+            return _waterEffectorsRenderer.IsRendering();
+        }
+
+        void SetRenderWaterEffectors(const bool RenderDebugInfo)
+        {
+            _waterEffectorsRenderer.SetRender(RenderDebugInfo);
+        }
+
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     const glm::vec3& AmbientLightColor, uint32_t DynamicWavesSampleSsboId, uint32_t SceneColor,
                     uint32_t SceneDepth);
 
         void RenderSpray(uint32_t TargetFrameBuffer) const;
+
+        void RenderWaterEffectorsDebug(const entt::registry& Registry, const glm::mat4& ViewMatrix,
+                                       const glm::mat4& ProjectionMatrix);
 
     private:
         void UpdateInitialSpectrum() const;

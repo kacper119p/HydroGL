@@ -41,7 +41,6 @@ namespace Core
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _shadowPassUbo);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, TransformsBuffer);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, IndirectDrawCommandsBuffer);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectDrawCommandsBuffer);
 
         _shadowPassShader.Use();

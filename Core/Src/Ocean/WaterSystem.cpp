@@ -7,6 +7,8 @@
 #include <random>
 
 #include "TimeManager.h"
+#include "Meshes/MeshManager.h"
+#include "Ocean/Components/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
 
 namespace Core
@@ -318,6 +320,12 @@ namespace Core
     void WaterSystem::RenderSpray(const uint32_t TargetFrameBuffer) const
     {
         _sprayManager.Render(TargetFrameBuffer);
+    }
+
+    void WaterSystem::RenderWaterEffectorsDebug(const entt::registry& Registry, const glm::mat4& ViewMatrix,
+                                                const glm::mat4& ProjectionMatrix)
+    {
+        _waterEffectorsRenderer.RenderDebug(Registry, ViewMatrix, ProjectionMatrix);
     }
 
     void WaterSystem::UpdateSpectrumTexture() const
