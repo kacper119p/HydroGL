@@ -148,6 +148,7 @@ namespace Core
         if (!IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level - 1))
         {
             _patchesFar.emplace_back(NodePosition.x, NodePosition.y, NodeSize, Level);
+            return true;
         }
 
         const float childSize = NodeSize * 0.5f;
@@ -272,9 +273,9 @@ namespace Core
 
                 indices[baseIndex + 0] = lowerLeft;
                 indices[baseIndex + 1] = upperLeft;
-                indices[baseIndex + 2] = upperRight;
+                indices[baseIndex + 2] = lowerRight;
 
-                indices[baseIndex + 3] = lowerLeft;
+                indices[baseIndex + 3] = upperLeft;
                 indices[baseIndex + 4] = upperRight;
                 indices[baseIndex + 5] = lowerRight;
             }
