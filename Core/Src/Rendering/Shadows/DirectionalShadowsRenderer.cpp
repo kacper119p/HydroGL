@@ -144,8 +144,8 @@ namespace Core
 
         glTextureStorage3D(_shadowMaps, 1, GL_DEPTH_COMPONENT32F,
                            ShadowMapResolution, ShadowMapResolution, CascadeCount);
-        glTextureParameteri(_shadowMaps, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(_shadowMaps, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(_shadowMaps, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(_shadowMaps, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteri(_shadowMaps, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
         glTextureParameteri(_shadowMaps, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
         glTextureParameteri(_shadowMaps, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
