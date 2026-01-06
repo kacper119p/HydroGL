@@ -49,7 +49,7 @@ void main()
         const vec2 texCoord = vec2(position.x, position.z) / CascadeSettingsBuffer.CascadeSettings[i].Length;
         tessendorfDisplacement += texture(DisplacementMaps, vec3(texCoord, i)).xyz;
     }
-    vec3 tessendorfPosition = position + tessendorfDisplacement;
+    const vec3 tessendorfPosition = position + tessendorfDisplacement;
 
     vec3 dynamicDisplacement = vec3(0.0);
     for (int i = 0; i < dynamicWavesBuffer.DynamicWavesCount; ++i)

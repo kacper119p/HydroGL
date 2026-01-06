@@ -102,12 +102,15 @@ namespace Core
     }
 
     WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
-        : _oceanGrid(),
-          _sprayManager(WindowSize, MainDepthBuffer),
-          _waterShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
+        : _sprayManager(WindowSize, MainDepthBuffer),
+          _waterNearShader(
+              ShaderBuilder().SetStage("Assets/Shaders/Water/WaterNear.vert", ShaderStage::VertexShader).
               SetStage("Assets/Shaders/Water/Water.tesc", ShaderStage::TesselationControlShader).
               SetStage("Assets/Shaders/Water/Water.tese", ShaderStage::TesselationEvaluationShader).
+              SetStage("Assets/Shaders/Water/Water.frag", ShaderStage::FragmentShader)
+              .Build()),
+          _waterFarShader(
+              ShaderBuilder().SetStage("Assets/Shaders/Water/WaterFar.vert", ShaderStage::VertexShader).
               SetStage("Assets/Shaders/Water/Water.frag", ShaderStage::FragmentShader)
               .Build()),
           _fftHorizontalShader(
@@ -279,6 +282,8 @@ namespace Core
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
+        _oceanGrid.UpdateBuffers(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
+
         _waterShaderUniforms.ViewMatrix = viewMatrix;
         _waterShaderUniforms.ProjectionMatrix = Camera.GetProjectionMatrix();
         _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
@@ -288,8 +293,6 @@ namespace Core
         _waterShaderUniforms.CameraPosition = cameraPosition;
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
-
-        _waterShader.Use();
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
         glBindBufferBase(GL_UNIFORM_BUFFER, 1, _waterSettingsUbo);
@@ -301,7 +304,12 @@ namespace Core
         glBindTextureUnit(5, SceneColor);
         glBindTextureUnit(6, SceneDepth);
 
-        _oceanGrid.Draw(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
+        _waterNearShader.Use();
+        _oceanGrid.RenderNearPatches();
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, _waterSettingsUbo);
+        _waterFarShader.Use();
+        _oceanGrid.RenderFarPatches();
 
         _sprayManager.Update(DeltaTime,
                              _displacementTextures,

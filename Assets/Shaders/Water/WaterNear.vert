@@ -37,7 +37,7 @@ void main()
     }
 
     const float factor = (distanceToCamera - lodRangeLow) / (lodRangeHigh - lodRangeLow);
-    const float morphFactor = clamp((factor - 0.7) / 0.3, 0.0, 1.0);
+    const float morphFactor = clamp(factor / 0.5 - 1.0, 0.0, 1.0);
 
     const vec2 morphedWorldPosition = MorphVertex(localPosition.xz + vec2(0.5), worldPosition2D, morphFactor);
 

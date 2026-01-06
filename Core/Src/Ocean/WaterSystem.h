@@ -256,7 +256,8 @@ namespace Core
         SprayManager _sprayManager;
         WaterEffectorsRenderer _waterEffectorsRenderer;
 
-        Shader _waterShader;
+        Shader _waterNearShader;
+        Shader _waterFarShader;
         Shader _fftHorizontalShader;
         Shader _fftVerticalShader;
         Shader _assembleComputeShader;
