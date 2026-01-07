@@ -98,7 +98,7 @@ namespace Application
         {
             return;
         }
-        const glm::mat4& worldMatrix = cameraTransform.GetLocalToWorldMatrix();
+        const glm::mat4& worldMatrix = cameraTransform.GetLocalToParentMatrix();
         const glm::vec3 forward = -glm::normalize(glm::vec3(worldMatrix[2]));
         const glm::vec3 right = glm::normalize(glm::vec3(worldMatrix[0]));
         const glm::vec3 movement = _movementSensitivity * DeltaTime * (forward * _movementY + right * _movementX);

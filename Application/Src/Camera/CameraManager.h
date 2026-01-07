@@ -30,9 +30,29 @@ namespace Application
         bool _isDragging = false;
 
     public:
-        explicit CameraManager(const Core::Engine* Engine);
+        [[nodiscard]] Core::TransformComponent* GetCameraParent() const
+        {
+            const auto cameraView = _scene->GetEntityRegistry()->view<Core::CameraComponent,
+                Core::TransformComponent>();
+            const entt::entity cameraEntity = cameraView.front();
+            const Core::TransformComponent& transform = _scene->GetEntityRegistry()
+                    ->get<Core::TransformComponent>(cameraEntity);
+            return transform.GetSceneHierarchyNode().GetParent()->GetTransformComponent();
+        }
+
+        void SetCameraParent(const Core::TransformComponent& CameraOwner) const
+        {
+            const auto cameraView = _scene->GetEntityRegistry()->view<Core::CameraComponent,
+                Core::TransformComponent>();
+            const entt::entity cameraEntity = cameraView.front();
+            const Core::TransformComponent& transform = _scene->GetEntityRegistry()->get<Core::TransformComponent>(
+                cameraEntity);
+            transform.GetSceneHierarchyNode().SetParent(CameraOwner.GetSceneHierarchyNode());
+        }
 
     public:
+        explicit CameraManager(const Core::Engine* Engine);
+
         ~CameraManager();
 
     public:

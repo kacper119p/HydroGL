@@ -78,7 +78,7 @@ namespace Core
             if (_sceneHierarchyNode->GetParent())
             {
                 const SceneNode* parentNode = _sceneHierarchyNode->GetParent();
-                const glm::quat parentWorldRotation = parentNode->GetTransformComponent().GetWorldRotation();
+                const glm::quat parentWorldRotation = parentNode->GetTransformComponent()->GetWorldRotation();
                 _rotation = glm::inverse(parentWorldRotation) * Rotation;
             } else
             {
@@ -113,7 +113,7 @@ namespace Core
             if (_sceneHierarchyNode->GetParent())
             {
                 const SceneNode* parentNode = _sceneHierarchyNode->GetParent();
-                const glm::mat4& parentWorld = parentNode->GetTransformComponent().GetLocalToWorldMatrix();
+                const glm::mat4& parentWorld = parentNode->GetTransformComponent()->GetLocalToWorldMatrix();
                 const glm::mat4 parentWorldInv = glm::inverse(parentWorld);
                 _position = glm::vec3(parentWorldInv * glm::vec4(Position, 1.0f));
             } else

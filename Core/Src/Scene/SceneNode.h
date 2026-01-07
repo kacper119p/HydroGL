@@ -93,7 +93,9 @@ namespace Core
             return _children.end();
         }
 
-        [[nodiscard]] const TransformComponent& GetTransformComponent() const;
+        [[nodiscard]] const TransformComponent* GetTransformComponent() const;
+
+        [[nodiscard]] TransformComponent* GetTransformComponent();
 
     private:
         void UpdateMatrices(TransformComponent& Transform) const;
