@@ -64,7 +64,5 @@ void main()
         imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 1), vec4(velocity1, 0.0));
         imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 2), vec4(velocity2, 0.0));
         imageStore(Velocity, ivec3(pixelCoords, baseWriteIndex + 3), vec4(velocity3, 0.0));
-
-
     }
 }
