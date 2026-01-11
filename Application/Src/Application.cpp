@@ -15,6 +15,36 @@
 
 namespace
 {
+    void CreateIslands(entt::registry* const EntityRegistry, Core::MaterialManager* const MaterialManager,
+                       const Core::PhysicsSystem* const PhysicsSystem)
+    {
+        Core::Mesh mesh = Core::MeshManager::GetMesh("Assets/Models/Island/Island.glb");
+        const Core::Texture colorMain = Core::Texture::GetTexture("Assets/Models/Island/Color.dds");
+        const Core::Texture normal = Core::Texture::GetTexture("Assets/Textures/NormalDefault.dds");
+        const Core::Texture rmao = Core::Texture::GetTexture("Assets/Models/Island/Rmao.dds");
+        const Core::Texture emissive = Core::Texture::GetTexture("Assets/Textures/Black.dds");
+        const Core::MaterialId materialMain = MaterialManager->CreateMaterial(
+            glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 0.0f,
+            colorMain, rmao, normal, emissive);
+
+        const entt::entity entity = EntityRegistry->create();
+        Core::TransformComponent& transform = EntityRegistry->emplace<Core::TransformComponent>(entity);
+        Core::RenderedMeshComponent& renderedMesh = EntityRegistry->emplace<
+            Core::RenderedMeshComponent>(entity);
+        renderedMesh.Mesh = mesh;
+        renderedMesh.Material = materialMain;
+        transform.SetWorldPosition(glm::vec3(3000.0f, 0.0f, -3000.0f));
+
+        const entt::entity entity2 = EntityRegistry->create();
+        Core::TransformComponent& transform2 = EntityRegistry->emplace<Core::TransformComponent>(entity2);
+        Core::RenderedMeshComponent& renderedMesh2 = EntityRegistry->emplace<
+            Core::RenderedMeshComponent>(entity2);
+        renderedMesh2.Mesh = mesh;
+        renderedMesh2.Material = materialMain;
+        transform2.SetWorldPosition(glm::vec3(-2000.0f, 0.0f, -3000.0f));
+        transform2.SetWorldEulerAngles(glm::vec3(0.0f, 90.0f, 0.0f));
+    }
+
     void CreateFishingShip(entt::registry* const EntityRegistry, Core::MaterialManager* const MaterialManager,
                            const Core::PhysicsSystem* const PhysicsSystem)
     {
@@ -201,9 +231,9 @@ int32_t Application::Application::Run(Platform::Window* Window)
         / static_cast<float>(Window->GetWindowHeight()),
         0.1f, 28284.2712f);
 
-
     CreateCargoShip(entityRegistry, engine->GetMaterialManager(), engine->GetPhysicsSystem());
     CreateFishingShip(entityRegistry, engine->GetMaterialManager(), engine->GetPhysicsSystem());
+    CreateIslands(entityRegistry, engine->GetMaterialManager(), engine->GetPhysicsSystem());
 
     const entt::entity directionalLightEntity = entityRegistry->create();
     Core::TransformComponent& directionalLightTransform = entityRegistry->emplace<Core::TransformComponent>(
