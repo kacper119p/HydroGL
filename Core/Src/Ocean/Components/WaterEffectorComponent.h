@@ -17,6 +17,7 @@ namespace Core
         CyclicBuffer<uint64_t, 3> InteractiveWavesTextureHandles;
         CyclicBuffer<glm::vec2, 2> PreviousPositions;
         CyclicBuffer<float, 2> PreviousInteractiveWavesFieldSizes;
+        float DragCoefficient;
         float IntersectionMaskFieldSize;
         float MeshTotalVolume;
         float BackWaveHeightFactor;
@@ -28,6 +29,7 @@ namespace Core
         WaterEffectorComponent(const class Mesh& Mesh,
                                const glm::vec3& Position,
                                float MeshTotalVolume,
+                               float DragCoefficient,
                                float DisplacementStrength,
                                float BackWaveHeightFactor,
                                float FrontWaveHeightFactor,
@@ -35,6 +37,7 @@ namespace Core
 
         WaterEffectorComponent(const class Mesh& Mesh,
                                const glm::vec3& Position,
+                               float DragCoefficient,
                                float DisplacementStrength,
                                float BackWaveHeightFactor,
                                float FrontWaveHeightFactor,
