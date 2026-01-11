@@ -41,9 +41,7 @@ void main()
 
     const int velocityPackedTextureCount = CascadeSettingsBuffer.VelocityLayers * 3 / 4;
 
-
     const int velocityPackedBaseIndex = cascadeIndex * velocityPackedTextureCount;
-
 
     const int velocityBaseIndex = cascadeIndex * CascadeSettingsBuffer.VelocityLayers;
 
