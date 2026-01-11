@@ -43,8 +43,8 @@ namespace Core
 
         constexpr float DefaultSssDistortion = 1.1f;
         constexpr float DefaultSssPower = 3.0f;
-        constexpr float DefaultSssScale = 2.5f;
-        constexpr glm::vec3 DefaultSssColor{0.1f, 0.8f, 0.6f};
+        constexpr float DefaultSssScale = 1.0f;
+        constexpr glm::vec3 DefaultSssColor{0.0f, 0.556f, 0.396f};
         constexpr float DefaultSssThreshold = 1.1f;
     }
 

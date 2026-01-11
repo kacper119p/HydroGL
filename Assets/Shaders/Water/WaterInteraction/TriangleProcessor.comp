@@ -70,25 +70,19 @@ float Remap(const float Value, const float InMin, const float InMax, const float
 
 vec3 RetrieveWaterVelocity(vec3 position)
 {
-    vec3 velocity = vec3(0.0);
-    for (int cascade = 0; cascade < CascadeSettingsBuffer.CascadeCount; ++cascade)
-    {
-        const int velocityBaseIndex = cascade * CascadeSettingsBuffer.VelocityLayers;
-        float textureIndex = velocityBaseIndex + Remap(position.y, CascadeSettingsBuffer.VelocityMinHeight, CascadeSettingsBuffer.VelocityMaxHeight, 0.0, float(CascadeSettingsBuffer.VelocityLayers - 1));
-        textureIndex = clamp(textureIndex, velocityBaseIndex, velocityBaseIndex + CascadeSettingsBuffer.VelocityLayers - 1);
+    float textureIndex = Remap(position.y, CascadeSettingsBuffer.VelocityMinHeight, CascadeSettingsBuffer.VelocityMaxHeight, 0.0, float(CascadeSettingsBuffer.VelocityLayers - 1));
+    textureIndex = clamp(textureIndex, 0, CascadeSettingsBuffer.VelocityLayers - 1);
 
-        const float lowerIndex = floor(textureIndex);
-        const float upperIndex = ceil(textureIndex);
-        const float t = textureIndex - lowerIndex;
+    const float lowerIndex = floor(textureIndex);
+    const float upperIndex = ceil(textureIndex);
+    const float t = textureIndex - lowerIndex;
 
-        const vec2 texCoord = vec2(position.x, position.z) / CascadeSettingsBuffer.CascadeSettings[cascade].Length;
+    const vec2 texCoord = vec2(position.x, position.z) / CascadeSettingsBuffer.CascadeSettings[0].Length;
 
-        const vec3 lowerValue = texture(Velocity, vec3(texCoord, lowerIndex)).xyz;
-        const vec3 upperValue = texture(Velocity, vec3(texCoord, upperIndex)).xyz;
+    const vec3 lowerValue = texture(Velocity, vec3(texCoord, lowerIndex)).xyz;
+    const vec3 upperValue = texture(Velocity, vec3(texCoord, upperIndex)).xyz;
 
-        velocity += mix(lowerValue, upperValue, t);
-    }
-    return velocity;
+    return mix(lowerValue, upperValue, t);
 }
 
 void ProcessTriangle(const vec3 VertexPositionsWorldSpace[3], const float TriangleNormalY, out float TriangleArea,
@@ -233,7 +227,7 @@ void main()
     const vec3 triangleCenterObjectSpace = (1.0 / 3.0) * (vertexObjectSpacePositions[0] + vertexObjectSpacePositions[1] + vertexObjectSpacePositions[2]);
     const vec3 triangleCenterWorldSpace = (1.0 / 3.0) * (vertexPositionsWorldSpace[0] + vertexPositionsWorldSpace[1] + vertexPositionsWorldSpace[2]);
 
-    const vec3 waterVelocity = RetrieveWaterVelocity(vec3(triangleCenterWorldSpace.x, triangleDepth, triangleCenterWorldSpace.z));
+    const vec3 waterVelocity = RetrieveWaterVelocity(triangleCenterWorldSpace);
     const vec3 relativeWaterVelocity = MeshData.ObjectVelocity - waterVelocity;
     const float relativeWaterSpeed = max(EPSILON, length(relativeWaterVelocity));
     const float waterProjectedArea = clamp(dot(triangleNormal, relativeWaterVelocity / relativeWaterSpeed), 0.0, 1.0) * submergedArea;
