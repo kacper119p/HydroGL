@@ -29,12 +29,10 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
     glCreateTextures(GL_TEXTURE_2D, 1, &MaskTexture);
     glCreateTextures(GL_TEXTURE_2D, 3, InteractiveWavesTextures.Data());
 
-    void* textureData = std::calloc(TexturesResolution * TexturesResolution, sizeof(float));
-
     glTextureStorage2D(MaskTexture, 1, GL_R32F, TexturesResolution,
                        TexturesResolution);
-    glTextureSubImage2D(MaskTexture, 0, 0, 0, TexturesResolution, TexturesResolution, GL_RED,
-                        GL_FLOAT, textureData);
+    constexpr float clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    glClearTexImage(MaskTexture, 0, GL_RED, GL_FLOAT, clearColor);
     glTextureParameteri(MaskTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(MaskTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTextureParameteri(MaskTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -45,8 +43,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
     {
         glTextureStorage2D(InteractiveWavesTextures[i], 1, GL_R32F, TexturesResolution,
                            TexturesResolution);
-        glTextureSubImage2D(InteractiveWavesTextures[i], 0, 0, 0, TexturesResolution, TexturesResolution, GL_RED,
-                            GL_FLOAT, textureData);
+        glClearTexImage(MaskTexture, 0, GL_RED, GL_FLOAT, clearColor);
         glTextureParameteri(InteractiveWavesTextures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTextureParameteri(InteractiveWavesTextures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteri(InteractiveWavesTextures[i], GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -55,7 +52,6 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
         InteractiveWavesTextureHandles[i] = glGetTextureHandleARB(InteractiveWavesTextures[i]);
         glMakeTextureHandleResidentARB(InteractiveWavesTextureHandles[i]);
     }
-    std::free(textureData);
 }
 
 Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
