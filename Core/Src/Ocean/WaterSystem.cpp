@@ -1,5 +1,4 @@
 #include "WaterSystem.h"
-#include "Ocean/WaterSystem.h"
 
 #include <chrono>
 #include <iostream>
@@ -10,6 +9,7 @@
 #include "Meshes/MeshManager.h"
 #include "Ocean/Components/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
+#include "spdlog/spdlog.h"
 
 namespace Core
 {
@@ -166,6 +166,10 @@ namespace Core
           _cascadeSettingsSsbo(CreateCascadeSettingsSsbo(_cascadeSettings))
     {
         UpdateInitialSpectrum();
+        spdlog::info("Gauss: {}", _gaussianNoiseTexture.Get());
+        spdlog::info("InitialSpectrum: {}", _initialSpectrumTextures.Get());
+        spdlog::info("TimeSpectrum1: {}", _hDzDxDfhxTextures.Get());
+        spdlog::info("TimeSpectrum2: {}", _hDzDxDfhxTextures.Get());
     }
 
     GlTextureUnique WaterSystem::CreateTextureArray(const int32_t Layers)

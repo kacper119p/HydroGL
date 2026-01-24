@@ -4,9 +4,6 @@ from matplotlib.path import Path
 import numpy as np
 import os
 
-# --- KONFIGURACJA PLIKÓW (TWOJE NAZWY) ---
-# Klucze odpowiadają strukturze, którą podałeś.
-# Wartości to ścieżki do plików.
 FILES = {
     # Stage 1
     "gauss": "textures/gauss.png",
@@ -102,7 +99,7 @@ def draw_stacked_texture_content(ax, textures_list, cmap, is_stacked=True):
 
         for spine in inset.spines.values():
             spine.set_visible(True)
-            spine.set_edgecolor('black')
+            spine.set_edgecolor('white')
             spine.set_linewidth(2.0)
 
         inset.set_xticks([])
@@ -113,10 +110,10 @@ def draw_stacked_texture_content(ax, textures_list, cmap, is_stacked=True):
 
 def add_labels_relative(ax, title, bottom_label=None):
     ax.text(0.5, 1.05, title, transform=ax.transAxes,
-            ha='center', va='bottom', fontsize=14, fontweight='bold', color='black')
+            ha='center', va='bottom', fontsize=32, fontweight='bold', color='black')
     if bottom_label:
         ax.text(0.5, -0.12, bottom_label, transform=ax.transAxes,
-                ha='center', va='top', fontsize=12, fontweight='medium', color='#222222')
+                ha='center', va='top', fontsize=28, fontweight='medium', color='black')
 
 
 def add_straight_arrow(fig, ax_start, ax_end, label=None):
@@ -129,7 +126,7 @@ def add_straight_arrow(fig, ax_start, ax_end, label=None):
     fig.add_artist(arrow)
     if label:
         ax_start.text(1.3, 0.55, label, transform=ax_start.transAxes,
-                      ha='center', va='bottom', fontsize=12, fontweight='bold',
+                      ha='center', va='bottom', fontsize=24, fontweight='bold',
                       bbox=dict(facecolor='white', edgecolor='none', alpha=0.9, pad=3), zorder=2)
 
 
@@ -197,42 +194,45 @@ def visualize_fft_pipeline_names():
     # Stage 1: Gauss
     ax1 = fig.add_subplot(gs[:, 0])
     draw_stacked_texture_content(ax1, t_gauss, 'gray', is_stacked=False)
-    add_labels_relative(ax1, "Stage 1", "gauss")
+    add_labels_relative(ax1, "Stage 1", r"$\xi_\mathbf{k}$")
 
     # Stage 2: h_0
     ax2 = fig.add_subplot(gs[:, 1])
     draw_stacked_texture_content(ax2, t_h0, 'hot', is_stacked=True)
-    add_labels_relative(ax2, "Stage 2", "h_0_{1..3}")
+    add_labels_relative(ax2, "Stage 2", r"$\tilde{h}_0(\mathbf{k})$" + ",\n$" + r"\tilde{h}^*_0(-\mathbf{k})$")
 
     # Stage 3: Upper (h_1)
     ax3_1 = fig.add_subplot(gs[0, 2])
     draw_stacked_texture_content(ax3_1, t_h1, 'viridis', is_stacked=True)
-    add_labels_relative(ax3_1, "Stage 3 (Upper)", "h_1_{1..3}")
+    add_labels_relative(ax3_1, "Stage 3", r"$\tilde h(\mathbf{k},t)$" + ", " + r"$\tilde{D}_x(\mathbf{k},t)$," + "\n"
+                        + r"$\tilde{D}_z(\mathbf{k},t)$" + ", " + r"$\frac{\partial h}{\partial x}(\mathbf{k},t)$")
 
     # Stage 3: Lower (h_2)
     ax3_2 = fig.add_subplot(gs[1, 2])
     draw_stacked_texture_content(ax3_2, t_h2, 'viridis', is_stacked=True)
-    add_labels_relative(ax3_2, "", "h_2_{1..3}")
+    add_labels_relative(ax3_2, "", r"$\frac{\partial h}{\partial z}(\mathbf{k},t)$" + ", " + r"$\frac{\partial D_x}{\partial x}(\mathbf{k},t)$," + "\n"
+                        + r"$\frac{\partial D_z}{\partial x}(\mathbf{k},t)$" + ", " + r"$\frac{\partial D_z}{\partial z}(\mathbf{k},t)$")
 
     # Stage 4: Upper (result_1)
     ax4_1 = fig.add_subplot(gs[0, 3])
     draw_stacked_texture_content(ax4_1, t_res1, 'Blues_r', is_stacked=True)
-    add_labels_relative(ax4_1, "Stage 4 (Upper)", "result_1_{1..3}")
+    add_labels_relative(ax4_1, "Stage 4", r"$\tilde h(\mathbf{x},t)$" + ", " + r"$\tilde{D}_x(\mathbf{x},t)$," + "\n"
+                        + r"$\tilde{D}_z(\mathbf{x},t)$" + ", " + r"$\frac{\partial h}{\partial x}(\mathbf{x},t)$")
 
     # Stage 4: Lower (result_2)
     ax4_2 = fig.add_subplot(gs[1, 3])
     draw_stacked_texture_content(ax4_2, t_res2, 'Blues_r', is_stacked=True)
-    add_labels_relative(ax4_2, "", "result_2_{1..3}")
+    add_labels_relative(ax4_2, "", r"$\frac{\partial h}{\partial z}(\mathbf{x},t)$" + ", " + r"$\frac{\partial D_x}{\partial x}(\mathbf{x},t)$," + "\n"
+                        + r"$\frac{\partial D_z}{\partial x}(\mathbf{x},t)$" + ", " + r"$\frac{\partial D_z}{\partial z}(\mathbf{x},t)$")
 
     # --- CONNECTIONS ---
     add_straight_arrow(fig, ax1, ax2)
     add_stepped_arrow(fig, ax2, ax3_1)
     add_stepped_arrow(fig, ax2, ax3_2)
-    add_straight_arrow(fig, ax3_1, ax4_1, label="IFFT")
-    add_straight_arrow(fig, ax3_2, ax4_2, label="IFFT")
+    add_straight_arrow(fig, ax3_1, ax4_1, label="IDFFT")
+    add_straight_arrow(fig, ax3_2, ax4_2, label="IDFFT")
 
-    plt.suptitle("FFT Ocean Pipeline: Named Textures Flow", fontsize=24, fontweight='bold', y=0.98)
-    plt.savefig("fft_pipeline_named.png")
+    plt.suptitle("FFT Ocean Texture Pipeline", fontsize=32, fontweight='bold', y=1.00)
     plt.show()
 
 
