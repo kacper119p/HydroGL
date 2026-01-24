@@ -37,17 +37,19 @@ namespace Application
             const entt::entity cameraEntity = cameraView.front();
             const Core::TransformComponent& transform = _scene->GetEntityRegistry()
                     ->get<Core::TransformComponent>(cameraEntity);
-            return transform.GetSceneHierarchyNode().GetParent()->GetTransformComponent();
+            return transform.GetSceneHierarchyNode()->GetParent()->GetTransformComponent();
         }
 
-        void SetCameraParent(const Core::TransformComponent& CameraOwner) const
+        void SetCameraParent(const Core::TransformComponent* CameraOwner) const
         {
             const auto cameraView = _scene->GetEntityRegistry()->view<Core::CameraComponent,
                 Core::TransformComponent>();
             const entt::entity cameraEntity = cameraView.front();
             const Core::TransformComponent& transform = _scene->GetEntityRegistry()->get<Core::TransformComponent>(
                 cameraEntity);
-            transform.GetSceneHierarchyNode().SetParent(CameraOwner.GetSceneHierarchyNode());
+            transform.GetSceneHierarchyNode()->SetParent(CameraOwner == nullptr
+                                                             ? nullptr
+                                                             : CameraOwner->GetSceneHierarchyNode());
         }
 
     public:

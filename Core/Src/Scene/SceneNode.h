@@ -53,14 +53,17 @@ namespace Core
             }
         }
 
-        void SetParent(SceneNode& InParent)
+        void SetParent(SceneNode* InParent)
         {
             if (_parent != nullptr)
             {
                 _parent->RemoveChild(*this);
             }
-            _parent = &InParent;
-            _parent->AddChild(*this);
+            _parent = InParent;
+            if (_parent != nullptr)
+            {
+                _parent->AddChild(*this);
+            }
             MarkDirty();
         }
 

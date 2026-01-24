@@ -200,9 +200,9 @@ namespace Core
             return glm::inverse(_localToParentMatrix);
         }
 
-        [[nodiscard]] SceneNode& GetSceneHierarchyNode() const
+        [[nodiscard]] SceneNode* GetSceneHierarchyNode() const
         {
-            return *_sceneHierarchyNode;
+            return _sceneHierarchyNode;
         }
 
         void UpdateMatrices() const

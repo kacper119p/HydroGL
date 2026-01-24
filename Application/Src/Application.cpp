@@ -70,10 +70,12 @@ namespace
             entityInterior);
         Core::RenderedMeshComponent& renderedMeshInterior = EntityRegistry->emplace<
             Core::RenderedMeshComponent>(entityInterior);
-        transformInterior.GetSceneHierarchyNode().SetParent(transformMain.GetSceneHierarchyNode());
+        transformInterior.GetSceneHierarchyNode()->SetParent(transformMain.GetSceneHierarchyNode());
         renderedMeshInterior.Mesh = Core::MeshManager::GetMesh("Assets/Models/FishingShip/Interior.glb");
-        const Core::Texture colorInterior = Core::Texture::GetTexture("Assets/Models/FishingShip/ColorInterior.dds");
-        const Core::Texture normalInterior = Core::Texture::GetTexture("Assets/Models/FishingShip/NormalInterior.dds");
+        const Core::Texture colorInterior =
+                Core::Texture::GetTexture("Assets/Models/FishingShip/ColorInterior.dds");
+        const Core::Texture normalInterior = Core::Texture::GetTexture(
+            "Assets/Models/FishingShip/NormalInterior.dds");
         const Core::Texture rmaoInterior = Core::Texture::GetTexture("Assets/Models/FishingShip/RmaoInterior.dds");
         const Core::MaterialId materialInterior = MaterialManager->CreateMaterial(
             glm::vec3(1.0f), 1.0f, glm::vec3(0.0f), 1.0f,
@@ -81,10 +83,11 @@ namespace
         renderedMeshInterior.Material = materialInterior;
 
         const entt::entity entityLight = EntityRegistry->create();
-        const Core::TransformComponent& transformLight = EntityRegistry->emplace<Core::TransformComponent>(entityLight);
+        const Core::TransformComponent& transformLight = EntityRegistry->emplace<Core::TransformComponent>(
+            entityLight);
         Core::RenderedMeshComponent& renderedMeshLight = EntityRegistry->emplace<Core::RenderedMeshComponent>(
             entityLight);
-        transformLight.GetSceneHierarchyNode().SetParent(transformMain.GetSceneHierarchyNode());
+        transformLight.GetSceneHierarchyNode()->SetParent(transformMain.GetSceneHierarchyNode());
         renderedMeshLight.Mesh = Core::MeshManager::GetMesh("Assets/Models/FishingShip/Light.glb");
         const Core::MaterialId materialLight = MaterialManager->CreateMaterial(
             glm::vec3(0.0f), 0.0f, glm::vec3(15.0f), 0.0f,
@@ -128,7 +131,7 @@ namespace
         const Core::TransformComponent& transformA = EntityRegistry->emplace<Core::TransformComponent>(entityA);
         Core::RenderedMeshComponent& renderedMeshA = EntityRegistry->emplace<
             Core::RenderedMeshComponent>(entityA);
-        transformA.GetSceneHierarchyNode().SetParent(transformMain.GetSceneHierarchyNode());
+        transformA.GetSceneHierarchyNode()->SetParent(transformMain.GetSceneHierarchyNode());
         renderedMeshA.Mesh = Core::MeshManager::GetMesh("Assets/Models/CargoShip/CargoShipA.glb");
         const Core::Texture colorA = Core::Texture::GetTexture("Assets/Models/CargoShip/ColorA.dds");
         const Core::Texture normalA = Core::Texture::GetTexture("Assets/Models/CargoShip/NormalA.dds");
@@ -141,7 +144,7 @@ namespace
         const entt::entity entityB = EntityRegistry->create();
         const Core::TransformComponent& transformB = EntityRegistry->emplace<Core::TransformComponent>(entityB);
         Core::RenderedMeshComponent& renderedMeshB = EntityRegistry->emplace<Core::RenderedMeshComponent>(entityB);
-        transformB.GetSceneHierarchyNode().SetParent(transformMain.GetSceneHierarchyNode());
+        transformB.GetSceneHierarchyNode()->SetParent(transformMain.GetSceneHierarchyNode());
         renderedMeshB.Mesh = Core::MeshManager::GetMesh("Assets/Models/CargoShip/CargoShipB.glb");
         const Core::Texture colorB = Core::Texture::GetTexture("Assets/Models/CargoShip/ColorB.dds");
         const Core::Texture normalB = Core::Texture::GetTexture("Assets/Models/CargoShip/NormalB.dds");
@@ -153,7 +156,7 @@ namespace
 
         const Core::Mesh colliderMesh = Core::MeshManager::GetMesh("Assets/Models/CargoShip/CargoShipCollider.glb");
 
-        transformMain.SetWorldPosition(glm::vec3(0.0f, 2.0f, 0.0f));
+        transformMain.SetWorldPosition(glm::vec3(20.0f, 0.0f, 0.0f));
         transformMain.SetLocalEulerAngles(glm::vec3(0.0f, 180, 0.0f));
 
         EntityRegistry->emplace<Core::WaterEffectorComponent>(
