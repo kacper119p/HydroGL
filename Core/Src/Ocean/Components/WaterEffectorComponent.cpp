@@ -31,8 +31,6 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
 
     glTextureStorage2D(MaskTexture, 1, GL_R32F, TexturesResolution,
                        TexturesResolution);
-    constexpr float clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glClearTexImage(MaskTexture, 0, GL_RED, GL_FLOAT, clearColor);
     glTextureParameteri(MaskTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(MaskTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTextureParameteri(MaskTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -43,6 +41,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
     {
         glTextureStorage2D(InteractiveWavesTextures[i], 1, GL_R32F, TexturesResolution,
                            TexturesResolution);
+        constexpr float clearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         glClearTexImage(MaskTexture, 0, GL_RED, GL_FLOAT, clearColor);
         glTextureParameteri(InteractiveWavesTextures[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTextureParameteri(InteractiveWavesTextures[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -56,7 +55,7 @@ Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
 
 Core::WaterEffectorComponent::WaterEffectorComponent(const class Mesh& Mesh,
                                                      const glm::vec3& Position,
-                                                     float DragCoefficient,
+                                                     const float DragCoefficient,
                                                      const float DisplacementStrength,
                                                      const float BackWaveHeightFactor,
                                                      const float FrontWaveHeightFactor,
