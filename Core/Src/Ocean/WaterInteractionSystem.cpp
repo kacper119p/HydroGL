@@ -204,8 +204,11 @@ namespace Core
 
         const float objectSpeed = glm::length(ObjectVelocity);
 
+        const glm::vec2 horizontalObjectVelocity(ObjectVelocity.x, ObjectVelocity.z);
+        const float horizontalSpeed = glm::length(horizontalObjectVelocity);
+
         glm::mat2 velocitySpaceTransform =
-                std::isnan(objectSpeed) || objectSpeed < 1e-3f
+                horizontalSpeed < 1e-5f
                     ? glm::mat2(1.0f)
                     : Math::CreateRotationMatrix2DFromUnitVector(
                         glm::normalize(glm::vec2(ObjectVelocity.x, ObjectVelocity.z)));
