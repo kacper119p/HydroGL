@@ -3,7 +3,6 @@
 #include "Ocean/OceanGrid.h"
 #include "Ocean/SprayManager.h"
 #include "Ocean/WaterEffectorsRenderer.h"
-#include "Rendering/RendererHelpers/DrawElementsIndirectCommand.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Scene/TransformComponent.h"
 #include "Utility/GlResourceUnique.h"
@@ -248,8 +247,8 @@ namespace Core
         static constexpr int32_t TextureResolution = 512; // Must be power of 2
         static constexpr int32_t VelocityLayers = 8; // Must be multiple of 4
         static constexpr int32_t VelocityPackedTexturesCount = VelocityLayers * 3 / 4;
-        static constexpr float VelocityMinHeight = -40.0f;
-        static constexpr float VelocityMaxHeight = 0.0f;
+        static constexpr float VelocityMinHeight = -30.0f;
+        static constexpr float VelocityMaxHeight = 10.0f;
 
     private:
         OceanGrid _oceanGrid;
