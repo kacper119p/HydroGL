@@ -158,7 +158,7 @@ void main()
     // ------------------------------------------------------------------
     const float sssMask = clamp(WaterParameters.SssThreshold - lowFrequencyJacobian / WaterParameters.SssThreshold, 0.0, 1.0);
 
-    const vec3 sssLight = normalize(LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * WaterParameters.SssDistortion));
+    const vec3 sssLight = LightsBuffer.DirectionalLight.Direction + (lowFrequencyNormal * WaterParameters.SssDistortion);
     const float sssDot = pow(clamp(dot(ViewDirection, -sssLight), 0.0, 1.0), WaterParameters.SssPower) * WaterParameters.SssScale;
     const float sssStrength = sssDot * sssMask * sunAttenuation;
     const vec3 sssColor = WaterParameters.SssColor * sssStrength * (1.0 - foamMask);

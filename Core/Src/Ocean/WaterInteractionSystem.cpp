@@ -25,7 +25,6 @@ namespace Core
         constexpr float WaveDampingMin = 0.98f;
         constexpr float WaveDampingMax = 0.999f;
         constexpr float DampingMaxVelocity = 5.0f;
-        constexpr float MaxDynamicWaveFieldSize = 1000.0f;
     }
 
     WaterInteractionSystem::WaterInteractionSystem()
@@ -107,7 +106,8 @@ namespace Core
         const glm::vec3 worldPosition = Transform.GetWorldPosition();
 
         ResetIntersectionPolygonsBuffer();
-        DispatchTriangleProcessing(mesh, triangleCount, meshVelocity, localToWorld, CascadeSettingsBuffer);
+        DispatchTriangleProcessing(mesh, triangleCount, meshVelocity, localToWorld,
+                                   CascadeSettingsBuffer, WaterEffectorComponent.DragCoefficient);
 
         const int32_t aggregationGroups = static_cast<int32_t>(Math::IntegerDivCeilPositive(
             triangleCount, AggregatorElementsPerGroup));
@@ -124,11 +124,12 @@ namespace Core
                                                             const uint32_t TriangleCount,
                                                             const glm::vec3& MeshVelocity,
                                                             const glm::mat4& LocalToWorldMatrix,
-                                                            const uint32_t CascadeSettingsBuffer) const
+                                                            const uint32_t CascadeSettingsBuffer,
+                                                            float DragCoefficient) const
     {
         const ShaderMeshData meshData(
             LocalToWorldMatrix, MeshVelocity,
-            _dragCoefficient,
+            DragCoefficient,
             Mesh.GetVerticesIndex(), Mesh.GetIndicesIndex(), TriangleCount);
 
         _triangleProcessorComputeShader.Use();
@@ -203,8 +204,11 @@ namespace Core
 
         const float objectSpeed = glm::length(ObjectVelocity);
 
+        const glm::vec2 horizontalObjectVelocity(ObjectVelocity.x, ObjectVelocity.z);
+        const float horizontalSpeed = glm::length(horizontalObjectVelocity);
+
         glm::mat2 velocitySpaceTransform =
-                std::isnan(objectSpeed) || objectSpeed < 1e-3f
+                horizontalSpeed < 1e-5f
                     ? glm::mat2(1.0f)
                     : Math::CreateRotationMatrix2DFromUnitVector(
                         glm::normalize(glm::vec2(ObjectVelocity.x, ObjectVelocity.z)));
@@ -227,7 +231,8 @@ namespace Core
 
         const float bodyHeight = WaterEffectorComponent.Mesh.GetBoundingBox().GetMax().y - WaterEffectorComponent.Mesh.
                                  GetBoundingBox().GetMin().y;
-        const float frontHeight = objectSpeed * bodyHeight * WaterEffectorComponent.FrontWaveHeightFactor *
+        const float frontHeight = std::min(objectSpeed, 20.0f) * bodyHeight * WaterEffectorComponent.
+                                  FrontWaveHeightFactor *
                                   SubmergedVolume / WaterEffectorComponent.MeshTotalVolume;
 
         const glm::vec2 boundsSizeVelocitySpace = abs(boundsMaxVelocitySpace - boundsMinVelocitySpace);

@@ -13,6 +13,49 @@ namespace
     constexpr uint32_t DefaultInstanceDataBufferSize = 1024;
     constexpr float VerticalExtent = 100.0f;
     constexpr float HorizontalMargin = 30.0f;
+
+    void UpdateGpuBuffer(const std::vector<glm::vec4>& CpuBuffer, Core::GlBufferUnique& GpuBuffer,
+                         uint32_t& GpuBufferCapacity)
+    {
+        if (CpuBuffer.size() > static_cast<int32_t>(GpuBufferCapacity))
+        {
+            GpuBufferCapacity = CpuBuffer.size();
+            GpuBuffer = Core::GlBufferUnique::Create();
+            glNamedBufferStorage(GpuBuffer,
+                                 static_cast<int64_t>(sizeof(glm::vec4) * CpuBuffer.size()),
+                                 CpuBuffer.data(),
+                                 GL_DYNAMIC_STORAGE_BIT);
+        } else
+        {
+            glNamedBufferSubData(GpuBuffer,
+                                 0,
+                                 static_cast<int64_t>(sizeof(glm::vec4) * CpuBuffer.size()),
+                                 CpuBuffer.data());
+        }
+    }
+
+    void RenderPatches(const Core::GlVertexArrayUnique& Vao, GLenum Mode, const int32_t ElementCount,
+                       const int32_t Count,
+                       const bool RenderAsWireframe)
+    {
+        glBindVertexArray(Vao);
+
+        if (RenderAsWireframe)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
+        glDrawElementsInstanced(Mode,
+                                ElementCount,
+                                GL_UNSIGNED_INT,
+                                nullptr,
+                                Count);
+
+        if (RenderAsWireframe)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+    }
 }
 
 namespace Core
@@ -21,69 +64,10 @@ namespace Core
     {
         constexpr float quadSize = PatchSize / static_cast<float>(PatchSubdivisions);
         constexpr uint32_t verticesOnEdge = PatchSubdivisions + 1;
-        constexpr uint32_t vertexCount = verticesOnEdge * verticesOnEdge;
-        constexpr uint32_t indexCount = PatchSubdivisions * PatchSubdivisions * 4;
 
-        glm::vec3* const vertexPositions = new glm::vec3[vertexCount];
-        uint32_t* const indices = new uint32_t[indexCount];
-        _visiblePatches.reserve(DefaultInstanceDataBufferSize);
-
-        for (uint32_t y = 0; y < verticesOnEdge; ++y)
-        {
-            for (uint32_t x = 0; x < verticesOnEdge; ++x)
-            {
-                vertexPositions[y * verticesOnEdge + x] = glm::vec3(
-                    -HalfPatchSize + static_cast<float>(x) * quadSize,
-                    0.0f,
-                    -HalfPatchSize + static_cast<float>(y) * quadSize);
-            }
-        }
-        for (uint32_t y = 0; y < PatchSubdivisions; ++y)
-        {
-            for (uint32_t x = 0; x < PatchSubdivisions; ++x)
-            {
-                const uint32_t baseIndex = (y * PatchSubdivisions + x) * 4;
-                const uint32_t lowerLeft = y * verticesOnEdge + x;
-                const uint32_t upperLeft = lowerLeft + verticesOnEdge;
-
-                indices[baseIndex + 0] = lowerLeft;
-                indices[baseIndex + 1] = upperLeft;
-                indices[baseIndex + 2] = upperLeft + 1;
-                indices[baseIndex + 3] = lowerLeft + 1;
-            }
-        }
-
-        _vao = GlVertexArrayUnique::Create();
-        _vbo = GlBufferUnique::Create();
-        _patchInstanceDataVbo = GlBufferUnique::Create();
-        _ebo = GlBufferUnique::Create();
-
-        glNamedBufferData(_vbo, static_cast<GLsizeiptr>(sizeof(glm::vec3) * vertexCount), vertexPositions,
-                          GL_STATIC_DRAW);
-
-        glEnableVertexArrayAttrib(_vao, 0);
-        glVertexArrayAttribFormat(_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribBinding(_vao, 0, 0);
-        glVertexArrayVertexBuffer(_vao, 0, _vbo, 0, sizeof(glm::vec3));
-
-        _patchInstanceDataVboSize = DefaultInstanceDataBufferSize;
-        glNamedBufferStorage(_patchInstanceDataVbo,
-                             static_cast<GLsizeiptr>(sizeof(glm::vec4) * DefaultInstanceDataBufferSize), nullptr,
-                             GL_DYNAMIC_STORAGE_BIT);
-
-        glEnableVertexArrayAttrib(_vao, 1);
-        glVertexArrayAttribFormat(_vao, 1, 4, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribBinding(_vao, 1, 1);
-        glVertexArrayBindingDivisor(_vao, 1, 1);
-        glVertexArrayVertexBuffer(_vao, 1, _patchInstanceDataVbo, 0, sizeof(glm::vec4));
-
-        glNamedBufferStorage(_ebo, static_cast<GLsizeiptr>(sizeof(uint32_t) * indexCount), indices, GL_NONE);
-        glVertexArrayElementBuffer(_vao, _ebo);
-
-        _elementCount = static_cast<int>(indexCount);
-        delete[] vertexPositions;
-        delete[] indices;
-
+        _vbo = CreateVbo(verticesOnEdge, quadSize);
+        InitializeNearVao(verticesOnEdge);
+        InitializeFarVao(verticesOnEdge);
 
         for (int32_t i = 0; i < LodLevels; i++)
         {
@@ -99,57 +83,44 @@ namespace Core
 
     OceanGrid::~OceanGrid() = default;
 
-    void OceanGrid::Draw(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
-                         const glm::vec3& CameraPosition)
+    void OceanGrid::UpdateBuffers(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
+                                  const glm::vec3& CameraPosition)
     {
-        _visiblePatches.clear();
+        _patchesNear.clear();
+        _patchesFar.clear();
 
         const glm::vec2 gridOrigin =
                 glm::floor(glm::vec2(CameraPosition.x, CameraPosition.z) / _quantizationSize) * _quantizationSize;
-        Frustum cameraFrustum(ViewMatrix, ProjectionMatrix);
+        const Frustum cameraFrustum(ViewMatrix, ProjectionMatrix);
 
         SelectNode(CameraPosition, gridOrigin, GridSize, LodLevels - 1, cameraFrustum);
 
-        if (_visiblePatches.empty())
+        UpdateGpuBuffer(_patchesNear, _patchInstanceDataNearVbo, _patchInstanceDataNearVboSize);
+        UpdateGpuBuffer(_patchesFar, _patchInstanceDataFarVbo, _patchInstanceDataFarVboSize);
+    }
+
+    void OceanGrid::RenderNearPatches() const
+    {
+        if (!_patchesNear.empty())
         {
-            return;
+            glPatchParameteri(GL_PATCH_VERTICES, 4);
+            RenderPatches(_nearVao,
+                          GL_PATCHES,
+                          _nearElementCount,
+                          static_cast<int32_t>(_patchesNear.size()),
+                          _renderAsWireframe);;
         }
+    }
 
-        if (_visiblePatches.size() > static_cast<int32_t>(_patchInstanceDataVboSize))
+    void OceanGrid::RenderFarPatches() const
+    {
+        if (!_patchesFar.empty())
         {
-            _patchInstanceDataVboSize = _visiblePatches.size();
-            _patchInstanceDataVbo = GlBufferUnique::Create();
-            glNamedBufferStorage(_patchInstanceDataVbo,
-                                 static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
-                                 _visiblePatches.data(),
-                                 GL_DYNAMIC_STORAGE_BIT);
-            glVertexArrayVertexBuffer(_vao, 1, _patchInstanceDataVbo, 0, sizeof(glm::vec4));
-        } else
-        {
-            glNamedBufferSubData(_patchInstanceDataVbo,
-                                 0,
-                                 static_cast<int64_t>(sizeof(glm::vec4) * _visiblePatches.size()),
-                                 _visiblePatches.data());
-        }
-
-
-        glBindVertexArray(_vao);
-        glPatchParameteri(GL_PATCH_VERTICES, 4);
-
-        if (_renderAsWireframe)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-
-        glDrawElementsInstanced(GL_PATCHES,
-                                _elementCount,
-                                GL_UNSIGNED_INT,
-                                nullptr,
-                                static_cast<int32_t>(_visiblePatches.size()));
-
-        if (_renderAsWireframe)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            RenderPatches(_farVao,
+                          GL_TRIANGLES,
+                          _farElementCount,
+                          static_cast<int32_t>(_patchesFar.size()),
+                          _renderAsWireframe);;
         }
     }
 
@@ -168,9 +139,15 @@ namespace Core
             return true;
         }
 
-        if (Level == 0 || !IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level - 1))
+        if (Level == 0)
         {
-            _visiblePatches.emplace_back(NodePosition.x, NodePosition.y, NodeSize, Level);
+            _patchesNear.emplace_back(NodePosition.x, NodePosition.y, NodeSize, Level);
+            return true;
+        }
+
+        if (!IsNodeInRange(CameraPosition, NodePosition, NodeSize, Level - 1))
+        {
+            _patchesFar.emplace_back(NodePosition.x, NodePosition.y, NodeSize, Level);
             return true;
         }
 
@@ -184,14 +161,25 @@ namespace Core
             {-quarter, quarter}
         };
 
+        const int32_t childLevel = Level - 1;
+
         for (auto childOffset : childOffsets)
         {
-            if (!SelectNode(CameraPosition, NodePosition + childOffset, childSize, Level - 1, Frustum))
+            if (!SelectNode(CameraPosition, NodePosition + childOffset, childSize, childLevel, Frustum))
             {
-                _visiblePatches.emplace_back(NodePosition.x + childOffset.x,
+                if (childLevel > 0)
+                {
+                    _patchesFar.emplace_back(NodePosition.x + childOffset.x,
                                              NodePosition.y + childOffset.y,
                                              childSize,
-                                             Level - 1);
+                                             childLevel);
+                } else
+                {
+                    _patchesNear.emplace_back(NodePosition.x + childOffset.x,
+                                              NodePosition.y + childOffset.y,
+                                              childSize,
+                                              childLevel);
+                }
             }
         }
 
@@ -213,5 +201,130 @@ namespace Core
         const float distanceSquared = glm::dot(difference, difference);
 
         return distanceSquared <= (_lodDistances[Level] * _lodDistances[Level]);
+    }
+
+    void OceanGrid::InitializeNearVao(const uint32_t VerticesOnEdge)
+    {
+        _nearVao = GlVertexArrayUnique::Create();
+        _nearEbo = GlBufferUnique::Create();
+        _patchInstanceDataNearVbo = GlBufferUnique::Create();
+
+        constexpr uint32_t indicesPerQuad = 4;
+        constexpr uint32_t indexCount = PatchSubdivisions * PatchSubdivisions * indicesPerQuad;
+        uint32_t* const indices = new uint32_t[indexCount];
+        for (uint32_t y = 0; y < PatchSubdivisions; ++y)
+        {
+            for (uint32_t x = 0; x < PatchSubdivisions; ++x)
+            {
+                const uint32_t baseIndex = (y * PatchSubdivisions + x) * 4;
+                const uint32_t lowerLeft = y * VerticesOnEdge + x;
+                const uint32_t upperLeft = lowerLeft + VerticesOnEdge;
+
+                indices[baseIndex + 0] = lowerLeft;
+                indices[baseIndex + 1] = upperLeft;
+                indices[baseIndex + 2] = upperLeft + 1;
+                indices[baseIndex + 3] = lowerLeft + 1;
+            }
+        }
+
+        glEnableVertexArrayAttrib(_nearVao, 0);
+        glVertexArrayAttribFormat(_nearVao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_nearVao, 0, 0);
+        glVertexArrayVertexBuffer(_nearVao, 0, _vbo, 0, sizeof(glm::vec3));
+
+        _patchesNear.reserve(DefaultInstanceDataBufferSize);
+        _patchInstanceDataNearVboSize = DefaultInstanceDataBufferSize;
+        glNamedBufferStorage(_patchInstanceDataNearVbo,
+                             static_cast<GLsizeiptr>(sizeof(glm::vec4) * DefaultInstanceDataBufferSize), nullptr,
+                             GL_DYNAMIC_STORAGE_BIT);
+
+        glEnableVertexArrayAttrib(_nearVao, 1);
+        glVertexArrayAttribFormat(_nearVao, 1, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_nearVao, 1, 1);
+        glVertexArrayBindingDivisor(_nearVao, 1, 1);
+        glVertexArrayVertexBuffer(_nearVao, 1, _patchInstanceDataNearVbo, 0, sizeof(glm::vec4));
+
+        glNamedBufferStorage(_nearEbo, static_cast<GLsizeiptr>(sizeof(uint32_t) * indexCount), indices, GL_NONE);
+        glVertexArrayElementBuffer(_nearVao, _nearEbo);
+
+        _nearElementCount = static_cast<int>(indexCount);
+        delete[] indices;
+    }
+
+    void OceanGrid::InitializeFarVao(uint32_t VerticesOnEdge)
+    {
+        _farVao = GlVertexArrayUnique::Create();
+        _farEbo = GlBufferUnique::Create();
+        _patchInstanceDataFarVbo = GlBufferUnique::Create();
+
+        constexpr uint32_t indicesPerQuad = 6;
+        constexpr uint32_t indexCount = PatchSubdivisions * PatchSubdivisions * indicesPerQuad;
+        uint32_t* const indices = new uint32_t[indexCount];
+
+        for (uint32_t y = 0; y < PatchSubdivisions; ++y)
+        {
+            for (uint32_t x = 0; x < PatchSubdivisions; ++x)
+            {
+                const uint32_t baseIndex = (y * PatchSubdivisions + x) * indicesPerQuad;
+                const uint32_t lowerLeft = y * VerticesOnEdge + x;
+                const uint32_t upperLeft = lowerLeft + VerticesOnEdge;
+                const uint32_t upperRight = upperLeft + 1;
+                const uint32_t lowerRight = lowerLeft + 1;
+
+                indices[baseIndex + 0] = lowerLeft;
+                indices[baseIndex + 1] = upperLeft;
+                indices[baseIndex + 2] = lowerRight;
+
+                indices[baseIndex + 3] = upperLeft;
+                indices[baseIndex + 4] = upperRight;
+                indices[baseIndex + 5] = lowerRight;
+            }
+        }
+
+        glEnableVertexArrayAttrib(_farVao, 0);
+        glVertexArrayAttribFormat(_farVao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_farVao, 0, 0);
+        glVertexArrayVertexBuffer(_farVao, 0, _vbo, 0, sizeof(glm::vec3));
+
+        _patchesFar.reserve(DefaultInstanceDataBufferSize);
+        _patchInstanceDataFarVboSize = DefaultInstanceDataBufferSize;
+        glNamedBufferStorage(_patchInstanceDataFarVbo,
+                             static_cast<GLsizeiptr>(sizeof(glm::vec4) * DefaultInstanceDataBufferSize), nullptr,
+                             GL_DYNAMIC_STORAGE_BIT);
+
+        glEnableVertexArrayAttrib(_farVao, 1);
+        glVertexArrayAttribFormat(_farVao, 1, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(_farVao, 1, 1);
+        glVertexArrayBindingDivisor(_farVao, 1, 1);
+        glVertexArrayVertexBuffer(_farVao, 1, _patchInstanceDataFarVbo, 0, sizeof(glm::vec4));
+
+        glNamedBufferStorage(_farEbo, static_cast<GLsizeiptr>(sizeof(uint32_t) * indexCount), indices, GL_NONE);
+        glVertexArrayElementBuffer(_farVao, _farEbo);
+
+        _farElementCount = static_cast<int>(indexCount);
+        delete[] indices;
+    }
+
+    GlBufferUnique OceanGrid::CreateVbo(const uint32_t VerticesOnEdge, const float QuadSize)
+    {
+        const uint32_t vertexCount = VerticesOnEdge * VerticesOnEdge;
+        glm::vec3* const vertexPositions = reinterpret_cast<glm::vec3*>(malloc(sizeof(glm::vec3) * vertexCount));
+        GlBufferUnique buffer = GlBufferUnique::Create();
+        for (uint32_t y = 0; y < VerticesOnEdge; ++y)
+        {
+            for (uint32_t x = 0; x < VerticesOnEdge; ++x)
+            {
+                vertexPositions[y * VerticesOnEdge + x] = glm::vec3(
+                    -HalfPatchSize + static_cast<float>(x) * QuadSize,
+                    0.0f,
+                    -HalfPatchSize + static_cast<float>(y) * QuadSize);
+            }
+        }
+
+        glNamedBufferStorage(buffer, static_cast<GLsizeiptr>(sizeof(glm::vec3) * vertexCount), vertexPositions,
+                             GL_NONE);
+
+        free(vertexPositions);
+        return buffer;
     }
 }

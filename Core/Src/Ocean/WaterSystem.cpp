@@ -1,5 +1,4 @@
 #include "WaterSystem.h"
-#include "Ocean/WaterSystem.h"
 
 #include <chrono>
 #include <iostream>
@@ -10,6 +9,7 @@
 #include "Meshes/MeshManager.h"
 #include "Ocean/Components/WaterEffectorComponent.h"
 #include "Rendering/Shaders/ShaderBuilder.h"
+#include "spdlog/spdlog.h"
 
 namespace Core
 {
@@ -43,8 +43,8 @@ namespace Core
 
         constexpr float DefaultSssDistortion = 1.1f;
         constexpr float DefaultSssPower = 3.0f;
-        constexpr float DefaultSssScale = 2.5f;
-        constexpr glm::vec3 DefaultSssColor{0.1f, 0.8f, 0.6f};
+        constexpr float DefaultSssScale = 1.0f;
+        constexpr glm::vec3 DefaultSssColor{0.0f, 0.556f, 0.396f};
         constexpr float DefaultSssThreshold = 1.1f;
     }
 
@@ -102,12 +102,15 @@ namespace Core
     }
 
     WaterSystem::WaterSystem(const glm::ivec2& WindowSize, const uint32_t MainDepthBuffer)
-        : _oceanGrid(),
-          _sprayManager(WindowSize, MainDepthBuffer),
-          _waterShader(
-              ShaderBuilder().SetStage("Assets/Shaders/Water/Water.vert", ShaderStage::VertexShader).
+        : _sprayManager(WindowSize, MainDepthBuffer),
+          _waterNearShader(
+              ShaderBuilder().SetStage("Assets/Shaders/Water/WaterNear.vert", ShaderStage::VertexShader).
               SetStage("Assets/Shaders/Water/Water.tesc", ShaderStage::TesselationControlShader).
               SetStage("Assets/Shaders/Water/Water.tese", ShaderStage::TesselationEvaluationShader).
+              SetStage("Assets/Shaders/Water/Water.frag", ShaderStage::FragmentShader)
+              .Build()),
+          _waterFarShader(
+              ShaderBuilder().SetStage("Assets/Shaders/Water/WaterFar.vert", ShaderStage::VertexShader).
               SetStage("Assets/Shaders/Water/Water.frag", ShaderStage::FragmentShader)
               .Build()),
           _fftHorizontalShader(
@@ -163,6 +166,10 @@ namespace Core
           _cascadeSettingsSsbo(CreateCascadeSettingsSsbo(_cascadeSettings))
     {
         UpdateInitialSpectrum();
+        spdlog::info("Gauss: {}", _gaussianNoiseTexture.Get());
+        spdlog::info("InitialSpectrum: {}", _initialSpectrumTextures.Get());
+        spdlog::info("TimeSpectrum1: {}", _hDzDxDfhxTextures.Get());
+        spdlog::info("TimeSpectrum2: {}", _hDzDxDfhxTextures.Get());
     }
 
     GlTextureUnique WaterSystem::CreateTextureArray(const int32_t Layers)
@@ -279,6 +286,8 @@ namespace Core
         const glm::vec3 cameraPosition = CameraTransform.GetWorldPosition();
         const glm::mat4 viewMatrix = glm::inverse(CameraTransform.GetLocalToWorldMatrix());
 
+        _oceanGrid.UpdateBuffers(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
+
         _waterShaderUniforms.ViewMatrix = viewMatrix;
         _waterShaderUniforms.ProjectionMatrix = Camera.GetProjectionMatrix();
         _waterShaderUniforms.CameraNearPlane = Camera.GetNearPlane();
@@ -288,8 +297,6 @@ namespace Core
         _waterShaderUniforms.CameraPosition = cameraPosition;
 
         glNamedBufferSubData(_waterSettingsUbo, 0, sizeof(WaterShaderUniforms), &_waterShaderUniforms);
-
-        _waterShader.Use();
 
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
         glBindBufferBase(GL_UNIFORM_BUFFER, 1, _waterSettingsUbo);
@@ -301,7 +308,12 @@ namespace Core
         glBindTextureUnit(5, SceneColor);
         glBindTextureUnit(6, SceneDepth);
 
-        _oceanGrid.Draw(Camera.GetProjectionMatrix(), CameraTransform.GetWorldToLocalMatrix(), cameraPosition);
+        _waterNearShader.Use();
+        _oceanGrid.RenderNearPatches();
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, _foamMaskSettingsUbo);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, _waterSettingsUbo);
+        _waterFarShader.Use();
+        _oceanGrid.RenderFarPatches();
 
         _sprayManager.Update(DeltaTime,
                              _displacementTextures,

@@ -20,15 +20,21 @@ namespace Core
     private:
         float _lodDistances[LodLevels];
 
-        GlVertexArrayUnique _vao;
+        GlVertexArrayUnique _nearVao;
+        GlVertexArrayUnique _farVao;
         GlBufferUnique _vbo;
-        GlBufferUnique _patchInstanceDataVbo;
-        uint32_t _patchInstanceDataVboSize;
-        GlBufferUnique _ebo;
-        int32_t _elementCount = 0;
+        GlBufferUnique _patchInstanceDataNearVbo;
+        GlBufferUnique _patchInstanceDataFarVbo;
+        uint32_t _patchInstanceDataNearVboSize{};
+        uint32_t _patchInstanceDataFarVboSize{};
+        GlBufferUnique _nearEbo;
+        GlBufferUnique _farEbo;
+        int32_t _nearElementCount;
+        int32_t _farElementCount;
         float _quantizationSize;
 
-        std::vector<glm::vec4> _visiblePatches;
+        std::vector<glm::vec4> _patchesFar;
+        std::vector<glm::vec4> _patchesNear;
 
         bool _renderAsWireframe = false;
 
@@ -59,9 +65,16 @@ namespace Core
     public:
         ~OceanGrid();
 
+    private:
+        static GlBufferUnique CreateVbo(uint32_t VerticesOnEdge, float QuadSize);
+
     public:
-        void Draw(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
-                  const glm::vec3& CameraPosition);
+        void UpdateBuffers(const glm::mat4& ProjectionMatrix, const glm::mat4& ViewMatrix,
+                           const glm::vec3& CameraPosition);
+
+        void RenderNearPatches() const;
+
+        void RenderFarPatches() const;
 
     private:
         bool SelectNode(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize, int32_t Level,
@@ -69,5 +82,10 @@ namespace Core
 
         [[nodiscard]] bool IsNodeInRange(const glm::vec3& CameraPosition, glm::vec2 NodePosition, float NodeSize,
                                          int32_t Level) const;
+
+
+        void InitializeNearVao(uint32_t VerticesOnEdge);
+
+        void InitializeFarVao(uint32_t VerticesOnEdge);
     };
 }

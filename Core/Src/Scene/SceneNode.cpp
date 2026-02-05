@@ -40,9 +40,14 @@ namespace Core
         UpdateMatrices(transform);
     }
 
-    const TransformComponent& SceneNode::GetTransformComponent() const
+    const TransformComponent* SceneNode::GetTransformComponent() const
     {
-        return _entityRegistry->get<TransformComponent>(_entityId);
+        return &(_entityRegistry->get<TransformComponent>(_entityId));
+    }
+
+    [[nodiscard]] TransformComponent* SceneNode::GetTransformComponent()
+    {
+        return &(_entityRegistry->get<TransformComponent>(_entityId));
     }
 
     void SceneNode::UpdateMatrices(TransformComponent& Transform) const

@@ -130,7 +130,6 @@ namespace Core
         GlBufferUnique _meshDataUbo;
         GlBufferUnique _intersectionMaskUbo;
         GlBufferUnique _interactiveWavesUbo;
-        float _dragCoefficient = 2.02f;
 
         int32_t _windVelocityLocation;
         int32_t _triangleCountLocation;
@@ -163,8 +162,11 @@ namespace Core
                          const TransformComponent& Transform, const RigidbodyComponent& Rigidbody,
                          uint32_t CascadeSettingsBuffer, float DeltaTime);
 
-        void DispatchTriangleProcessing(const Mesh& Mesh, uint32_t TriangleCount, const glm::vec3& MeshVelocity,
-                                        const glm::mat4& LocalToWorldMatrix, uint32_t CascadeSettingsBuffer) const;
+        void DispatchTriangleProcessing(const Mesh& Mesh, uint32_t TriangleCount,
+                                        const glm::vec3& MeshVelocity,
+                                        const glm::mat4& LocalToWorldMatrix,
+                                        uint32_t CascadeSettingsBuffer,
+                                        float DragCoefficient) const;
 
         void DispatchTriangleAggregation(uint32_t TriangleCount,
                                          int32_t AggregationGroupsCount) const;

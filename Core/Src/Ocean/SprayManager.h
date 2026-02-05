@@ -64,7 +64,7 @@ namespace Core
         float _sprayOpacity = 0.2f;
         float _spraySize = 3.0f;
         float _spawnThreshold = 0.25f;
-        float _waterVelocityInfluence = 0.75f;
+        float _waterVelocityInfluence = 0.1f;
         float _windInfluence = 0.1f;
         float _spawnRate = MaxParticleCount / _lifetime;
 

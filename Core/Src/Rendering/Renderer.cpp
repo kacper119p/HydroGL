@@ -14,7 +14,7 @@
 namespace
 {
     constexpr int32_t DefaultBufferSize = 1024;
-    constexpr float DefaultFogDensity = 0.001f;
+    constexpr float DefaultFogDensity = 0.0002f;
 }
 
 namespace Core
