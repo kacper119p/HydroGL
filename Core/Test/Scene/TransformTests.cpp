@@ -31,7 +31,7 @@ TEST_F(TransformTests, TransformWitchChildCreationAndDestruction)
     const ::Core::TransformComponent& parentComponent = _registry->get<Core::TransformComponent>(parentId);
     const ::Core::TransformComponent& childComponent = _registry->get<Core::TransformComponent>(childId);
 
-    ASSERT_NO_FATAL_FAILURE(parentComponent.GetSceneHierarchyNode().AddChild(childComponent.GetSceneHierarchyNode()));
+    ASSERT_NO_FATAL_FAILURE(parentComponent.GetSceneHierarchyNode()->AddChild(*childComponent.GetSceneHierarchyNode()));
 
     ASSERT_NO_FATAL_FAILURE(_registry->destroy(parentId));
     ASSERT_FALSE(_registry->valid(parentId));
@@ -85,7 +85,7 @@ TEST_F(TransformTests, ChildMatrixUpdateTest)
     const ::entt::entity childId = _registry->create();
     Core::TransformComponent& childTransform = _registry->emplace<::Core::TransformComponent>(childId);
 
-    ASSERT_NO_FATAL_FAILURE(childTransform.GetSceneHierarchyNode().SetParent(parentTransform.GetSceneHierarchyNode()));
+    ASSERT_NO_FATAL_FAILURE(childTransform.GetSceneHierarchyNode()->SetParent(parentTransform.GetSceneHierarchyNode()));
     ASSERT_NO_FATAL_FAILURE(
         ::TestUtilities::AssertMat4Equal(childTransform.GetLocalToWorldMatrix(), glm::identity<glm::mat4>()));
     ASSERT_NO_FATAL_FAILURE(
@@ -130,7 +130,7 @@ TEST_F(TransformTests, SetWorldPositionWithParent)
     const entt::entity childId = _registry->create();
     Core::TransformComponent& childTransform = _registry->emplace<Core::TransformComponent>(childId);
 
-    childTransform.GetSceneHierarchyNode().SetParent(parentTransform.GetSceneHierarchyNode());
+    childTransform.GetSceneHierarchyNode()->SetParent(parentTransform.GetSceneHierarchyNode());
 
     constexpr glm::vec3 parentPos(100.0f, 0.0f, 0.0f);
     parentTransform.SetLocalPosition(parentPos);
@@ -171,7 +171,7 @@ TEST_F(TransformTests, SetWorldRotationWithParent)
     const entt::entity childId = _registry->create();
     Core::TransformComponent& childTransform = _registry->emplace<Core::TransformComponent>(childId);
 
-    childTransform.GetSceneHierarchyNode().SetParent(parentTransform.GetSceneHierarchyNode());
+    childTransform.GetSceneHierarchyNode()->SetParent(parentTransform.GetSceneHierarchyNode());
 
     const glm::quat parentRot = glm::quat(glm::radians(glm::vec3(45.0f, 0.0f, 0.0f)));
     parentTransform.SetLocalRotation(parentRot);
@@ -270,8 +270,8 @@ TEST_F(TransformTests, MultiLevelHierarchyMatrixUpdate)
     const entt::entity childId = _registry->create();
     Core::TransformComponent& child = _registry->emplace<Core::TransformComponent>(childId);
 
-    parent.GetSceneHierarchyNode().SetParent(grandparent.GetSceneHierarchyNode());
-    child.GetSceneHierarchyNode().SetParent(parent.GetSceneHierarchyNode());
+    parent.GetSceneHierarchyNode()->SetParent(grandparent.GetSceneHierarchyNode());
+    child.GetSceneHierarchyNode()->SetParent(parent.GetSceneHierarchyNode());
 
     grandparent.SetLocalPosition(glm::vec3(100.0f, 0.0f, 0.0f));
     parent.SetLocalPosition(glm::vec3(50.0f, 0.0f, 0.0f));
@@ -289,10 +289,10 @@ TEST_F(TransformTests, RemoveChildUpdatesHierarchy)
     const entt::entity childId = _registry->create();
     Core::TransformComponent& childTransform = _registry->emplace<Core::TransformComponent>(childId);
 
-    parentTransform.GetSceneHierarchyNode().AddChild(childTransform.GetSceneHierarchyNode());
-    ASSERT_EQ(childTransform.GetSceneHierarchyNode().GetParent(), &parentTransform.GetSceneHierarchyNode());
+    parentTransform.GetSceneHierarchyNode()->AddChild(*childTransform.GetSceneHierarchyNode());
+    ASSERT_EQ(childTransform.GetSceneHierarchyNode()->GetParent(), parentTransform.GetSceneHierarchyNode());
 
-    parentTransform.GetSceneHierarchyNode().RemoveChild(childTransform.GetSceneHierarchyNode());
-    ASSERT_EQ(childTransform.GetSceneHierarchyNode().GetParent(), nullptr);
+    parentTransform.GetSceneHierarchyNode()->RemoveChild(*childTransform.GetSceneHierarchyNode());
+    ASSERT_EQ(childTransform.GetSceneHierarchyNode()->GetParent(), nullptr);
 }
 
