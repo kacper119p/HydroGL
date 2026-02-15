@@ -136,23 +136,47 @@ namespace Core
         int32_t _partialsCountLocation;
 
     public:
+        /**
+         * @brief Default constructor.
+         */
         WaterInteractionSystem();
 
     public:
+        /**
+         * @brief Destructor.
+         */
         ~WaterInteractionSystem();
 
     public:
+        /**
+         * @brief Gets the OpenGL ID of the Shader Storage Buffer Object (SSBO) containing dynamic wave sample data.
+         * @return The OpenGL buffer ID.
+         */
         [[nodiscard]] uint32_t GetDynamicWavesSampleBufferId() const
         {
             return _dynamicWavesSampleBuffer.GpuBuffer;
         }
 
+        /**
+         * @brief Gets the number of current dynamic waves.
+         * @return The count of dynamic waves.
+         */
         [[nodiscard]] int32_t GetDynamicWavesSampleCount() const
         {
             return _dynamicWavesSampleBuffer.DynamicWavesBuffer->DynamicWavesCount;
         }
 
     public:
+        /**
+         * @brief Evaluates interactions for all valid entities and applies the resulting physical forces.
+         * @param Scene The scene containing entities.
+         * @param PhysicsSystem The physics system to which computed forces will be applied.
+         * @param DisplacementTextures OpenGL texture array ID containing water displacement data.
+         * @param WindVelocity The current global 2D wind velocity vector.
+         * @param VelocityTextures OpenGL texture array ID containing water surface velocity data.
+         * @param CascadeSettingsBuffer OpenGL SSBO ID containing water cascade configurations.
+         * @param DeltaTime The elapsed time since the last frame in seconds.
+         */
         void ProcessMeshes(Scene& Scene, PhysicsSystem& PhysicsSystem, uint32_t DisplacementTextures,
                            glm::vec2 WindVelocity, uint32_t VelocityTextures, uint32_t CascadeSettingsBuffer,
                            float DeltaTime);
