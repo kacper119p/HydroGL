@@ -7,6 +7,9 @@
 
 namespace Core
 {
+    /**
+     * @brief Renders visual debugging representations for water effectors.
+     */
     class WaterEffectorsRenderer
     {
     private:
@@ -32,20 +35,37 @@ namespace Core
         bool _render = false;
 
     public:
+        /**
+         * @brief Checks if the debug rendering for water effectors is currently active.
+         * @return True if debug rendering is enabled, false otherwise.
+         */
         [[nodiscard]] bool IsRendering() const
         {
             return _render;
         }
 
+        /**
+         * @brief Enables or disables the debug rendering for water effectors.
+         * @param Value True to enable debug rendering, false to disable.
+         */
         void SetRender(const bool Value)
         {
             _render = Value;
         }
 
     public:
+        /**
+         * @brief Default constructor.
+         */
         WaterEffectorsRenderer();
 
     public:
+        /**
+         * @brief Renders debug visualizations for water effectors.
+         * * @param EntityRegistry The EnTT registry containing the effector entities and their components.
+         * @param ViewMatrix The current camera view matrix.
+         * @param ProjectionMatrix The current camera projection matrix.
+         */
         void RenderDebug(const entt::registry& EntityRegistry, const glm::mat4& ViewMatrix,
                          const glm::mat4& ProjectionMatrix);
 

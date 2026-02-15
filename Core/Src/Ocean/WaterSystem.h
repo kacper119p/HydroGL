@@ -9,27 +9,42 @@
 
 namespace Core
 {
+    /**
+     * @brief System managing the entire water rendering pipeline.
+     */
     class WaterSystem
     {
     public:
+        /**
+         * @brief Configuration for a single wave cascade used in the Tessendorf method.
+         */
         struct alignas(16) CascadeSettings
         {
         public:
-            float WaveLengthLowerBound;
-            alignas(4) float WaveLengthUpperBound;
+            /**
+             * @brief Minimum wave number for this cascade.
+             */
+            float WaveNumberLowerBound;
+            /**
+            * @brief Maximum wave number for this cascade.
+            */
+            alignas(4) float WaveNumberUpperBound;
+            /**
+             * @brief The physical scale length of the cascade domain.
+             */
             alignas(4) float Length;
 
         private:
             alignas(4) float Padding{};
 
         public:
-            CascadeSettings() : WaveLengthLowerBound(0.0f), WaveLengthUpperBound(0.0f), Length(0)
+            CascadeSettings() : WaveNumberLowerBound(0.0f), WaveNumberUpperBound(0.0f), Length(0)
             {
             }
 
             CascadeSettings(const float WaveLengthLowerBound, const float WaveLengthUpperBound, const float Length)
-                : WaveLengthLowerBound(WaveLengthLowerBound),
-                  WaveLengthUpperBound(WaveLengthUpperBound),
+                : WaveNumberLowerBound(WaveLengthLowerBound),
+                  WaveNumberUpperBound(WaveLengthUpperBound),
                   Length(Length)
             {
             }
@@ -289,6 +304,11 @@ namespace Core
         GlBufferUnique _cascadeSettingsSsbo;
 
     public:
+        /**
+         * @brief Initializes the water system.
+         * @param WindowSize The resolution of the main render target.
+         * @param MainDepthBuffer The OpenGL texture ID of the main depth buffer used for depth tests.
+         */
         WaterSystem(const glm::ivec2& WindowSize, uint32_t MainDepthBuffer);
 
     private:
@@ -321,204 +341,364 @@ namespace Core
         }
 
     public:
+        /**
+         * @brief Gets a reference to the system managing spray particles.
+         * @return A reference to the underlying SprayManager.
+         */
         [[nodiscard]] SprayManager& GetSprayManager()
         {
             return _sprayManager;
         }
 
+        /**
+         * @brief Sets the threshold value determining when foam becomes visible.
+         * @param FoamThreshold The jacobian threshold value.
+         */
         void SetFoamThreshold(const float FoamThreshold)
         {
             _foamUniformBufferData.FoamThreshold = FoamThreshold;
             SentFoamMaskSettingsToGpu();
         }
 
+        /**
+         * @brief Gets the current foam generation threshold.
+         * @return The jacobian threshold value.
+         */
         [[nodiscard]] float GetFoamThreshold() const
         {
             return _foamUniformBufferData.FoamThreshold;
         }
 
+        /**
+         * @brief Sets the exponent used for shaping the foam falloff curve.
+         * @param FoamExponent The falloff exponent.
+         */
         void SetFoamExponent(const float FoamExponent)
         {
             _foamUniformBufferData.FoamExponent = FoamExponent;
             SentFoamMaskSettingsToGpu();
         }
 
+        /**
+         * @brief Gets the exponent used for shaping the foam falloff curve.
+         * @return The falloff exponent.
+         */
         [[nodiscard]] float GetFoamExponent() const
         {
             return _foamUniformBufferData.FoamExponent;
         }
 
+        /**
+         * @brief Sets the overall visual intensity of generated foam.
+         * @param FoamIntensity The intensity multiplier.
+         */
         void SetFoamIntensity(const float FoamIntensity)
         {
             _foamUniformBufferData.FoamIntensity = FoamIntensity;
             SentFoamMaskSettingsToGpu();
         }
 
+        /**
+         * @brief Gets the overall visual intensity of generated foam.
+         * @return The intensity multiplier.
+         */
         [[nodiscard]] float GetFoamIntensity() const
         {
             return _foamUniformBufferData.FoamIntensity;
         }
 
+        /**
+         * @brief Sets the maximum distance from the camera at which hardware tessellation is applied to the water mesh.
+         * @param TesselationMaxDistance The distance in meters.
+         */
         void SetTesselationMaxDistance(const float TesselationMaxDistance)
         {
             _waterShaderUniforms.TesselationMaxDistance = TesselationMaxDistance;
         }
 
+        /**
+         * @brief Gets the maximum distance for hardware tessellation.
+         * @return The maximum tessellation distance in meters.
+         */
         [[nodiscard]] float GetTesselationMaxDistance() const
         {
             return _waterShaderUniforms.TesselationMaxDistance;
         }
 
+        /**
+         * @brief Sets the distance from the camera at which maximum hardware tessellation is reached.
+         * @param TesselationMinDistance The distance in meters.
+         */
         void SetTesselationMinDistance(const float TesselationMinDistance)
         {
             _waterShaderUniforms.TesselationMinDistance = TesselationMinDistance;
         }
 
+        /**
+         * @brief Gets the distance for maximum hardware tessellation.
+         * @return The minimum tessellation distance in meters.
+         */
         [[nodiscard]] float GetTesselationMinDistance() const
         {
             return _waterShaderUniforms.TesselationMinDistance;
         }
 
+        /**
+         * @brief Sets the maximum tessellation level applied near the camera.
+         * @param MaxTesselationLevel The highest subdivision multiplier.
+         */
         void SetMaxTesselationLevel(const float MaxTesselationLevel)
         {
             _waterShaderUniforms.MaxTesselationLevel = MaxTesselationLevel;
         }
 
+        /**
+         * @brief Gets the maximum tessellation level.
+         * @return The maximum tessellation multiplier.
+         */
         [[nodiscard]] float GetMaxTesselationLevel() const
         {
             return _waterShaderUniforms.MaxTesselationLevel;
         }
 
+        /**
+         * @brief Sets the minimum tessellation level applied at the maximum tessellation distance or further.
+         * @param MinTesselationLevel The lowest subdivision multiplier.
+         */
         void SetMinTesselationLevel(const float MinTesselationLevel)
         {
             _waterShaderUniforms.MinTesselationLevel = MinTesselationLevel;
         }
 
+        /**
+         * @brief Gets the minimum tessellation level.
+         * @return The minimum tessellation multiplier.
+         */
         [[nodiscard]] float GetMinTesselationLevel() const
         {
             return _waterShaderUniforms.MinTesselationLevel;
         }
 
+        /**
+         * @brief Sets the primary base color of the water surface.
+         * @param SurfaceColor The base linear RGB color.
+         */
         void SetSurfaceColor(const glm::vec3& SurfaceColor)
         {
             _waterShaderUniforms.SurfaceColor = SurfaceColor;
         }
 
+        /**
+         * @brief Gets the primary base color of the water surface.
+         * @return The base linear RGB color.
+         */
         [[nodiscard]] glm::vec3 GetSurfaceColor() const
         {
             return _waterShaderUniforms.SurfaceColor;
         }
 
+        /**
+         * @brief Sets the PBR metallic factor for the water surface.
+         * @param Metallic The metallic factor (0.0 to 1.0).
+         */
         void SetMetallic(const float Metallic)
         {
             _waterShaderUniforms.Metallic = Metallic;
         }
 
+        /**
+         * @brief Gets the PBR metallic factor of the water surface.
+         * @return The metallic factor.
+         */
         [[nodiscard]] float GetMetallic() const
         {
             return _waterShaderUniforms.Metallic;
         }
 
+        /**
+         * @brief Sets the deep-water light absorption coefficients.
+         * @param Absorption The absorption RGB coefficients.
+         */
         void SetAbsorption(const glm::vec3& Absorption)
         {
             _waterShaderUniforms.Absorption = Absorption;
         }
 
+        /**
+         * @brief Gets the deep-water light absorption coefficients.
+         * @return The absorption RGB coefficients.
+         */
         [[nodiscard]] glm::vec3 GetAbsorption() const
         {
             return _waterShaderUniforms.Absorption;
         }
 
+        /**
+         * @brief Sets the PBR roughness factor of the water surface.
+         * @param Roughness The roughness value (0.0 to 1.0).
+         */
         void SetRoughness(const float Roughness)
         {
             _waterShaderUniforms.Roughness = Roughness;
         }
 
+        /**
+         * @brief Gets the PBR roughness factor of the water surface.
+         * @return The roughness value.
+         */
         [[nodiscard]] float GetRoughness() const
         {
             return _waterShaderUniforms.Roughness;
         }
 
+        /**
+         * @brief Sets the base color applied to the rendered foam.
+         * @param FoamColor The foam linear RGB color.
+         */
         void SetFoamColor(const glm::vec3& FoamColor)
         {
             _waterShaderUniforms.FoamColor = FoamColor;
         }
 
+        /**
+         * @brief Gets the base color applied to the rendered foam.
+         * @return The foam linear RGB color.
+         */
         [[nodiscard]] glm::vec3 GetFoamColor() const
         {
             return _waterShaderUniforms.FoamColor;
         }
 
+        /**
+         * @brief Sets the PBR metallic factor of the foam surface.
+         * @param FoamMetallic The metallic factor (0.0 to 1.0).
+         */
         void SetFoamMetallic(const float FoamMetallic)
         {
             _waterShaderUniforms.FoamMetallic = FoamMetallic;
         }
 
+        /**
+         * @brief Gets the PBR metallic factor of the foam surface.
+         * @return The metallic factor.
+         */
         [[nodiscard]] float GetFoamMetallic() const
         {
             return _waterShaderUniforms.FoamMetallic;
         }
 
+        /**
+         * @brief Sets the PBR roughness factor of the foam surface.
+         * @param FoamRoughness The roughness value (0.0 to 1.0).
+         */
         void SetFoamRoughness(const float FoamRoughness)
         {
             _waterShaderUniforms.FoamRoughness = FoamRoughness;
         }
 
+        /**
+         * @brief Gets the PBR roughness factor of the foam surface.
+         * @return The roughness value.
+         */
         [[nodiscard]] float GetFoamRoughness() const
         {
             return _waterShaderUniforms.FoamRoughness;
         }
 
+        /**
+         * @brief Sets the normal distortion strength used for Subsurface Scattering (SSS) calculations.
+         * @param SssDistortion The SSS distortion coefficient.
+         */
         void SetSssDistortion(const float SssDistortion)
         {
             _waterShaderUniforms.SssDistortion = SssDistortion;
         }
 
+        /**
+         * @brief Gets the normal distortion strength for Subsurface Scattering.
+         * @return The SSS distortion coefficient.
+         */
         [[nodiscard]] float GetSssDistortion() const
         {
             return _waterShaderUniforms.SssDistortion;
         }
 
+        /**
+         * @brief Sets the intensity exponent for the Subsurface Scattering effect.
+         * @param SssPower The SSS power exponent.
+         */
         void SetSssPower(const float SssPower)
         {
             _waterShaderUniforms.SssPower = SssPower;
         }
 
+        /**
+         * @brief Gets the intensity exponent for Subsurface Scattering.
+         * @return The SSS power exponent.
+         */
         [[nodiscard]] float GetSssPower() const
         {
             return _waterShaderUniforms.SssPower;
         }
 
+        /**
+         * @brief Sets the intensity multiplier for the Subsurface Scattering effect.
+         * @param SssScale The SSS intensity multiplier.
+         */
         void SetSssScale(const float SssScale)
         {
             _waterShaderUniforms.SssScale = SssScale;
         }
 
+        /**
+         * @brief Gets the intensity multiplier for Subsurface Scattering.
+         * @return The SSS intensity multiplier.
+         */
         [[nodiscard]] float GetSssScale() const
         {
             return _waterShaderUniforms.SssScale;
         }
 
+        /**
+         * @brief Sets the tint color applied to light scattered through waves via SSS.
+         * @param SssColor The SSS linear RGB tint color.
+         */
         void SetSssColor(const glm::vec3& SssColor)
         {
             _waterShaderUniforms.SssColor = SssColor;
         }
 
+        /**
+         * @brief Gets the tint color for Subsurface Scattering.
+         * @return The SSS linear RGB tint color.
+         */
         [[nodiscard]] const glm::vec3& GetSssColor() const
         {
             return _waterShaderUniforms.SssColor;
         }
 
+        /**
+          * @brief Sets the threshold value for SSS visibility.
+          * @param SssThreshold The jacobian threshold value.
+          */
         void SetSssThreshold(const float SssThreshold)
         {
             _waterShaderUniforms.SssThreshold = SssThreshold;
         }
 
+        /**
+          * @brief Gets the threshold value for SSS visibility.
+          * @return The jacobian threshold value.
+          */
         [[nodiscard]] float GetSssThreshold() const
         {
             return _waterShaderUniforms.SssThreshold;
         }
 
+        /**
+         * @brief Sets the global wind velocity vector.
+         * @param WindVelocity The 2D vector representing wind velocity.
+         */
         void SetWindVelocity(const glm::vec2 WindVelocity)
         {
             _initialSpectrumSettingsBufferData.WindVelocity = WindVelocity;
@@ -530,11 +710,19 @@ namespace Core
             UpdateInitialSpectrum();
         }
 
+        /**
+         * @brief Gets the current global wind velocity.
+         * @return The 2D wind velocity vector.
+         */
         [[nodiscard]] glm::vec2 GetWindVelocity() const
         {
             return _initialSpectrumSettingsBufferData.WindVelocity;
         }
 
+        /**
+         * @brief Sets the fetch length (distance over which wind blows).
+         * @param Fetch The wind fetch distance in meters.
+         */
         void SetFetch(const float Fetch)
         {
             _initialSpectrumSettingsBufferData.Fetch = Fetch;
@@ -546,11 +734,19 @@ namespace Core
             UpdateInitialSpectrum();
         }
 
+        /**
+         * @brief Gets the current wind fetch distance (distance over which wind blows).
+         * @return The wind fetch in meters.
+         */
         [[nodiscard]] float GetFetch() const
         {
             return _initialSpectrumSettingsBufferData.Fetch;
         }
 
+        /**
+         * @brief Sets the spectrum delta which determines directionality of the wave spectrum.
+         * @param Delta The spectrum delta parameter.
+         */
         void SetDelta(const float Delta)
         {
             _initialSpectrumSettingsBufferData.Delta = Delta;
@@ -558,11 +754,19 @@ namespace Core
             UpdateInitialSpectrum();
         }
 
+        /**
+         * @brief Gets the spectrum delta which determines directionality of the wave spectrum.
+         * @return The spectrum delta parameter.
+         */
         [[nodiscard]] float GetDelta() const
         {
             return _initialSpectrumSettingsBufferData.Delta;
         }
 
+        /**
+         * @brief Sets the swell modifier for the wave spectrum.
+         * @param Swell The swell scalar modifier.
+         */
         void SetSwell(const float Swell)
         {
             _initialSpectrumSettingsBufferData.Swell = Swell;
@@ -570,52 +774,104 @@ namespace Core
             UpdateInitialSpectrum();
         }
 
+        /**
+         * @brief Gets the swell modifier.
+         * @return The swell scalar modifier.
+         */
         [[nodiscard]] float GetSwell() const
         {
             return _initialSpectrumSettingsBufferData.Swell;
         }
 
+        /**
+         * @brief Retrieves the OpenGL texture ID of the texture array containing water displacement maps.
+         * @return The OpenGL texture array ID.
+         */
         [[nodiscard]] uint32_t GetDisplacementTextures() const
         {
             return _displacementTextures;
         }
 
+        /**
+         * @brief Retrieves the OpenGL texture ID of the texture array containing water surface velocity maps.
+         * @return The OpenGL texture array ID.
+         */
         [[nodiscard]] uint32_t GetVelocityTextures() const
         {
             return _velocityTextures;
         }
 
+        /**
+         * @brief Retrieves the OpenGL SSBO ID containing cascade configurations used by shaders.
+         * @return The OpenGL SSBO ID.
+         */
         [[nodiscard]] uint32_t GetCascadeSettingsSsbo() const
         {
             return _cascadeSettingsSsbo;
         }
 
+        /**
+         * @brief Enables or disables rendering the water mesh as wireframe.
+         * @param RenderAsWireframe True to render as wireframe, false for solid geometry.
+         */
         void SetRenderWaterAsWireframe(const bool RenderAsWireframe)
         {
             _oceanGrid.SetRenderAsWireframe(RenderAsWireframe);
         }
 
+        /**
+         * @brief Checks if the water mesh is currently rendering in wireframe mode.
+         * @return True if wireframe rendering is active.
+         */
         [[nodiscard]] bool GetRenderWaterAsWireframe() const
         {
             return _oceanGrid.GetRenderAsWireframe();
         }
 
+        /**
+         * @brief Checks if debug visualizations for water effectors are currently being rendered.
+         * @return True if effector debug rendering is active.
+         */
         [[nodiscard]] bool GetRenderWaterEffectors() const
         {
             return _waterEffectorsRenderer.IsRendering();
         }
 
+        /**
+         * @brief Enables or disables debug visualizations for water effectors.
+         * @param RenderDebugInfo True to enable effector debug rendering.
+         */
         void SetRenderWaterEffectors(const bool RenderDebugInfo)
         {
             _waterEffectorsRenderer.SetRender(RenderDebugInfo);
         }
 
+        /**
+         * @brief Executes the full water pipeline: computes the new wave state, updates grid LOD, and draws the ocean.
+         * @param DeltaTime Time elapsed since the last frame in seconds.
+         * @param CameraTransform The transform component of the active camera.
+         * @param Camera The active camera component.
+         * @param AmbientLightColor The ambient color of the scene for basic lighting.
+         * @param DynamicWavesSampleSsboId The SSBO containing dynamic wave interactions to overlay.
+         * @param SceneColor The OpenGL texture ID of the scene color buffer.
+         * @param SceneDepth The OpenGL texture ID of the scene depth buffer.
+         */
         void Render(float DeltaTime, const TransformComponent& CameraTransform, const CameraComponent& Camera,
                     const glm::vec3& AmbientLightColor, uint32_t DynamicWavesSampleSsboId, uint32_t SceneColor,
                     uint32_t SceneDepth);
 
+        /**
+         * @brief Dispatches the spray rendering pass.
+         * @param TargetFrameBuffer The OpenGL Framebuffer Object where spray should be drawn.
+         */
         void RenderSpray(uint32_t TargetFrameBuffer) const;
 
+        /**
+         * @brief Renders the debug visualizers for water effectors.
+         * @param Registry The entity registry containing effector components.
+         * @param ViewMatrix The active camera's view matrix.
+         * @param ProjectionMatrix The active camera's projection matrix.
+         */
         void RenderWaterEffectorsDebug(const entt::registry& Registry, const glm::mat4& ViewMatrix,
                                        const glm::mat4& ProjectionMatrix);
 

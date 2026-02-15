@@ -2,6 +2,7 @@
 #extension GL_ARB_bindless_texture: enable
 
 #include "Lighting.glsl"
+#include "ColorCorrection.glsl"
 
 in vec2 TexCoord;
 in vec3 Position;
@@ -35,7 +36,7 @@ layout (location = 0) out vec4 FragColor;
 layout (early_fragment_tests) in;
 void main()
 {
-    vec3 BaseColor = texture(Materials[MaterialIndex].BaseMap, TexCoord).rgb * Materials[MaterialIndex].BaseColor;
+    vec3 BaseColor = SrgbToLinear(texture(Materials[MaterialIndex].BaseMap, TexCoord).rgb) * Materials[MaterialIndex].BaseColor;
     vec3 RoughnessMetallicAmbientOcclusion = texture(Materials[MaterialIndex].RoughnessMetallicAmbientOcclusionMap, TexCoord).rgb;
     float Roughness = RoughnessMetallicAmbientOcclusion.r * Materials[MaterialIndex].Roughness;
     float Metallic = RoughnessMetallicAmbientOcclusion.g * Materials[MaterialIndex].Metallic;
