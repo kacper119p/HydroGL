@@ -79,7 +79,7 @@ namespace Core
             alignas(4) float PeakWaveFrequency;
 
         private:
-            alignas(4) float Padding{};
+            alignas(4) float _padding{};
 
         public:
             InitialSpectrumSettingsBuffer(const glm::vec2& WindVelocity, const float Fetch, const float Delta,
@@ -303,6 +303,9 @@ namespace Core
         GlBufferUnique _waterSettingsUbo;
         GlBufferUnique _cascadeSettingsSsbo;
 
+        bool _foamSettingsDirty = false;
+        bool _spectrumSettingsDirty = false;
+
     public:
         /**
          * @brief Initializes the water system.
@@ -357,7 +360,7 @@ namespace Core
         void SetFoamThreshold(const float FoamThreshold)
         {
             _foamUniformBufferData.FoamThreshold = FoamThreshold;
-            SentFoamMaskSettingsToGpu();
+            _foamSettingsDirty = true;
         }
 
         /**
@@ -376,7 +379,7 @@ namespace Core
         void SetFoamExponent(const float FoamExponent)
         {
             _foamUniformBufferData.FoamExponent = FoamExponent;
-            SentFoamMaskSettingsToGpu();
+            _foamSettingsDirty = true;
         }
 
         /**
@@ -395,7 +398,7 @@ namespace Core
         void SetFoamIntensity(const float FoamIntensity)
         {
             _foamUniformBufferData.FoamIntensity = FoamIntensity;
-            SentFoamMaskSettingsToGpu();
+            _foamSettingsDirty = true;
         }
 
         /**
@@ -706,8 +709,7 @@ namespace Core
                 _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
             _initialSpectrumSettingsBufferData.Alpha = CalculateInitialSpectrumAlpha(
                 _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
-            SendInitialSpectrumSettingsToGpu();
-            UpdateInitialSpectrum();
+            _spectrumSettingsDirty = true;
         }
 
         /**
@@ -730,8 +732,7 @@ namespace Core
                 _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
             _initialSpectrumSettingsBufferData.Alpha = CalculateInitialSpectrumAlpha(
                 _initialSpectrumSettingsBufferData.WindVelocity, _initialSpectrumSettingsBufferData.Fetch, Gravity);
-            SendInitialSpectrumSettingsToGpu();
-            UpdateInitialSpectrum();
+            _spectrumSettingsDirty = true;
         }
 
         /**
@@ -750,8 +751,7 @@ namespace Core
         void SetDelta(const float Delta)
         {
             _initialSpectrumSettingsBufferData.Delta = Delta;
-            SendInitialSpectrumSettingsToGpu();
-            UpdateInitialSpectrum();
+            _spectrumSettingsDirty = true;
         }
 
         /**
@@ -770,8 +770,7 @@ namespace Core
         void SetSwell(const float Swell)
         {
             _initialSpectrumSettingsBufferData.Swell = Swell;
-            SendInitialSpectrumSettingsToGpu();
-            UpdateInitialSpectrum();
+            _spectrumSettingsDirty = true;
         }
 
         /**
@@ -886,7 +885,7 @@ namespace Core
 
         void SendInitialSpectrumSettingsToGpu() const;
 
-        void SentFoamMaskSettingsToGpu() const;
+        void SendFoamMaskSettingsToGpu() const;
 
         void SendCascadeSettingsToGpu() const;
     };
