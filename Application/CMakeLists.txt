@@ -43,4 +43,4 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_SOURCE_DIR}/Assets
-        ${CMAKE_CURRENT_BINARY_DIR}/Assets)
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/Assets)
