@@ -282,6 +282,7 @@ namespace Core
         if (_foamSettingsDirty == true)
         {
             SendFoamMaskSettingsToGpu();
+            _foamSettingsDirty = false;
         }
 
         UpdateSpectrumTexture();
