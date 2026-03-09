@@ -27,7 +27,7 @@ HydroGL is a modern OpenGL 3D ocean simulation project.
 
 ## Showcase video
 
-[![HydroGL Demo](https://img.youtube.com/vi/sZoOOdoeNqY/maxresdefault.jpg)](https://youtu.be/sZoOOdoeNqY)
+[![HydroGL Demo](https://img.youtube.com/vi/sZoOOdoeNqY/maxresdefault.jpg)](https://youtu.be/sZoOOdoeNqY)  
 <https://youtu.be/sZoOOdoeNqY>
 
 ## Requirements
