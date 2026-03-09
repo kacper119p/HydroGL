@@ -32,24 +32,69 @@ namespace Application
     public:
         [[nodiscard]] Core::TransformComponent* GetCameraParent() const
         {
-            const auto cameraView = _scene->GetEntityRegistry()->view<Core::CameraComponent,
-                Core::TransformComponent>();
+            const entt::registry* entityRegistry = _scene->GetEntityRegistry();
+            const auto cameraView = entityRegistry->view<Core::CameraComponent, Core::TransformComponent>();
             const entt::entity cameraEntity = cameraView.front();
-            const Core::TransformComponent& transform = _scene->GetEntityRegistry()
+            const Core::TransformComponent& transform = entityRegistry
                     ->get<Core::TransformComponent>(cameraEntity);
             return transform.GetSceneHierarchyNode()->GetParent()->GetTransformComponent();
         }
 
         void SetCameraParent(const Core::TransformComponent* CameraOwner) const
         {
-            const auto cameraView = _scene->GetEntityRegistry()->view<Core::CameraComponent,
+            const entt::registry* entityRegistry = _scene->GetEntityRegistry();
+            const auto cameraView = entityRegistry->view<Core::CameraComponent,
                 Core::TransformComponent>();
             const entt::entity cameraEntity = cameraView.front();
-            const Core::TransformComponent& transform = _scene->GetEntityRegistry()->get<Core::TransformComponent>(
+            const Core::TransformComponent& transform = entityRegistry->get<Core::TransformComponent>(
                 cameraEntity);
             transform.GetSceneHierarchyNode()->SetParent(CameraOwner == nullptr
                                                              ? nullptr
                                                              : CameraOwner->GetSceneHierarchyNode());
+        }
+
+        void SetCameraWorldPosition(const glm::vec3& Position) const
+        {
+            entt::registry* const entityRegistry = _scene->GetEntityRegistry();
+            const auto cameraView = entityRegistry->view<Core::CameraComponent,
+                Core::TransformComponent>();
+            const entt::entity cameraEntity = cameraView.front();
+            Core::TransformComponent& transform = entityRegistry->get<Core::TransformComponent>(
+                cameraEntity);
+            transform.SetWorldPosition(Position);
+        }
+
+        [[nodiscard]] glm::vec3 GetCameraWorldPosition() const
+        {
+            entt::registry* const entityRegistry = _scene->GetEntityRegistry();
+            const auto cameraView = entityRegistry->view<Core::CameraComponent,
+                Core::TransformComponent>();
+            const entt::entity cameraEntity = cameraView.front();
+            const Core::TransformComponent& transform = entityRegistry->get<Core::TransformComponent>(
+                cameraEntity);
+            return transform.GetWorldPosition();
+        }
+
+        void SetCameraLocalPosition(const glm::vec3& Position) const
+        {
+            entt::registry* const entityRegistry = _scene->GetEntityRegistry();
+            const auto cameraView = entityRegistry->view<Core::CameraComponent,
+                Core::TransformComponent>();
+            const entt::entity cameraEntity = cameraView.front();
+            Core::TransformComponent& transform = entityRegistry->get<Core::TransformComponent>(
+                cameraEntity);
+            transform.SetLocalPosition(Position);
+        }
+
+        [[nodiscard]] glm::vec3 GetCameraLocalPosition() const
+        {
+            entt::registry* const entityRegistry = _scene->GetEntityRegistry();
+            const auto cameraView = entityRegistry->view<Core::CameraComponent,
+                Core::TransformComponent>();
+            const entt::entity cameraEntity = cameraView.front();
+            const Core::TransformComponent& transform = entityRegistry->get<Core::TransformComponent>(
+                cameraEntity);
+            return transform.GetLocalPosition();
         }
 
     public:

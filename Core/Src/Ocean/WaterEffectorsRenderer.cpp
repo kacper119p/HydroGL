@@ -36,7 +36,7 @@ namespace Core
     void WaterEffectorsRenderer::RenderDebug(const entt::registry& EntityRegistry, const glm::mat4& ViewMatrix,
                                              const glm::mat4& ProjectionMatrix)
     {
-        if (!_render)
+        if (_render == false)
         {
             return;
         }

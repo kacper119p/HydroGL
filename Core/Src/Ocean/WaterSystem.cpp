@@ -273,6 +273,18 @@ namespace Core
                              const uint32_t SceneColor,
                              const uint32_t SceneDepth)
     {
+        if (_spectrumSettingsDirty == true)
+        {
+            SendInitialSpectrumSettingsToGpu();
+            UpdateInitialSpectrum();
+            _spectrumSettingsDirty = false;
+        }
+        if (_foamSettingsDirty == true)
+        {
+            SendFoamMaskSettingsToGpu();
+            _foamSettingsDirty = false;
+        }
+
         UpdateSpectrumTexture();
 
         RunFft(_hDzDxDfhxTextures, CascadeCount);
@@ -423,7 +435,7 @@ namespace Core
                              &_initialSpectrumSettingsBufferData);
     }
 
-    void WaterSystem::SentFoamMaskSettingsToGpu() const
+    void WaterSystem::SendFoamMaskSettingsToGpu() const
     {
         glNamedBufferSubData(_foamMaskSettingsUbo, 0,
                              static_cast<int64_t>(sizeof(FoamMaskShaderUniforms)),
