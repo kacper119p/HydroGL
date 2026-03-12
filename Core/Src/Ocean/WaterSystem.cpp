@@ -273,13 +273,13 @@ namespace Core
                              const uint32_t SceneColor,
                              const uint32_t SceneDepth)
     {
-        if (_spectrumSettingsDirty == true)
+        if (_spectrumSettingsDirty)
         {
             SendInitialSpectrumSettingsToGpu();
             UpdateInitialSpectrum();
             _spectrumSettingsDirty = false;
         }
-        if (_foamSettingsDirty == true)
+        if (_foamSettingsDirty)
         {
             SendFoamMaskSettingsToGpu();
             _foamSettingsDirty = false;
