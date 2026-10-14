@@ -20,12 +20,9 @@ namespace Core
                                                _physicsSystem(std::make_unique<PhysicsSystem>())
     {
         MeshManager::Initialize();
-
-        spdlog::info("Engine Started.");
     }
 
     Engine::~Engine()
     {
-        spdlog::info("Engine Shutdown.");
     }
 }

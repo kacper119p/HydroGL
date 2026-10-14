@@ -166,10 +166,6 @@ namespace Core
           _cascadeSettingsSsbo(CreateCascadeSettingsSsbo(_cascadeSettings))
     {
         UpdateInitialSpectrum();
-        spdlog::info("Gauss: {}", _gaussianNoiseTexture.Get());
-        spdlog::info("InitialSpectrum: {}", _initialSpectrumTextures.Get());
-        spdlog::info("TimeSpectrum1: {}", _hDzDxDfhxTextures.Get());
-        spdlog::info("TimeSpectrum2: {}", _hDzDxDfhxTextures.Get());
     }
 
     GlTextureUnique WaterSystem::CreateTextureArray(const int32_t Layers)
