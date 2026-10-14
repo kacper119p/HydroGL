@@ -30,6 +30,15 @@ HydroGL is a modern OpenGL 3D ocean simulation project.
 [![HydroGL Demo](https://img.youtube.com/vi/s60CJzEqQ9E/maxresdefault.jpg)](https://youtu.be/s60CJzEqQ9E)  
 <https://youtu.be/s60CJzEqQ9E>
 
+## Controls
+
+| Input | Action |
+| --- | --- |
+| `W` `A` `S` `D` Move camera
+| `Right Mouse Button` (Hold & Drag) | Rotate camera |
+| `H` | Toggle GUI overlay |
+|     |     |
+
 ## Requirements
 
 This project only works on Windows systems (tested on Windows 10 and 11).
