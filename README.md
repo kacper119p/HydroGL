@@ -37,7 +37,6 @@ HydroGL is a modern OpenGL 3D ocean simulation project.
 | `W` `A` `S` `D` Move camera
 | `Right Mouse Button` (Hold & Drag) | Rotate camera |
 | `H` | Toggle GUI overlay |
-|     |     |
 
 ## Requirements
 
